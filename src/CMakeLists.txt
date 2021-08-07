@@ -1,0 +1,1 @@
+add_executable(atmega328_emu main.c)
