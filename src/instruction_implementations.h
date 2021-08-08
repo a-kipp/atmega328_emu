@@ -1,30 +1,10 @@
 #include <stdint.h>
-#include "memory_map.h"
+#include "memory.h"
 #include "global_variables.h"
-#include "adress_decoding.h"
+#include "utility_functions.h"
 
 #define INSTRUCTION_DEBUG 
 
-
-// Convinience Functions
-// ____________________________________________________________________________________________________________________
-
-void get_sreg_flag(int flag) {
-    get_bit(*(register_ptr + SREG), NEGATIVE_FLAG)
-}
-
-void set_sreg_flag(int flag) {
-    set_bit(*(register_ptr + SREG), flag);
-}
-
-void clear_sreg_flag(int flag) {
-    clear_bit(*(register_ptr + SREG), CARRY_FLAG));
-}
-
-
-
-// Bit
-// ____________________________________________________________________________________________________________________
 
 // Extraction Patterns
 #define EXTRACTION_PATTERN_0000000111110000 0
@@ -35,7 +15,7 @@ void clear_sreg_flag(int flag) {
 
 
 // extracts addresses and immediate values from an instruction
-uint16_t extract_bits(uint16_t instruction, int extraction_pattern) {
+uint16_t _extract_bits(uint16_t instruction, int extraction_pattern) {
     switch (extraction_pattern) {
     case EXTRACTION_PATTERN_0000000111110000:
         return (instruction & 0b0000000111110000) >> 4; break;
@@ -67,50 +47,50 @@ uint16_t extract_bits(uint16_t instruction, int extraction_pattern) {
 // This instruction performs a single cycle No Operation.
 // AVR Instruction Manual page 131
 void nop() {
-    program_counter += 2;
+    global_program_counter += 2;
 }
 
 
 // ADC - Add with Carry
 // Adds two registers and the contents of the C Flag and places the result in the destination register Rd.
 void adc(uint8_t rd_addr, uint8_t rr_addr) {
-    uint8_t rd = *(data_memory_ptr + rd_addr);
-    uint8_t rr = *(data_memory_ptr + rr_addr);
-    uint8_t result = rd + rr + get_sreg_flag(CARRY_FLAG);
+    uint8_t rd = *(_data_mem_ptr + rd_addr);
+    uint8_t rr = *(_data_mem_ptr + rr_addr);
+    uint8_t result = rd + rr + memory_get_sreg_flag(CARRY_FLAG);
 
     if (get_bit(rd, 3) && get_bit(rr, 3) || get_bit(rr, 3) && !get_bit(result, 3) || !get_bit(result, 3) && get_bit(rd, 3)) {
-        set_sreg_flag(CARRY_FLAG);
+        memory_set_sreg_flag(CARRY_FLAG);
     } else {
-        clear_sreg_flag(CARRY_FLAG);
+        memory_clear_sreg_flag(CARRY_FLAG);
     }
-    if (get_sreg_flag(NEGATIVE_FLAG) ^ get_sreg_flag(TWOS_COMPLEMENT_OVERFLOW_FLAG)) {
-        set_sreg_flag(SIGN_BIT);
+    if (memory_get_sreg_flag(NEGATIVE_FLAG) ^ memory_get_sreg_flag(TWOS_COMPLEMENT_OVERFLOW_FLAG)) {
+        memory_set_sreg_flag(SIGN_BIT);
     } else {
-        clear_sreg_flag(SIGN_BIT);
+        memory_clear_sreg_flag(SIGN_BIT);
     }
     if (get_bit(rd, 7) && get_bit(rr, 7) && !get_bit(result, 7) || !get_bit(rd, 7) && !get_bit(rr, 7) && get_bit(result, 7)) {
-        set_sreg_flag(TWOS_COMPLEMENT_OVERFLOW_FLAG);
+        memory_set_sreg_flag(TWOS_COMPLEMENT_OVERFLOW_FLAG);
     } else {
-        clear_sreg_flag(TWOS_COMPLEMENT_OVERFLOW_FLAG)
+        memory_clear_sreg_flag(TWOS_COMPLEMENT_OVERFLOW_FLAG)
     }
     if (get_bit(result, 7)) {
-        set_sreg_flag(NEGATIVE_FLAG);
+        memory_set_sreg_flag(NEGATIVE_FLAG);
     } else {
-        clear_sreg_flag(NEGATIVE_FLAG);
+        memory_clear_sreg_flag(NEGATIVE_FLAG);
     }
     if (result == 0) {
-        set_sreg_flag(ZERO_FLAG);
+        memory_set_sreg_flag(ZERO_FLAG);
     } else {
-        clear_sreg_flag(ZERO_FLAG);
+        memory_clear_sreg_flag(ZERO_FLAG);
     }
     if (get_bit(rd, 7) && get_bit(rr, 7) || get_bit(rr, 7) && get_bit(result, 7) || !get_bit(result, 7) && !get_bit(result, 7)) {
-        set_sreg_flag(CARRY_FLAG);
+        memory_set_sreg_flag(CARRY_FLAG);
     } else {
-        clear_sreg_flag(CARRY_FLAG);
+        memory_clear_sreg_flag(CARRY_FLAG);
     }
     
-    *(data_memory_ptr + rd_addr) = result;
-    program_counter += 2;
+    *(_data_mem_ptr + rd_addr) = result;
+    global_program_counter += 2;
     INSTRUCTION_DEBUG
 }
 
@@ -126,14 +106,14 @@ void add() {
 // Clears a register. This instruction performs an Exclusive OR between a register and itself. This will clear all bits in the register.
 // AVR Instruction Manual page 71
 void clr() {
-    uint16_t instruction = *(uint16_t*)(program_memory_ptr + program_counter);
-    uint16_t rd_addr = extract_bits(instruction, EXTRACTION_PATTERN_0000000111110000);
-    *(uint8_t*)(data_memory_ptr + rd_addr) = 0;
-    clear_sreg_flag(SIGN_BIT);
-    clear_sreg_flag(TWOS_COMPLEMENT_OVERFLOW_FLAG);
-    clear_sreg_flag(NEGATIVE_FLAG);
-    set_sreg_flag(ZERO_FLAG);
-    program_counter += 2;
+    uint16_t instruction = fetch_16bit_instruction(global_program_counter);
+    uint16_t rd_addr = _extract_bits(instruction, EXTRACTION_PATTERN_0000000111110000);
+    *(uint8_t*)(_data_mem_ptr + rd_addr) = 0;
+    memory_clear_sreg_flag(SIGN_BIT);
+    memory_clear_sreg_flag(TWOS_COMPLEMENT_OVERFLOW_FLAG);
+    memory_clear_sreg_flag(NEGATIVE_FLAG);
+    memory_set_sreg_flag(ZERO_FLAG);
+    global_program_counter += 2;
     INSTRUCTION_DEBUG
 }
 
@@ -142,11 +122,11 @@ void clr() {
 // Loads an 8-bit constant directly to register 16 to 31.
 // AVR Instruction Manual page 115
 void ldi() {
-    uint16_t instruction = *(uint16_t*)(program_memory_ptr + program_counter);
-    uint16_t rd_addr = extract_bits(instruction, EXTRACTION_PATTERN_0000000011110000) + 16;
-    uint8_t k_immediate_value = extract_bits(instruction, EXTRACTION_PATTERN_0000111100001111);
-    *(uint8_t*)(data_memory_ptr + rd_addr) = k_immediate_value;
-    program_counter += 2;
+    uint16_t instruction = fetch_16bit_instruction(global_program_counter);
+    uint16_t rd_addr = _extract_bits(instruction, EXTRACTION_PATTERN_0000000011110000) + 16;
+    uint8_t k_immediate_value = _extract_bits(instruction, EXTRACTION_PATTERN_0000111100001111);
+    *(uint8_t*)(_data_mem_ptr + rd_addr) = k_immediate_value;
+    global_program_counter += 2;
     INSTRUCTION_DEBUG
 }
 
@@ -158,11 +138,11 @@ void ldi() {
 // Atmega328 datasheet page 624
 // AVR Instruction Manual page 134
 void out() {
-    uint16_t instruction = *(uint16_t*)(program_memory_ptr + program_counter);
-    uint16_t rr_addr = extract_bits(instruction, EXTRACTION_PATTERN_0000000111110000);
-    uint16_t ioa_addr = extract_bits(instruction, EXTRACTION_PATTERN_0000011000001111) + 0x20;
-    *(uint8_t*)(data_memory_ptr + ioa_addr) = *(uint8_t*)(data_memory_ptr + rr_addr);
-    program_counter += 2;
+    uint16_t instruction = *(uint16_t*)(_program_mem_ptr + global_program_counter);
+    uint16_t rr_addr = _extract_bits(instruction, EXTRACTION_PATTERN_0000000111110000);
+    uint16_t ioa_addr = _extract_bits(instruction, EXTRACTION_PATTERN_0000011000001111) + 0x20;
+    *(uint8_t*)(_data_mem_ptr + ioa_addr) = *(uint8_t*)(_data_mem_ptr + rr_addr);
+    global_program_counter += 2;
     INSTRUCTION_DEBUG
 }
 
@@ -172,30 +152,30 @@ void out() {
 // destination register Rd.
 // AVR Instruction Manual page 91
 void eor() {
-    uint16_t instruction = *(uint16_t*)(program_memory_ptr + program_counter);
-    uint16_t rd_addr = extract_bits(instruction, EXTRACTION_PATTERN_0000000111110000);
-    uint16_t rr_addr = extract_bits(instruction, EXTRACTION_PATTERN_0000001000001111);
-    uint8_t rd_content = *(uint8_t*)(data_memory_ptr + rd_addr);
-    uint8_t rr_content = *(uint8_t*)(data_memory_ptr + rr_addr);
+    uint16_t instruction = *(uint16_t*)(_program_mem_ptr + global_program_counter);
+    uint16_t rd_addr = _extract_bits(instruction, EXTRACTION_PATTERN_0000000111110000);
+    uint16_t rr_addr = _extract_bits(instruction, EXTRACTION_PATTERN_0000001000001111);
+    uint8_t rd_content = *(uint8_t*)(_data_mem_ptr + rd_addr);
+    uint8_t rr_content = *(uint8_t*)(_data_mem_ptr + rr_addr);
     uint8_t result = rd_content + rr_content;
-    *(uint8_t*)(data_memory_ptr + rd_addr) = result;
-    if (get_sreg_flag(NEGATIVE_FLAG) ^ get_sreg_flag(TWOS_COMPLEMENT_OVERFLOW_FLAG)) {
-        set_sreg_flag(SIGN_BIT);
+    *(uint8_t*)(_data_mem_ptr + rd_addr) = result;
+    if (memory_get_sreg_flag(NEGATIVE_FLAG) ^ memory_get_sreg_flag(TWOS_COMPLEMENT_OVERFLOW_FLAG)) {
+        memory_set_sreg_flag(SIGN_BIT);
     } else {
-        clear_sreg_flag(SIGN_BIT);
+        memory_clear_sreg_flag(SIGN_BIT);
     }
-    clear_sreg_flag(TWOS_COMPLEMENT_OVERFLOW_FLAG);
+    memory_clear_sreg_flag(TWOS_COMPLEMENT_OVERFLOW_FLAG);
 
     if (get_bit(result, 7)) {
-        set_sreg_flag(NEGATIVE_FLAG);
+        memory_set_sreg_flag(NEGATIVE_FLAG);
     } else {
-        clear_sreg_flag(NEGATIVE_FLAG);
+        memory_clear_sreg_flag(NEGATIVE_FLAG);
     }
     if (result == 0) {
-        set_sreg_flag(ZERO_FLAG);
+        memory_set_sreg_flag(ZERO_FLAG);
     } else {
-        clear_sreg_flag(ZERO_FLAG);
+        memory_clear_sreg_flag(ZERO_FLAG);
     }
-    program_counter += 2;
+    global_program_counter += 2;
     INSTRUCTION_DEBUG
 }

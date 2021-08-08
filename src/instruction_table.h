@@ -20,5 +20,6 @@ void (*instruction_table[])(uint16_t) = {
     nop,
     nop,
     nop,
-    //65536 inctruction will go here...
+    // TODO
+    // 65536 inctruction will go here...
 }

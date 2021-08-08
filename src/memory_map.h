@@ -1,3 +1,11 @@
+// Due to the harvard architecture of ATmega328 there are distinct memory spaces for
+// instructions and data. The program memory is read only when the atmega is running,
+// The data memory holds all the state information of the atmega, it serves not only
+// as RAM but also holds all the register files in it's address space.
+// In addition to that there is an eeprom wich can be thought of as the atmega's hdd.
+// All three memorys have their own address space.
+
+
 // Program Memory Map
 #define PROAGRAM_MEMORY_START 0x000
     #define BOOT_SECTION_START

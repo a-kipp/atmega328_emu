@@ -1,3 +1,5 @@
+// All functions in this file are free from side effects. No global variables are used.
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -5,13 +7,13 @@
 #include <stdbool.h>
 
 
+uint16_t byteswap_16bit(uint16_t num) {
+    return num << 8 | num >> 8;
+}
 
-// All functions in this file are free from side effects. No global variables are used.
-
-
-uint8_t get_bit(uint8_t byte, int bit) {
+uint8_t get_bit(uint8_t* byte, int bit) {
     bit = 1 << bit;
-    return(bit & byte);
+    return(bit & *byte);
 }
 
 void set_bit(uint8_t *byte, int bit) {
