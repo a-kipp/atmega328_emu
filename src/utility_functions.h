@@ -7,35 +7,35 @@
 #include <stdbool.h>
 
 
-uint16_t byteswap_16bit(uint16_t num) {
+uint16_t uti_byteswap16bit(uint16_t num) {
     return num << 8 | num >> 8;
 }
 
-uint8_t get_bit(uint8_t* byte, int bit) {
+uint8_t uti_extractSingleBit(uint8_t* byte, int bit) {
     bit = 1 << bit;
     return(bit & *byte);
 }
 
-void set_bit(uint8_t *byte, int bit) {
+void uti_setSingleBit(uint8_t *byte, int bit) {
     bit = 1 << bit;
     *byte = *byte | bit;
 }
 
-void clear_bit(uint8_t *byte, int bit) {
+void uti_clearSingleBit(uint8_t *byte, int bit) {
     bit = 1 << bit;
     bit ^= 0xff;
     *byte = *byte & bit;
 }
 
-uint32_t get_bits(uint32_t four_byte, int first_bit, int last_bit) {
-    four_byte >>= first_bit;
-    uint32_t mask = 0xFFFFFF >> (16 - (last_bit - first_bit));
-    return four_byte ^= mask;
+uint32_t uti_extractBits(uint32_t num, int firstBit, int lastBit) {
+    num >>= firstBit;
+    uint32_t mask = 0xFFFFFF >> (16 - (lastBit - firstBit));
+    return num ^= mask;
 }
 
-void load_program(uint8_t *memory, char *path_to_file, int memory_size) {
-    FILE *file_ptr = fopen(path_to_file, "r");
+void uti_loadFile(uint8_t *memory, char *pathToFile, int memorySize) {
+    FILE *file_ptr = fopen(pathToFile, "r");
     if(file_ptr == NULL) printf("can't open file\n");
-    fread(memory, sizeof(uint16_t), memory_size, file_ptr);
+    fread(memory, sizeof(uint16_t), memorySize, file_ptr);
     fclose(file_ptr);
 }

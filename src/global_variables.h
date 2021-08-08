@@ -1,3 +1,3 @@
 #include <stdint.h>
 
-uint16_t global_program_counter = 0;
+uint16_t g_programCounter = 0;
