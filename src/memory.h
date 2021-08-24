@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include "memory_map.h"
 #include "global_variables.h"
 #include "utility_functions.h"
@@ -23,10 +24,6 @@ void mem_init(char* FilePath) {
 
 // Read and Write
 // ____________________________________________________________________________________________________________________
-
-uint8_t mem_programMemoryRead8bit(uint16_t address) {
-    return *(uint8_t*)(_programMemory_ptr + address);
-}
 
 uint8_t mem_dataMemoryRead8bit(uint16_t address) {
     return *(uint8_t*)(_dataMemory_ptr + address);
@@ -58,14 +55,74 @@ void mem_dataMemoryWrite16bit(uint16_t address, uint16_t value) {
     *(uint16_t*)(_dataMemory_ptr + address) = value;
 }
 
-void mem_getSregFlag(int flag) {
-    uti_extractSingleBit(_dataMemory_ptr + SREG, flag);
+bool mem_getSregCarryFlag() {
+    return (bool)uti_extractSingleBit(_dataMemory_ptr + SREG, CARRY_FLAG);
 }
 
-void mem_setSregFlag(int flag) {
-    uti_setSingleBit(_dataMemory_ptr + SREG, flag);
+bool mem_getSregZeroFlag() {
+    return (bool)uti_extractSingleBit(_dataMemory_ptr + SREG, ZERO_FLAG);
 }
 
-void mem_clearSregFlag(int flag) {
-    uti_clearSingleBit(_dataMemory_ptr + SREG, flag);
+bool mem_getSregNegativeFlag() {
+    return (bool)uti_extractSingleBit(_dataMemory_ptr + SREG, NEGATIVE_FLAG);
+}
+
+bool mem_getSregTwosComplementOverflowFlag() {
+    return (bool)uti_extractSingleBit(_dataMemory_ptr + SREG, TWOS_COMPLEMENT_OVERFLOW_FLAG);
+}
+
+bool mem_getSregSignBit() {
+    return (bool)uti_extractSingleBit(_dataMemory_ptr + SREG, SIGN_BIT);
+}
+
+bool mem_getSregHalfCarryFlag() {
+    return (bool)uti_extractSingleBit(_dataMemory_ptr + SREG, HALF_CARRY_FLAG);
+}
+
+void mem_setSregCarryFlagTo(bool val) {
+    if (val) {
+        uti_setSingleBit(_dataMemory_ptr + SREG, CARRY_FLAG);
+    } else {
+        uti_clearSingleBit(_dataMemory_ptr + SREG, CARRY_FLAG);
+    }
+}
+
+void mem_setSregZeroFlagTo(bool val) {
+    if (val) {
+        uti_setSingleBit(_dataMemory_ptr + SREG, ZERO_FLAG);
+    } else {
+        uti_clearSingleBit(_dataMemory_ptr + SREG, ZERO_FLAG);
+    }
+}
+
+void mem_setSregNegativeFlagTo(bool val {
+    if (val) {
+        uti_setSingleBit(_dataMemory_ptr + SREG, NEGATIVE_FLAG);
+    } else {
+        uti_clearSingleBit(_dataMemory_ptr + SREG, NEGATIVE_FLAG);
+    }
+}
+
+void mem_setSregTwosComplementOverflowFlagTo(bool val) {
+    if (val) {
+        uti_setSingleBit(_dataMemory_ptr + SREG, TWOS_COMPLEMENT_OVERFLOW_FLAG);
+    } else {
+        uti_clearSingleBit(_dataMemory_ptr + SREG, TWOS_COMPLEMENT_OVERFLOW_FLAG);
+    }
+}
+
+void mem_setSregSignBitTo(bool val) {
+    if (val) {
+        uti_setSingleBit(_dataMemory_ptr + SREG, SIGN_BIT);
+    } else {
+        uti_clearSingleBit(_dataMemory_ptr + SREG, SIGN_BIT);
+    }
+}
+
+void mem_setSregHalfCarryFlagTo(bool val) {
+    if (val) {
+        uti_setSingleBit(_dataMemory_ptr + SREG, HALF_CARRY_FLAG);
+    } else {
+        uti_clearSingleBit(_dataMemory_ptr + SREG, HALF_CARRY_FLAG);
+    }
 }

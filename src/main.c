@@ -11,5 +11,5 @@ int main(int argc, char *argv[] ) {
         exit(1);
     }
 
-    memory_init(argv[1]);
+    mem_init(argv[1]);
 }
