@@ -95,7 +95,7 @@ void mem_setSregZeroFlagTo(bool val) {
     }
 }
 
-void mem_setSregNegativeFlagTo(bool val {
+void mem_setSregNegativeFlagTo(bool val) {
     if (val) {
         uti_setSingleBit(_dataMemory_ptr + SREG, NEGATIVE_FLAG);
     } else {

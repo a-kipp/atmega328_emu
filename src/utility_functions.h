@@ -33,7 +33,7 @@ uint32_t uti_extractBits(uint32_t num, int firstBit, int lastBit) {
     return num ^= mask;
 }
 
-void uti_loadFile(uint8_t *memory, char *pathToFile, int memorySize) {
+void uti_loadFile(uint16_t *memory, char *pathToFile, int memorySize) {
     FILE *file_ptr = fopen(pathToFile, "r");
     if(file_ptr == NULL) printf("can't open file\n");
     fread(memory, sizeof(uint16_t), memorySize, file_ptr);
