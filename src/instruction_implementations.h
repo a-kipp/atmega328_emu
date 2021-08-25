@@ -7,7 +7,7 @@
 #include "memory.h"
 #include "utility_functions.h"
 
-#define INSTRUCTION_DEBUG printf(instructionName);
+#define INSTRUCTION_DEBUG() (printf("%x %d %s\n", instruction, g_programCounter, instructionName))
 
 
 // Extraction Patterns
@@ -66,9 +66,11 @@ uint16_t _extract_bits(uint16_t instruction, int extractionPattern) {
 // unknown opcode
 void unknown() {
     char *instructionName = "unknown";
-    printf("unknown instruction");
-    exit(-1);
-    INSTRUCTION_DEBUG   
+    uint16_t instruction = mem_programMemoryFetchInstruction(g_programCounter);
+    g_programCounter += 1;
+    g_cycles += 1;
+    //exit(-1);
+    INSTRUCTION_DEBUG();
 }
 
 
@@ -78,9 +80,10 @@ void unknown() {
 // AVR Instruction Manual page 131
 void nop() {
     char *instructionName = "nop";
+    uint16_t instruction = mem_programMemoryFetchInstruction(g_programCounter);
     g_programCounter += 1;
     g_cycles += 1;
-    INSTRUCTION_DEBUG
+    INSTRUCTION_DEBUG();
 }
 
 
@@ -125,7 +128,7 @@ void adc() {
     mem_dataMemoryWrite8bit(rd_addr, result);
     g_programCounter += 1;
     g_cycles += 1;
-    INSTRUCTION_DEBUG
+    INSTRUCTION_DEBUG();
 }
 
 
@@ -170,7 +173,7 @@ void add() {
     mem_dataMemoryWrite8bit(rd_addr, result);
     g_programCounter += 1;
     g_cycles += 1;
-    INSTRUCTION_DEBUG
+    INSTRUCTION_DEBUG();
 }
 
 
@@ -198,7 +201,7 @@ void clr() {
     mem_dataMemoryWrite8bit(rd_addr, 0);
     g_programCounter += 1;
     g_cycles += 1;
-    INSTRUCTION_DEBUG
+    INSTRUCTION_DEBUG();
 }
 
 
@@ -215,7 +218,7 @@ void ldi() {
     mem_dataMemoryWrite8bit(rd_addr, constData);
     g_programCounter += 1;
     g_cycles += 1;
-    INSTRUCTION_DEBUG
+    INSTRUCTION_DEBUG();
 }
 
 
@@ -236,7 +239,7 @@ void out() {
     mem_dataMemoryWrite8bit(ioa_addr, rrContent);
     g_programCounter += 1;
     g_cycles += 1;
-    INSTRUCTION_DEBUG
+    INSTRUCTION_DEBUG();
 }
 
 
@@ -271,7 +274,7 @@ void eor() {
     mem_dataMemoryWrite8bit(rd_addr, result);
     g_programCounter += 1;
     g_cycles += 1;
-    INSTRUCTION_DEBUG
+    INSTRUCTION_DEBUG();
 }
 
 
@@ -310,7 +313,7 @@ void sbiw() {
     mem_dataMemoryWrite16bit(rd_addr, result);
     g_programCounter += 1;
     g_cycles += 2;
-    INSTRUCTION_DEBUG   
+    INSTRUCTION_DEBUG();  
 }
 
 
@@ -335,7 +338,7 @@ void brne() {
         g_programCounter += 1;
         g_cycles += 1;
     }
-    INSTRUCTION_DEBUG 
+    INSTRUCTION_DEBUG();
 }
 
 
@@ -372,7 +375,7 @@ void dec() {
     mem_dataMemoryWrite8bit(rd_addr, result);
     g_programCounter += 1;
     g_cycles += 1;
-    INSTRUCTION_DEBUG
+    INSTRUCTION_DEBUG();
 }
 
 
@@ -389,5 +392,5 @@ void rjmp() {
 
     g_programCounter += (constAddress + 1) % (DATA_MEMORY_END + 1);
     g_cycles += 2;
-    INSTRUCTION_DEBUG   
+    INSTRUCTION_DEBUG();
 }

@@ -6,5 +6,5 @@
 ;
 void cpu_execute_single_instruction() {
     uint16_t instruction = mem_programMemoryFetchInstruction(g_programCounter);
-    instruction_table[instruction];
+    instruction_table[instruction]();
 } 

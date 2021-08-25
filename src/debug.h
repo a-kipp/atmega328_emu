@@ -10,7 +10,18 @@
 #include "memory_map.h"
 
 
-debug_get_name(int address) {
+
+void deb_printBinary16bit(uint16_t integer_number) {
+    for(int i=0; i<16; i++) {
+        if(i%8 == 0) printf(" ");
+        printf("%d", (integer_number>>15));
+        integer_number<<=1;
+    }
+    printf("\n");
+}
+
+
+deb_getName(int address) {
     switch (address) {
         case R0: return "R0";
         case R1: return "R1";

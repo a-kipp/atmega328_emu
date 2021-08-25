@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include "instruction_implementations.h"
 
-void *instruction_table[] = {
+void (*instruction_table[])(void) = {
     nop,
     unknown,
     unknown,

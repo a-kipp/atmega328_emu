@@ -13,15 +13,15 @@ uint8_t *_eepromMemory_ptr;
 
 
 
-void mem_init(char* FilePath) {
+void mem_init(char* filePath) {
     _programMemory_ptr = calloc(PROGRAM_MEMORY_END + 1, sizeof(uint8_t));
     _dataMemory_ptr = calloc(DATA_MEMORY_END + 1, sizeof(uint8_t));
     _eepromMemory_ptr = calloc(EEPROM_END + 1, sizeof(uint8_t));
 
-    uti_loadFile(_programMemory_ptr, FilePath, PROGRAM_MEMORY_END);
-    printf("%s\n", FilePath);
+    uti_loadFile(_programMemory_ptr, filePath, PROGRAM_MEMORY_END);
+    printf("%s\n", filePath);
     printf("%s\n", _programMemory_ptr);
-    printf("toll hhier passiert was");
+
 }
 
 

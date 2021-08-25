@@ -6,7 +6,7 @@ top = r"""#pragma once
 #include <stdint.h>
 #include "instruction_implementations.h"
 
-void *instruction_table[] = {"""
+void (*instruction_table[])(void) = {"""
 bottom = r"""}"""
 
 
