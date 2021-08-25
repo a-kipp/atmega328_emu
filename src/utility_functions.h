@@ -52,36 +52,40 @@ char *_getFileContent(FILE *file_ptr) {
 }
 
 
-void _parse(uint16_t *memoryLocation_ptr, char *fileContent_ptr, int maxSize) {
-    int fileSizeCounter = 0;
-    while (*fileContent_ptr != EOF) {
-        char startCharacter = 0;
-        int byteCount = 0;
-        int addressOffset = 0;
-        int recordType = 0;
-        sscanf(fileContent_ptr, "%1c%2x%4x%2x", &startCharacter, &byteCount, &addressOffset, &recordType);
-        for(int i = 0; i < byteCount; i++) {
-            printf("byteCount: %x\n", fileSizeCounter);
-            int instruction = 0;
-            if (fileSizeCounter > maxSize) {
-                fprintf(stderr, "hex file too big, maximum memory size exceeded\n");
-                return; 
-                exit(1);
-            }
-            sscanf(fileContent_ptr, "%4x", &instruction);
-            *memoryLocation_ptr = uti_byteswap16bit((uint16_t)instruction);
-            memoryLocation_ptr++;
-            fileSizeCounter++;
-        }
+void _parse(uint16_t *programMemoryStart_ptr, char *fileContent_ptr, int maxSize) {
+    for (int i = 0; i < 4; i++) {
+        fileContent_ptr+=1;
+        char byteCountBuffer[3] = {0};
+        byteCountBuffer[0] = *fileContent_ptr; fileContent_ptr++;
+        byteCountBuffer[1] = *fileContent_ptr; fileContent_ptr++;
+        int byteCount = strtol(byteCountBuffer, NULL, 16);
+        char addressOffsetBuffer[5] = {0};
+        addressOffsetBuffer[0] = *fileContent_ptr; fileContent_ptr++;
+        addressOffsetBuffer[1] = *fileContent_ptr; fileContent_ptr++;
+        addressOffsetBuffer[2] = *fileContent_ptr; fileContent_ptr++;
+        addressOffsetBuffer[3] = *fileContent_ptr; fileContent_ptr++;
+        int addressOffset = strtol(addressOffsetBuffer, NULL, 16);
+        uint16_t *instruction_ptr = programMemoryStart_ptr + addressOffset/2;
         fileContent_ptr += 2;
+        for(int i = 0; i < byteCount; i+=2) {
+            char instructionBuffer[5] = {0};
+            instructionBuffer[0] = *fileContent_ptr; fileContent_ptr++;
+            instructionBuffer[1] = *fileContent_ptr; fileContent_ptr++;
+            instructionBuffer[2] = *fileContent_ptr; fileContent_ptr++;
+            instructionBuffer[3] = *fileContent_ptr; fileContent_ptr++;
+            int instruction = strtol(instructionBuffer, NULL, 16);
+            *instruction_ptr = (uint16_t)instruction;
+            instruction_ptr++;
+        }
+        fileContent_ptr += 4;
     }
 }
 
 
-void uti_loadFile(uint16_t *memoryLocation_ptr, char *pathToFile, int maxSize) {
+void uti_loadFile(uint16_t *programMemoryStart_ptr, char *pathToFile, int maxSize) {
     FILE *file_ptr = fopen(pathToFile, "r");
     if(file_ptr == NULL) printf("can't open file\n");
     char *fileContent_ptr = _getFileContent(file_ptr);
     fclose(file_ptr);
-    _parse(memoryLocation_ptr, fileContent_ptr, maxSize);
+    _parse(programMemoryStart_ptr, fileContent_ptr, maxSize);
 }

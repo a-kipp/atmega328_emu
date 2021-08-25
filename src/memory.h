@@ -19,9 +19,6 @@ void mem_init(char* filePath) {
     _eepromMemory_ptr = calloc(EEPROM_END + 1, sizeof(uint8_t));
 
     uti_loadFile(_programMemory_ptr, filePath, PROGRAM_MEMORY_END);
-    printf("%s\n", filePath);
-    printf("%s\n", _programMemory_ptr);
-
 }
 
 

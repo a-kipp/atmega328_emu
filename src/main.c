@@ -14,10 +14,8 @@ int main(int argc, char *argv[] ) {
     }
 
     mem_init(argv[1]);
-    cpu_execute_single_instruction();
-    cpu_execute_single_instruction();
-    cpu_execute_single_instruction();
-    cpu_execute_single_instruction();
-    cpu_execute_single_instruction();
-    cpu_execute_single_instruction();
+
+    for (int i = 0; i < 100; i++) {
+        cpu_execute_single_instruction();
+    }
 }
