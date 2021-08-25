@@ -5,6 +5,7 @@
 // In addition to that there is an eeprom wich can be thought of as the atmega's hdd.
 // All three memorys have their own address space.
 
+#pragma once
 
 // Program Memory Map
 #define PROAGRAM_MEMORY_START 0x000

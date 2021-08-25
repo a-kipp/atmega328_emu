@@ -1,29 +1,35 @@
 from itertools import product
 import re
 
-top = r"""#include <stdint.h>
-#include "instruction_implementations.h
+top = r"""#pragma once
 
-void (*instruction_table[])(uint16_t) = {"""
+#include <stdint.h>
+#include "instruction_implementations.h"
+
+void *instruction_table[] = {"""
 bottom = r"""}"""
+
+
+opcode_function_pair = [
+    ['0000 0000 0000 0000', 'nop'],
+    ['0001 11rd dddd rrrr', 'adc'],
+    ['0000 11rd dddd rrrr', 'add'],
+    ['0010 01dd dddd dddd', 'clr'],
+    ['1110 KKKK dddd KKKK', 'ldi'],
+    ['1011 1AAr rrrr AAAA', 'out'],
+    ['0010 01rd dddd rrrr', 'eor'],
+    ['1001 0111 KKdd KKKK', 'sbiw'],
+    ['1111 01kk kkkk k001', 'brne'],
+    ['1001 010d dddd 1010', 'dec'],
+    ['1100 kkkk kkkk kkkk', 'rjmp'],
+]
 
 
 function_table = ["unknown"] * 65536
 
-opcode_function_pair = []
-opcode_function_pair.append(['0000000000000000', 'nop'])
-opcode_function_pair.append(['000111rdddddrrrr', 'adc'])
-opcode_function_pair.append(['000011rdddddrrrr', 'add'])
-opcode_function_pair.append(['001001dddddddddd', 'clr'])
-opcode_function_pair.append(['1110KKKKddddKKKK', 'ldi'])
-opcode_function_pair.append(['10111AArrrrrAAAA', 'out'])
-opcode_function_pair.append(['001001rdddddrrrr', 'eor'])
-opcode_function_pair.append(['10010111KKddKKKK', 'sbiw'])
-opcode_function_pair.append(['111101kkkkkkk001', 'brne'])
-opcode_function_pair.append(['1001010ddddd1010', 'dec'])
-opcode_function_pair.append(['1100kkkkkkkkkkkk', 'rjmp'])
 
 for pair in opcode_function_pair:
+    pair[0] = pair[0].replace(" ", "")
     pair[0] = re.sub('[a-zA-Z]', '[0-1]', pair[0])
 
 for i in range(65536):

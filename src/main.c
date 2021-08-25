@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdint.h>
 #include "memory.h"
+#include "cpu.h"
 
 
 int main(int argc, char *argv[] ) {
@@ -12,4 +13,11 @@ int main(int argc, char *argv[] ) {
     }
 
     mem_init(argv[1]);
+
+    cpu_execute_single_instruction();
+    cpu_execute_single_instruction();
+    cpu_execute_single_instruction();
+    cpu_execute_single_instruction();
+    cpu_execute_single_instruction();
+    cpu_execute_single_instruction();
 }

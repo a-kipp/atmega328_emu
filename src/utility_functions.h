@@ -1,4 +1,5 @@
 // All functions in this file are free from side effects. No global variables are used.
+#pragma once
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,17 +12,17 @@ uint16_t uti_byteswap16bit(uint16_t num) {
     return num << 8 | num >> 8;
 }
 
-uint8_t uti_extractSingleBit(uint8_t* byte, int bit) {
+uint8_t uti_getBit(uint8_t byte, int bit) {
     bit = 1 << bit;
-    return(bit & *byte);
+    return(bit & byte);
 }
 
-void uti_setSingleBit(uint8_t *byte, int bit) {
+void uti_setBit(uint8_t *byte, int bit) {
     bit = 1 << bit;
     *byte = *byte | bit;
 }
 
-void uti_clearSingleBit(uint8_t *byte, int bit) {
+void uti_clearBit(uint8_t *byte, int bit) {
     bit = 1 << bit;
     bit ^= 0xff;
     *byte = *byte & bit;

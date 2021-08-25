@@ -1,7 +1,9 @@
-#include <stdint.h>
-#include "instruction_implementations.h
+#pragma once
 
-void (*instruction_table[])(uint16_t) = {
+#include <stdint.h>
+#include "instruction_implementations.h"
+
+void *instruction_table[] = {
     nop,
     unknown,
     unknown,

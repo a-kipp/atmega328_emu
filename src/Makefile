@@ -57,10 +57,10 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/andreas/code/atmega328_emu/src
+CMAKE_SOURCE_DIR = /home/andreas/code/atmega328_emu
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/andreas/code/atmega328_emu/src
+CMAKE_BINARY_DIR = /home/andreas/code/atmega328_emu
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -87,14 +87,14 @@ edit_cache/fast: edit_cache
 
 # The main all target
 all: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/andreas/code/atmega328_emu/src/CMakeFiles /home/andreas/code/atmega328_emu/src//CMakeFiles/progress.marks
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/andreas/code/atmega328_emu/src/CMakeFiles 0
+	cd /home/andreas/code/atmega328_emu && $(CMAKE_COMMAND) -E cmake_progress_start /home/andreas/code/atmega328_emu/CMakeFiles /home/andreas/code/atmega328_emu/src//CMakeFiles/progress.marks
+	cd /home/andreas/code/atmega328_emu && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 src/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/andreas/code/atmega328_emu/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
 clean:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 clean
+	cd /home/andreas/code/atmega328_emu && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 src/clean
 .PHONY : clean
 
 # The main clean target
@@ -103,30 +103,31 @@ clean/fast: clean
 
 # Prepare targets for installation.
 preinstall: all
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 preinstall
+	cd /home/andreas/code/atmega328_emu && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 src/preinstall
 .PHONY : preinstall
 
 # Prepare targets for installation.
 preinstall/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 preinstall
+	cd /home/andreas/code/atmega328_emu && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 src/preinstall
 .PHONY : preinstall/fast
 
 # clear depends
 depend:
-	$(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
+	cd /home/andreas/code/atmega328_emu && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
 .PHONY : depend
 
-#=============================================================================
-# Target rules for targets named atmega328_emu
+# Convenience name for target.
+src/CMakeFiles/atmega328_emu.dir/rule:
+	cd /home/andreas/code/atmega328_emu && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 src/CMakeFiles/atmega328_emu.dir/rule
+.PHONY : src/CMakeFiles/atmega328_emu.dir/rule
 
-# Build rule for target.
-atmega328_emu: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 atmega328_emu
+# Convenience name for target.
+atmega328_emu: src/CMakeFiles/atmega328_emu.dir/rule
 .PHONY : atmega328_emu
 
 # fast build rule for target.
 atmega328_emu/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/atmega328_emu.dir/build.make CMakeFiles/atmega328_emu.dir/build
+	cd /home/andreas/code/atmega328_emu && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/atmega328_emu.dir/build.make src/CMakeFiles/atmega328_emu.dir/build
 .PHONY : atmega328_emu/fast
 
 main.o: main.c.o
@@ -134,7 +135,7 @@ main.o: main.c.o
 
 # target to build an object file
 main.c.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/atmega328_emu.dir/build.make CMakeFiles/atmega328_emu.dir/main.c.o
+	cd /home/andreas/code/atmega328_emu && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/atmega328_emu.dir/build.make src/CMakeFiles/atmega328_emu.dir/main.c.o
 .PHONY : main.c.o
 
 main.i: main.c.i
@@ -142,7 +143,7 @@ main.i: main.c.i
 
 # target to preprocess a source file
 main.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/atmega328_emu.dir/build.make CMakeFiles/atmega328_emu.dir/main.c.i
+	cd /home/andreas/code/atmega328_emu && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/atmega328_emu.dir/build.make src/CMakeFiles/atmega328_emu.dir/main.c.i
 .PHONY : main.c.i
 
 main.s: main.c.s
@@ -150,7 +151,7 @@ main.s: main.c.s
 
 # target to generate assembly for a file
 main.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/atmega328_emu.dir/build.make CMakeFiles/atmega328_emu.dir/main.c.s
+	cd /home/andreas/code/atmega328_emu && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/atmega328_emu.dir/build.make src/CMakeFiles/atmega328_emu.dir/main.c.s
 .PHONY : main.c.s
 
 # Help Target
@@ -176,6 +177,6 @@ help:
 # No rule that depends on this can have commands that come from listfiles
 # because they might be regenerated.
 cmake_check_build_system:
-	$(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
+	cd /home/andreas/code/atmega328_emu && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
 .PHONY : cmake_check_build_system
 

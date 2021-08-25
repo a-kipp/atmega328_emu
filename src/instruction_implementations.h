@@ -1,10 +1,13 @@
+#pragma once
+
+#include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include "global_variables.h"
 #include "memory.h"
 #include "utility_functions.h"
 
-#define INSTRUCTION_DEBUG 
+#define INSTRUCTION_DEBUG printf(instructionName);
 
 
 // Extraction Patterns
@@ -62,189 +65,249 @@ uint16_t _extract_bits(uint16_t instruction, int extractionPattern) {
 
 // unknown opcode
 void unknown() {
+    char *instructionName = "unknown";
+    printf("unknown instruction");
     exit(-1);
     INSTRUCTION_DEBUG   
 }
 
 
 // NOP - No Operation
+// 16-bit Opcode: 0000 0000 0000 0000
 // This instruction performs a single cycle No Operation.
 // AVR Instruction Manual page 131
-// 16-bit Opcode: 0000 0000 0000 0000
 void nop() {
+    char *instructionName = "nop";
     g_programCounter += 1;
+    g_cycles += 1;
     INSTRUCTION_DEBUG
 }
 
 
 // ADC - Add with Carry
+// 16-bit Opcode: 0001 11rd dddd rrrr
 // Adds two registers and the contents of the C Flag and places the result in the destination register Rd.
 // AVR Instruction Manual page 30
-// 16-bit Opcode: 0001 11rd dddd rrrr
-void adc(uint8_t rd_addr, uint8_t rr_addr) {
-    uint8_t rd = *(_dataMemory_ptr + rd_addr);
-    uint8_t rr = *(_dataMemory_ptr + rr_addr);
-    uint8_t result = rd + rr + mem_getSregFlag(CARRY_FLAG);
+void adc() {
+    char *instructionName = "adc";
+    uint16_t instruction = mem_programMemoryFetchInstruction(g_programCounter);
+    uint16_t rd_addr = _extract_bits(instruction, EXTRACTION_PATTERN_0000000111110000);
+    uint16_t rr_addr = _extract_bits(instruction, EXTRACTION_PATTERN_0000001000001111);
+    uint8_t rdContent = mem_dataMemoryRead8bit(rd_addr);
+    uint8_t rrContent = mem_dataMemoryRead8bit(rr_addr);
+    uint8_t result = rdContent + rrContent + (uint8_t)mem_getSregCarryFlag();
 
-    if (uti_extractSingleBit(rd, 3) && uti_extractSingleBit(rr, 3) || uti_extractSingleBit(rr, 3) && !uti_extractSingleBit(result, 3) || !uti_extractSingleBit(result, 3) && uti_extractSingleBit(rd, 3)) {
-        mem_setSregFlag(CARRY_FLAG);
-    } else {
-        mem_clearSregFlag(CARRY_FLAG);
-    }
-    if (mem_getSregFlag(NEGATIVE_FLAG) ^ mem_getSregFlag(TWOS_COMPLEMENT_OVERFLOW_FLAG)) {
-        mem_setSregFlag(SIGN_BIT);
-    } else {
-        mem_clearSregFlag(SIGN_BIT);
-    }
-    if (uti_extractSingleBit(rd, 7) && uti_extractSingleBit(rr, 7) && !uti_extractSingleBit(result, 7) || !uti_extractSingleBit(rd, 7) && !uti_extractSingleBit(rr, 7) && uti_extractSingleBit(result, 7)) {
-        mem_setSregFlag(TWOS_COMPLEMENT_OVERFLOW_FLAG);
-    } else {
-        mem_clearSregFlag(TWOS_COMPLEMENT_OVERFLOW_FLAG)
-    }
-    if (uti_extractSingleBit(result, 7)) {
-        mem_setSregFlag(NEGATIVE_FLAG);
-    } else {
-        mem_clearSregFlag(NEGATIVE_FLAG);
-    }
-    if (result == 0) {
-        mem_setSregFlag(ZERO_FLAG);
-    } else {
-        mem_clearSregFlag(ZERO_FLAG);
-    }
-    if (uti_extractSingleBit(rd, 7) && uti_extractSingleBit(rr, 7) || uti_extractSingleBit(rr, 7) && uti_extractSingleBit(result, 7) || !uti_extractSingleBit(result, 7) && !uti_extractSingleBit(result, 7)) {
-        mem_setSregFlag(CARRY_FLAG);
-    } else {
-        mem_clearSregFlag(CARRY_FLAG);
-    }
+    bool rdBit3 = uti_getBit(rdContent, 3);
+    bool rrBit3 = uti_getBit(rrContent, 3);
+    bool resultBit3 = uti_getBit(result, 3);
+    bool rdBit7 = uti_getBit(rdContent, 7);
+    bool rrBit7 = uti_getBit(rrContent, 7);
+    bool resultBit7 = uti_getBit(result, 7);
+
+    // H: Set if there was a carry from bit 3; cleared otherwise.
+    mem_setSregCarryFlagTo(rdBit3 && rrBit3 || rrBit3 && !resultBit3 || !resultBit3 && rdBit3);
+
+    // S = N ⊕ V, for signed tests.
+    mem_setSregSignBitTo(mem_getSregZeroFlag() ^ mem_getSregNegativeFlag());
+
+    // V: Set if two’s complement overflow resulted from the operation; cleared otherwise.
+    mem_setSregTwosComplementOverflowFlagTo(rdBit7 && rrBit7 && !resultBit7 || !rdBit7 && !rrBit7 && resultBit7);
+
+    // N: Set if MSB of the result is set; cleared otherwise.
+    mem_setSregNegativeFlagTo(resultBit7);
+
+    // Z: Set if the result is $00; cleared otherwise.
+    mem_setSregZeroFlagTo(result == 0x00);
+
+    // C: Set if there was carry from the MSB of the result; cleared otherwise.
+    mem_setSregCarryFlagTo(rdBit7 && rrBit7 || rrBit7 && !resultBit7 || !resultBit7 && rdBit7);
     
-    *(_dataMemory_ptr + rd_addr) = result;
+    mem_dataMemoryWrite8bit(rd_addr, result);
     g_programCounter += 1;
+    g_cycles += 1;
     INSTRUCTION_DEBUG
 }
 
 
 // ADD - Add without Carry
-// Adds two registers without the C Flag and places the result in the destination register Rd.
-// AVR Instruction Manual page 30
 // 16-bit Opcode: 0000 11rd dddd rrrr
+// Adds two registers without the C Flag and places the result in the destination register Rd.
+// AVR Instruction Manual page 32
 void add() {
+    char *instructionName = "add";
+    uint16_t instruction = mem_programMemoryFetchInstruction(g_programCounter);
+    uint16_t rd_addr = _extract_bits(instruction, EXTRACTION_PATTERN_0000000111110000);
+    uint16_t rr_addr = _extract_bits(instruction, EXTRACTION_PATTERN_0000001000001111);
+    uint8_t rdContent = mem_dataMemoryRead8bit(rd_addr);
+    uint8_t rrContent = mem_dataMemoryRead8bit(rr_addr);
+    uint8_t result = rdContent + rrContent;
 
+    bool rdBit3 = uti_getBit(rdContent, 3);
+    bool rrBit3 = uti_getBit(rrContent, 3);
+    bool resultBit3 = uti_getBit(result, 3);
+    bool rdBit7 = uti_getBit(rdContent, 7);
+    bool rrBit7 = uti_getBit(rrContent, 7);
+    bool resultBit7 = uti_getBit(result, 7);
+
+    // H: Set if there was a carry from bit 3; cleared otherwise.
+    mem_setSregCarryFlagTo(rdBit3 && rrBit3 || rrBit3 && !resultBit3 || !resultBit3 && rdBit3);
+
+    // S = N ⊕ V, for signed tests.
+    mem_setSregSignBitTo(mem_getSregZeroFlag() ^ mem_getSregNegativeFlag());
+
+    // V: Set if two’s complement overflow resulted from the operation; cleared otherwise.
+    mem_setSregTwosComplementOverflowFlagTo(rdBit7 && rrBit7 && !resultBit7 || !rdBit7 && !rrBit7 && resultBit7);
+
+    // N: Set if MSB of the result is set; cleared otherwise.
+    mem_setSregNegativeFlagTo(resultBit7);
+
+    // Z: Set if the result is $00; cleared otherwise.
+    mem_setSregZeroFlagTo(result == 0x00);
+
+    // C: Set if there was carry from the MSB of the result; cleared otherwise.
+    mem_setSregCarryFlagTo(rdBit7 && rrBit7 || rrBit7 && !resultBit7 || !resultBit7 && rdBit7);
+    
+    mem_dataMemoryWrite8bit(rd_addr, result);
+    g_programCounter += 1;
+    g_cycles += 1;
+    INSTRUCTION_DEBUG
 }
 
 
 // CLR – Clear Register
+// 16-bit Opcode: 0010 01dd dddd dddd
 // Clears a register. This instruction performs an Exclusive OR between a register and itself. This will clear all bits in the register.
 // AVR Instruction Manual page 71
-// 16-bit Opcode: 0010 01dd dddd dddd
 void clr() {
+    char *instructionName = "clr";
     uint16_t instruction = mem_programMemoryFetchInstruction(g_programCounter);
     uint16_t rd_addr = _extract_bits(instruction, EXTRACTION_PATTERN_0000000111110000);
-    *(uint8_t*)(_dataMemory_ptr + rd_addr) = 0;
-    mem_clearSregFlag(SIGN_BIT);
-    mem_clearSregFlag(TWOS_COMPLEMENT_OVERFLOW_FLAG);
-    mem_clearSregFlag(NEGATIVE_FLAG);
-    mem_setSregFlag(ZERO_FLAG);
+
+    // S: Cleared.
+    mem_setSregSignBitTo(false);
+
+    // V: Cleared.
+    mem_setSregTwosComplementOverflowFlagTo(false);
+
+    // N: Cleared.
+    mem_setSregNegativeFlagTo(false);
+
+    // Z:Set.
+    mem_setSregZeroFlagTo(true);
+
+    mem_dataMemoryWrite8bit(rd_addr, 0);
     g_programCounter += 1;
+    g_cycles += 1;
     INSTRUCTION_DEBUG
 }
 
 
 // LDI – Load Immediate
+// 16-bit Opcode: 1110 KKKK dddd KKKK
 // Loads an 8-bit constant directly to register 16 to 31.
 // AVR Instruction Manual page 115
-// 16-bit Opcode: 1110 KKKK dddd KKKK
 void ldi() {
+    char *instructionName = "ldi";
     uint16_t instruction = mem_programMemoryFetchInstruction(g_programCounter);
-    uint16_t rd_addr = _extract_bits(instruction, EXTRACTION_PATTERN_0000000011110000) + 16;
-    uint8_t k_immediate_value = _extract_bits(instruction, EXTRACTION_PATTERN_0000111100001111);
-    *(uint8_t*)(_dataMemory_ptr + rd_addr) = k_immediate_value;
+    uint16_t rd_addr =  _extract_bits(instruction, EXTRACTION_PATTERN_0000000011110000) + 16;
+    uint8_t constData = _extract_bits(instruction, EXTRACTION_PATTERN_0000111100001111);
+
+    mem_dataMemoryWrite8bit(rd_addr, constData);
     g_programCounter += 1;
+    g_cycles += 1;
     INSTRUCTION_DEBUG
 }
 
 
 // OUT – Store Register to I/O Location
+// 16-bit Opcode: 1011 1AAr rrrr AAAA
 // Stores data from register Rr in the Register File to I/O Space (Ports, Timers, Configuration Registers, etc.).
 // When using the I/O specific commands IN and OUT, the I/O addresses 0x00 - 0x3F must be used.
 // That means 0x20 must bei added to the provided adresses.
 // Atmega328 datasheet page 624
 // AVR Instruction Manual page 134
-// 16-bit Opcode: 1011 1AAr rrrr AAAA
 void out() {
+    char *instructionName = "out";
     uint16_t instruction = mem_programMemoryFetchInstruction(g_programCounter);
-    uint16_t rr_addr = _extract_bits(instruction, EXTRACTION_PATTERN_0000000111110000);
+    uint16_t rr_addr =  _extract_bits(instruction, EXTRACTION_PATTERN_0000000111110000);
     uint16_t ioa_addr = _extract_bits(instruction, EXTRACTION_PATTERN_0000011000001111) + 0x20;
-    *(uint8_t*)(_dataMemory_ptr + ioa_addr) = *(uint8_t*)(_dataMemory_ptr + rr_addr);
+    uint8_t rrContent = mem_dataMemoryRead8bit(rr_addr);
+    
+    mem_dataMemoryWrite8bit(ioa_addr, rrContent);
     g_programCounter += 1;
+    g_cycles += 1;
     INSTRUCTION_DEBUG
 }
 
 
 // EOR – Exclusive OR
+// 16-bit Opcode: 0010 01rd dddd rrrr
 // Performs the logical EOR between the contents of register Rd and register Rr and places the result in the
 // destination register Rd.
 // AVR Instruction Manual page 91
-// 16-bit Opcode: 0010 01rd dddd rrrr
 void eor() {
+    char *instructionName = "eor";
     uint16_t instruction = mem_programMemoryFetchInstruction(g_programCounter);
     uint16_t rd_addr = _extract_bits(instruction, EXTRACTION_PATTERN_0000000111110000);
     uint16_t rr_addr = _extract_bits(instruction, EXTRACTION_PATTERN_0000001000001111);
-    uint8_t rd_content = *(uint8_t*)(_dataMemory_ptr + rd_addr);
-    uint8_t rr_content = *(uint8_t*)(_dataMemory_ptr + rr_addr);
-    uint8_t result = rd_content + rr_content;
-    *(uint8_t*)(_dataMemory_ptr + rd_addr) = result;
-    if (mem_getSregFlag(NEGATIVE_FLAG) ^ mem_getSregFlag(TWOS_COMPLEMENT_OVERFLOW_FLAG)) {
-        mem_setSregFlag(SIGN_BIT);
-    } else {
-        mem_clearSregFlag(SIGN_BIT);
-    }
-    mem_clearSregFlag(TWOS_COMPLEMENT_OVERFLOW_FLAG);
+    uint8_t rdContent = mem_dataMemoryRead8bit(rd_addr);
+    uint8_t rrContent = mem_dataMemoryRead8bit(rr_addr);
+    uint8_t result = rdContent ^ rrContent;
 
-    if (uti_extractSingleBit(result, 7)) {
-        mem_setSregFlag(NEGATIVE_FLAG);
-    } else {
-        mem_clearSregFlag(NEGATIVE_FLAG);
-    }
-    if (result == 0) {
-        mem_setSregFlag(ZERO_FLAG);
-    } else {
-        mem_clearSregFlag(ZERO_FLAG);
-    }
+    bool resultBit7 = uti_getBit(result, 7);
+
+    // S: N ⊕ V, for signed tests.
+    mem_setSregSignBitTo(mem_getSregZeroFlag() ^ mem_getSregNegativeFlag());
+
+    // V: Cleared.
+    mem_setSregTwosComplementOverflowFlagTo(false);
+
+    // N: Set if MSB of the result is set; cleared otherwise.
+    mem_setSregNegativeFlagTo(resultBit7);
+
+    // Z is set if the result is $00; cleared otherwise.
+    mem_setSregZeroFlagTo(result == 0x00);
+
+    mem_dataMemoryWrite8bit(rd_addr, result);
     g_programCounter += 1;
+    g_cycles += 1;
     INSTRUCTION_DEBUG
 }
 
 
 // SBIW – Subtract Immediate from Word
+// 16-bit Opcode: 1001 0111 KKdd KKKK
 // Subtracts an immediate value (0-63) from a register pair and places the result in the register pair.
 // This instruction operates on the upper four register pairs, and is well suited for operations on the
 // Pointer Registers.
 // AVR Instruction Manual page 154
-// 16-bit Opcode: 1001 0111 KKdd KKKK
 void sbiw() {
+    char *instructionName = "sbiw";
     uint16_t instruction = mem_programMemoryFetchInstruction(g_programCounter);
-    uint16_t extractedValue = _extract_bits(instruction, EXTRACTION_PATTERN_0000000000110000);
-    uint16_t destRegister_addr = extractedValue * 2 + R24;
-    uint16_t registerContent = mem_dataMemoryRead16bit(destRegister_addr);
+    uint16_t rd_addr =   _extract_bits(instruction, EXTRACTION_PATTERN_0000000000110000) * 2 + R24;
     uint16_t constData = _extract_bits(instruction, EXTRACTION_PATTERN_0000000011001111);
-    uint16_t result = registerContent - constData;
+    uint16_t rdContent = mem_dataMemoryRead16bit(rd_addr);
+    uint16_t result = rdContent - constData;
+
+    bool resultBit15 = (bool)(result & (1 << 15));
+    bool rdhBit7 = (bool)(rdContent & (1 << 15));
 
     // S = N ⊕ V, for signed tests.
-    mem_setSregSignBitTo((mem_getSregZeroFlag() ^ mem_getSregNegativeFlag());
+    mem_setSregSignBitTo(mem_getSregZeroFlag() ^ mem_getSregNegativeFlag());
 
-    // V = R15 • Rdh7, Set if two’s complement overflow resulted from the operation; cleared otherwise.
-    mem_setSregTwosComplementOverflowFlagTo((result & (1 << 15)) && !(registerContent & (1 << 7)));
+    // V: Set if two’s complement overflow resulted from the operation; cleared otherwise.
+    mem_setSregTwosComplementOverflowFlagTo((result & (1 << 15)) && !(rdContent & (1 << 7)));
 
-    // N = R15;
-    mem_setSregNegativeFlagTo(result & (1 << 15));
+    // N: Set if MSB of the result is set; cleared otherwise.
+    mem_setSregNegativeFlagTo(resultBit15);
 
-    // Set Z if the result is $0000; cleared otherwise.
+    // Z: Set if the result is $0000; cleared otherwise.
     mem_setSregZeroFlagTo(result == 0x0000);
 
-    // C R15 • Rdh7, Set if the absolute value of K is larger than the absolute value of Rd; cleared otherwise.
-    mem_setSregSignBitTo(constData > registerContent);
+    // C: Set if the absolute value of K is larger than the absolute value of Rd; cleared otherwise.
+    mem_setSregSignBitTo(resultBit15 && rdhBit7);
 
-    mem_dataMemoryWrite16bit(destRegister_addr, result);
+    mem_dataMemoryWrite16bit(rd_addr, result);
     g_programCounter += 1;
     g_cycles += 2;
     INSTRUCTION_DEBUG   
@@ -252,6 +315,7 @@ void sbiw() {
 
 
 // BRNE – Branch if Not Equal
+// 16-bit Opcode: 1111 01kk kkkk k001
 // Conditional relative branch. Tests the Zero Flag (Z) and branches relatively to PC if Z is cleared. If the
 // instruction is executed immediately after any of the instructions CP, CPI, SUB, or SUBI, the branch will
 // occur if and only if, the unsigned or signed binary number represented in Rd was not equal to the
@@ -259,10 +323,11 @@ void sbiw() {
 // direction (PC - 63 ≤ destination ≤ PC + 64). Parameter k is the offset from PC and is represented in two’s
 // complement form. (Equivalent to instruction BRBC 1,k.)
 // AVR Instruction Manual page 54
-// 16-bit Opcode: 1111 01kk kkkk k001
 void brne() {
+    char *instructionName = "brne";
     uint16_t instruction = mem_programMemoryFetchInstruction(g_programCounter);
     uint16_t constData = _extract_bits(instruction, EXTRACTION_PATTERN_0000001111111000);
+
     if (mem_getSregZeroFlag()) {
         g_programCounter += (constData + 1);
         g_cycles += 2;
@@ -275,33 +340,36 @@ void brne() {
 
 
 // DEC – Decrement
+// 16-bit Opcode: 1001 010d dddd 1010
 // Subtracts one -1- from the contents of register Rd and places the result in the destination register Rd.
 // The C Flag in SREG is not affected by the operation, thus allowing the DEC instruction to be used on a
 // loop counter in multiple-precision computations.
 // When operating on unsigned values, only BREQ and BRNE branches can be expected to perform
 // consistently. When operating on two’s complement values, all signed branches are available.
 // AVR Instruction Manual page 84
-// 16-bit Opcode: 1001 010d dddd 1010
 void dec() {
+    char *instructionName = "dec";
     uint16_t instruction = mem_programMemoryFetchInstruction(g_programCounter);
-    uint16_t destRegister_addr = _extract_bits(instruction, EXTRACTION_PATTERN_0000000111110000);
-    uint8_t registerContent = mem_dataMemoryRead8bit(destRegister_addr);
-    uint8_t result = registerContent - 1;
+    uint16_t rd_addr = _extract_bits(instruction, EXTRACTION_PATTERN_0000000111110000);
+    uint8_t rdContent = mem_dataMemoryRead8bit(rd_addr);
+    uint8_t result = rdContent - 1;
 
-    // S = N ⊕ V, for signed tests.
-    mem_setSregSignBitTo((mem_getSregZeroFlag() ^ mem_getSregNegativeFlag());
+    bool resultBit7 = uti_getBit(result, 7);
 
-    // V is set Set if two’s complement overflow resulted from the operation; cleared otherwise.
+    // S: N ⊕ V, for signed tests.
+    mem_setSregSignBitTo(mem_getSregZeroFlag() ^ mem_getSregNegativeFlag());
+
+    // V: Set if two’s complement overflow resulted from the operation; cleared otherwise.
     // Two’s complement overflow occurs if and only if Rd was $80 before the operation.
-    mem_setSregTwosComplementOverflowFlagTo(registerContent == 0x80);
+    mem_setSregTwosComplementOverflowFlagTo(rdContent == 0x80);
 
-    // N = R7, Set if MSB of the result is set; cleared otherwise.
-    mem_setSregNegativeFlagTo(result & (1 << 7));
+    // N: Set if MSB of the result is set; cleared otherwise.
+    mem_setSregNegativeFlagTo(resultBit7);
 
     // Z is set if the result is $00; cleared otherwise.
     mem_setSregZeroFlagTo(result == 0x00);
 
-    mem_dataMemoryWrite8bit(result);
+    mem_dataMemoryWrite8bit(rd_addr, result);
     g_programCounter += 1;
     g_cycles += 1;
     INSTRUCTION_DEBUG
@@ -309,14 +377,16 @@ void dec() {
 
 
 // RJMP – Relative Jump
+// 16-bit Opcode: 1100 kkkk kkkk kkkk
 // Relative jump to an address within PC - 2K +1 and PC + 2K (words). For AVR microcontrollers with
 // Program memory not exceeding 4K words (8KB) this instruction can address the entire memory from
 // every address location. See also JMP.
 // AVR Instruction Manual page 142
-// 16-bit Opcode: 1100 kkkk kkkk kkkk
-rjmp() {
+void rjmp() {
+    char *instructionName = "rjmp";
     uint16_t instruction = mem_programMemoryFetchInstruction(g_programCounter);
-    int16_t constAddress = _extract_bits(instruction, EXTRACTION_PATTERN_0000111111111111);
+    int16_t constAddress = (int16_t)_extract_bits(instruction, EXTRACTION_PATTERN_0000111111111111);
+
     g_programCounter += (constAddress + 1) % (DATA_MEMORY_END + 1);
     g_cycles += 2;
     INSTRUCTION_DEBUG   
