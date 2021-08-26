@@ -56,7 +56,7 @@ void _parseHexFile(uint16_t *programMemoryStart_ptr, char *fileContent_ptr, int 
 
 void loa_loadHexFile(uint16_t *programMemoryStart_ptr, char *filePath, int maxSize) {
     FILE *file_ptr = fopen(filePath, "r");
-    if(file_ptr == NULL) printf("can't open file\n");
+    //if(file_ptr == NULL) printf("can't open file\n");
     char *fileContent_ptr = _getFileContent(file_ptr);
     fclose(file_ptr);
     _parseHexFile(programMemoryStart_ptr, fileContent_ptr, maxSize);

@@ -23,6 +23,9 @@
 #define EXTRACTION_PATTERN_0000111111111111 8
 
 
+uint16_t _programCounter = 0;
+
+
 // info string, contains instruction name, immediate values and jump addresses.
 #define MAX_INFO_LENGTH 120
 char _infoString[MAX_INFO_LENGTH] = {0};
@@ -69,17 +72,15 @@ uint16_t _extract_bits(uint16_t instruction, int extractionPattern) {
 // ____________________________________________________________________________________________________________________
 
 
-
-
 // unknown opcode
 void unknown() {
     char *instructionName = "unknown";
-    uint16_t instruction = mem_programMemoryFetchInstruction(g_programCounter);
+    uint16_t instruction = mem_programMemoryFetchInstruction(_programCounter);
 
     snprintf(_infoString, MAX_INFO_LENGTH, "%s", instructionName);
     INSTRUCTION_DEBUG();
 
-    g_programCounter += 1;
+    _programCounter += 1;
     g_cycles += 1;
     //exit(-1);
 }
@@ -91,12 +92,12 @@ void unknown() {
 // AVR Instruction Manual page 131
 void nop() {
     char *instructionName = "nop";
-    uint16_t instruction = mem_programMemoryFetchInstruction(g_programCounter);
+    uint16_t instruction = mem_programMemoryFetchInstruction(_programCounter);
 
     snprintf(_infoString, MAX_INFO_LENGTH, "%s", instructionName);
     INSTRUCTION_DEBUG();
 
-    g_programCounter += 1;
+    _programCounter += 1;
     g_cycles += 1;
 
 }
@@ -108,7 +109,7 @@ void nop() {
 // AVR Instruction Manual page 30
 void adc() {
     char *instructionName = "adc";
-    uint16_t instruction = mem_programMemoryFetchInstruction(g_programCounter);
+    uint16_t instruction = mem_programMemoryFetchInstruction(_programCounter);
     uint16_t rd_addr = _extract_bits(instruction, EXTRACTION_PATTERN_0000000111110000);
     uint16_t rr_addr = _extract_bits(instruction, EXTRACTION_PATTERN_0000001000001111);
     uint8_t rdContent = mem_dataMemoryRead8bit(rd_addr);
@@ -144,7 +145,7 @@ void adc() {
     mem_setSregCarryFlagTo(rdBit7 && rrBit7 || rrBit7 && !resultBit7 || !resultBit7 && rdBit7);
     
     mem_dataMemoryWrite8bit(rd_addr, result);
-    g_programCounter += 1;
+    _programCounter += 1;
     g_cycles += 1;
 }
 
@@ -155,7 +156,7 @@ void adc() {
 // AVR Instruction Manual page 32
 void add() {
     char *instructionName = "add";
-    uint16_t instruction = mem_programMemoryFetchInstruction(g_programCounter);
+    uint16_t instruction = mem_programMemoryFetchInstruction(_programCounter);
     uint16_t rd_addr = _extract_bits(instruction, EXTRACTION_PATTERN_0000000111110000);
     uint16_t rr_addr = _extract_bits(instruction, EXTRACTION_PATTERN_0000001000001111);
     uint8_t rdContent = mem_dataMemoryRead8bit(rd_addr);
@@ -191,7 +192,7 @@ void add() {
     mem_setSregCarryFlagTo(rdBit7 && rrBit7 || rrBit7 && !resultBit7 || !resultBit7 && rdBit7);
     
     mem_dataMemoryWrite8bit(rd_addr, result);
-    g_programCounter += 1;
+    _programCounter += 1;
     g_cycles += 1;
 }
 
@@ -202,7 +203,7 @@ void add() {
 // AVR Instruction Manual page 115
 void ldi() {
     char *instructionName = "ldi";
-    uint16_t instruction = mem_programMemoryFetchInstruction(g_programCounter);
+    uint16_t instruction = mem_programMemoryFetchInstruction(_programCounter);
     uint16_t rd_addr =  _extract_bits(instruction, EXTRACTION_PATTERN_0000000011110000) + 16;
     uint8_t constData = _extract_bits(instruction, EXTRACTION_PATTERN_0000111100001111);
 
@@ -210,7 +211,7 @@ void ldi() {
     INSTRUCTION_DEBUG();
 
     mem_dataMemoryWrite8bit(rd_addr, constData);
-    g_programCounter += 1;
+    _programCounter += 1;
     g_cycles += 1;
 }
 
@@ -224,7 +225,7 @@ void ldi() {
 // AVR Instruction Manual page 134
 void out() {
     char *instructionName = "out";
-    uint16_t instruction = mem_programMemoryFetchInstruction(g_programCounter);
+    uint16_t instruction = mem_programMemoryFetchInstruction(_programCounter);
     uint16_t ioa_addr = _extract_bits(instruction, EXTRACTION_PATTERN_0000011000001111) + 0x20;
     uint16_t rr_addr =  _extract_bits(instruction, EXTRACTION_PATTERN_0000000111110000);
     uint8_t rrContent = mem_dataMemoryRead8bit(rr_addr);
@@ -233,7 +234,7 @@ void out() {
     INSTRUCTION_DEBUG();
     
     mem_dataMemoryWrite8bit(ioa_addr, rrContent);
-    g_programCounter += 1;
+    _programCounter += 1;
     g_cycles += 1;
 }
 
@@ -246,7 +247,7 @@ void out() {
 // AVR Instruction Manual page 91 and 71
 void eor() {
     char *instructionName = "eor";
-    uint16_t instruction = mem_programMemoryFetchInstruction(g_programCounter);
+    uint16_t instruction = mem_programMemoryFetchInstruction(_programCounter);
     uint16_t rd_addr = _extract_bits(instruction, EXTRACTION_PATTERN_0000000111110000);
     uint16_t rr_addr = _extract_bits(instruction, EXTRACTION_PATTERN_0000001000001111);
     uint8_t rdContent = mem_dataMemoryRead8bit(rd_addr);
@@ -275,7 +276,7 @@ void eor() {
     mem_setSregZeroFlagTo(result == 0x00);
 
     mem_dataMemoryWrite8bit(rd_addr, result);
-    g_programCounter += 1;
+    _programCounter += 1;
     g_cycles += 1;
 
 }
@@ -289,7 +290,7 @@ void eor() {
 // AVR Instruction Manual page 154
 void sbiw() {
     char *instructionName = "sbiw";
-    uint16_t instruction = mem_programMemoryFetchInstruction(g_programCounter);
+    uint16_t instruction = mem_programMemoryFetchInstruction(_programCounter);
     uint16_t rd_addr =   _extract_bits(instruction, EXTRACTION_PATTERN_0000000000110000) * 2 + R24;
     uint16_t constData = _extract_bits(instruction, EXTRACTION_PATTERN_0000000011001111);
     uint16_t rdContent = mem_dataMemoryRead16bit(rd_addr);
@@ -317,7 +318,7 @@ void sbiw() {
     mem_setSregSignBitTo(resultBit15 && rdhBit7);
 
     mem_dataMemoryWrite16bit(rd_addr, result);
-    g_programCounter += 1;
+    _programCounter += 1;
     g_cycles += 2;
 }
 
@@ -333,17 +334,17 @@ void sbiw() {
 // AVR Instruction Manual page 54
 void brne() {
     char *instructionName = "brne";
-    uint16_t instruction = mem_programMemoryFetchInstruction(g_programCounter);
+    uint16_t instruction = mem_programMemoryFetchInstruction(_programCounter);
     uint16_t constData = _extract_bits(instruction, EXTRACTION_PATTERN_0000001111111000);
 
     snprintf(_infoString, MAX_INFO_LENGTH, "%s %02X", instructionName, constData);
     INSTRUCTION_DEBUG();
 
     if (mem_getSregZeroFlag()) {
-        g_programCounter += (constData + 1);
+        _programCounter += (constData + 1);
         g_cycles += 2;
     } else {
-        g_programCounter += 1;
+        _programCounter += 1;
         g_cycles += 1;
     }
 }
@@ -359,7 +360,7 @@ void brne() {
 // AVR Instruction Manual page 84
 void dec() {
     char *instructionName = "dec";
-    uint16_t instruction = mem_programMemoryFetchInstruction(g_programCounter);
+    uint16_t instruction = mem_programMemoryFetchInstruction(_programCounter);
     uint16_t rd_addr = _extract_bits(instruction, EXTRACTION_PATTERN_0000000111110000);
     uint8_t rdContent = mem_dataMemoryRead8bit(rd_addr);
     uint8_t result = rdContent - 1;
@@ -383,7 +384,7 @@ void dec() {
     mem_setSregZeroFlagTo(result == 0x00);
 
     mem_dataMemoryWrite8bit(rd_addr, result);
-    g_programCounter += 1;
+    _programCounter += 1;
     g_cycles += 1;
 }
 
@@ -396,13 +397,13 @@ void dec() {
 // AVR Instruction Manual page 142
 void rjmp() {
     char *instructionName = "rjmp";
-    uint16_t instruction = mem_programMemoryFetchInstruction(g_programCounter);
+    uint16_t instruction = mem_programMemoryFetchInstruction(_programCounter);
     int16_t constAddress = (int16_t)_extract_bits(instruction, EXTRACTION_PATTERN_0000111111111111);
-    uint16_t jumpDest_addr = (g_programCounter + constAddress - 0xfff) % (DATA_MEMORY_END + 1);
+    uint16_t jumpDest_addr = (_programCounter + constAddress - 0xfff) % (DATA_MEMORY_END + 1);
 
     snprintf(_infoString, MAX_INFO_LENGTH, "%s %04X", instructionName, jumpDest_addr);
     INSTRUCTION_DEBUG();
 
-    g_programCounter = jumpDest_addr;
+    _programCounter = jumpDest_addr;
     g_cycles += 2;
 }

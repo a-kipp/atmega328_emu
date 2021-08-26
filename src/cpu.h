@@ -2,20 +2,25 @@
 
 #include <stdint.h>
 #include <time.h>
-#include "instruction_table.h"
+#include "jump_table.h"
 #include "memory.h"
+#include "input_interface.h"
 
 ;
 void _execute_single_instruction() {
-    uint16_t instruction = mem_programMemoryFetchInstruction(g_programCounter);
-    instruction_table[instruction]();
+    uint16_t instruction = mem_programMemoryFetchInstruction(_programCounter);
+    jump_table[instruction]();
 }
 
 void cpu_run() {
     clock_t start = clock(), diff;
 
     for (int i = 0; i < 16000000; i++) {
-        _execute_single_instruction();
+        if (inp_interruptSignal) {
+            //int_handleInterrupt()
+        } else {
+            _execute_single_instruction();
+        }
     }
     diff = clock() - start;
 
