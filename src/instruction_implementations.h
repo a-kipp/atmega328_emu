@@ -6,8 +6,9 @@
 #include "global_variables.h"
 #include "memory.h"
 #include "utility_functions.h"
+#include "debug.h"
 
-#define INSTRUCTION_DEBUG() (printf("%x %d %s\n", instruction, g_programCounter, instructionName))
+#define INSTRUCTION_DEBUG() //(printf("%04X  %s\n", g_programCounter, _infoString))
 
 
 // Extraction Patterns
@@ -20,6 +21,11 @@
 #define EXTRACTION_PATTERN_0000000011001111 6
 #define EXTRACTION_PATTERN_0000001111111000 7
 #define EXTRACTION_PATTERN_0000111111111111 8
+
+
+// info string, contains instruction name, immediate values and jump addresses.
+#define MAX_INFO_LENGTH 120
+char _infoString[MAX_INFO_LENGTH] = {0};
 
 
 // extract addresses and immediate values from an instruction
@@ -63,14 +69,19 @@ uint16_t _extract_bits(uint16_t instruction, int extractionPattern) {
 // ____________________________________________________________________________________________________________________
 
 
+
+
 // unknown opcode
 void unknown() {
     char *instructionName = "unknown";
     uint16_t instruction = mem_programMemoryFetchInstruction(g_programCounter);
+
+    snprintf(_infoString, MAX_INFO_LENGTH, "%s", instructionName);
+    INSTRUCTION_DEBUG();
+
     g_programCounter += 1;
     g_cycles += 1;
     //exit(-1);
-    INSTRUCTION_DEBUG();
 }
 
 
@@ -81,9 +92,13 @@ void unknown() {
 void nop() {
     char *instructionName = "nop";
     uint16_t instruction = mem_programMemoryFetchInstruction(g_programCounter);
+
+    snprintf(_infoString, MAX_INFO_LENGTH, "%s", instructionName);
+    INSTRUCTION_DEBUG();
+
     g_programCounter += 1;
     g_cycles += 1;
-    INSTRUCTION_DEBUG();
+
 }
 
 
@@ -107,6 +122,9 @@ void adc() {
     bool rrBit7 = uti_getBit(rrContent, 7);
     bool resultBit7 = uti_getBit(result, 7);
 
+    snprintf(_infoString, MAX_INFO_LENGTH, "%s %s %s", instructionName, deb_getName(rd_addr), deb_getName(rr_addr));
+    INSTRUCTION_DEBUG();
+
     // H: Set if there was a carry from bit 3; cleared otherwise.
     mem_setSregCarryFlagTo(rdBit3 && rrBit3 || rrBit3 && !resultBit3 || !resultBit3 && rdBit3);
 
@@ -128,7 +146,6 @@ void adc() {
     mem_dataMemoryWrite8bit(rd_addr, result);
     g_programCounter += 1;
     g_cycles += 1;
-    INSTRUCTION_DEBUG();
 }
 
 
@@ -152,6 +169,9 @@ void add() {
     bool rrBit7 = uti_getBit(rrContent, 7);
     bool resultBit7 = uti_getBit(result, 7);
 
+    snprintf(_infoString, MAX_INFO_LENGTH, "%s %s %s", instructionName, deb_getName(rd_addr), deb_getName(rr_addr));
+    INSTRUCTION_DEBUG();
+
     // H: Set if there was a carry from bit 3; cleared otherwise.
     mem_setSregCarryFlagTo(rdBit3 && rrBit3 || rrBit3 && !resultBit3 || !resultBit3 && rdBit3);
 
@@ -173,35 +193,6 @@ void add() {
     mem_dataMemoryWrite8bit(rd_addr, result);
     g_programCounter += 1;
     g_cycles += 1;
-    INSTRUCTION_DEBUG();
-}
-
-
-// CLR – Clear Register
-// 16-bit Opcode: 0010 01dd dddd dddd
-// Clears a register. This instruction performs an Exclusive OR between a register and itself. This will clear all bits in the register.
-// AVR Instruction Manual page 71
-void clr() {
-    char *instructionName = "clr";
-    uint16_t instruction = mem_programMemoryFetchInstruction(g_programCounter);
-    uint16_t rd_addr = _extract_bits(instruction, EXTRACTION_PATTERN_0000000111110000);
-
-    // S: Cleared.
-    mem_setSregSignBitTo(false);
-
-    // V: Cleared.
-    mem_setSregTwosComplementOverflowFlagTo(false);
-
-    // N: Cleared.
-    mem_setSregNegativeFlagTo(false);
-
-    // Z:Set.
-    mem_setSregZeroFlagTo(true);
-
-    mem_dataMemoryWrite8bit(rd_addr, 0);
-    g_programCounter += 1;
-    g_cycles += 1;
-    INSTRUCTION_DEBUG();
 }
 
 
@@ -215,10 +206,12 @@ void ldi() {
     uint16_t rd_addr =  _extract_bits(instruction, EXTRACTION_PATTERN_0000000011110000) + 16;
     uint8_t constData = _extract_bits(instruction, EXTRACTION_PATTERN_0000111100001111);
 
+    snprintf(_infoString, MAX_INFO_LENGTH, "%s %s %02X", instructionName, deb_getName(rd_addr), constData);
+    INSTRUCTION_DEBUG();
+
     mem_dataMemoryWrite8bit(rd_addr, constData);
     g_programCounter += 1;
     g_cycles += 1;
-    INSTRUCTION_DEBUG();
 }
 
 
@@ -232,22 +225,25 @@ void ldi() {
 void out() {
     char *instructionName = "out";
     uint16_t instruction = mem_programMemoryFetchInstruction(g_programCounter);
-    uint16_t rr_addr =  _extract_bits(instruction, EXTRACTION_PATTERN_0000000111110000);
     uint16_t ioa_addr = _extract_bits(instruction, EXTRACTION_PATTERN_0000011000001111) + 0x20;
+    uint16_t rr_addr =  _extract_bits(instruction, EXTRACTION_PATTERN_0000000111110000);
     uint8_t rrContent = mem_dataMemoryRead8bit(rr_addr);
+
+    snprintf(_infoString, MAX_INFO_LENGTH, "%s %s %s", instructionName, deb_getName(ioa_addr), deb_getName(rr_addr));
+    INSTRUCTION_DEBUG();
     
     mem_dataMemoryWrite8bit(ioa_addr, rrContent);
     g_programCounter += 1;
     g_cycles += 1;
-    INSTRUCTION_DEBUG();
 }
 
 
-// EOR – Exclusive OR
+// EOR – Exclusive OR and CLR – Clear Register
 // 16-bit Opcode: 0010 01rd dddd rrrr
 // Performs the logical EOR between the contents of register Rd and register Rr and places the result in the
 // destination register Rd.
-// AVR Instruction Manual page 91
+// If the both registers are the same this instruction becomes the clr instruction.
+// AVR Instruction Manual page 91 and 71
 void eor() {
     char *instructionName = "eor";
     uint16_t instruction = mem_programMemoryFetchInstruction(g_programCounter);
@@ -258,6 +254,13 @@ void eor() {
     uint8_t result = rdContent ^ rrContent;
 
     bool resultBit7 = uti_getBit(result, 7);
+    
+    if (rdContent == rrContent) {
+        snprintf(_infoString, MAX_INFO_LENGTH, "%s %s", "clr", deb_getName(rd_addr));
+    } else {
+        snprintf(_infoString, MAX_INFO_LENGTH, "%s %s %s", instructionName, deb_getName(rd_addr), deb_getName(rr_addr));
+    }
+    INSTRUCTION_DEBUG();
 
     // S: N ⊕ V, for signed tests.
     mem_setSregSignBitTo(mem_getSregZeroFlag() ^ mem_getSregNegativeFlag());
@@ -274,7 +277,7 @@ void eor() {
     mem_dataMemoryWrite8bit(rd_addr, result);
     g_programCounter += 1;
     g_cycles += 1;
-    INSTRUCTION_DEBUG();
+
 }
 
 
@@ -295,6 +298,9 @@ void sbiw() {
     bool resultBit15 = (bool)(result & (1 << 15));
     bool rdhBit7 = (bool)(rdContent & (1 << 15));
 
+    snprintf(_infoString, MAX_INFO_LENGTH, "%s %s %02X", instructionName, deb_getName(rd_addr), constData);
+    INSTRUCTION_DEBUG();  
+
     // S = N ⊕ V, for signed tests.
     mem_setSregSignBitTo(mem_getSregZeroFlag() ^ mem_getSregNegativeFlag());
 
@@ -313,7 +319,6 @@ void sbiw() {
     mem_dataMemoryWrite16bit(rd_addr, result);
     g_programCounter += 1;
     g_cycles += 2;
-    INSTRUCTION_DEBUG();  
 }
 
 
@@ -331,6 +336,9 @@ void brne() {
     uint16_t instruction = mem_programMemoryFetchInstruction(g_programCounter);
     uint16_t constData = _extract_bits(instruction, EXTRACTION_PATTERN_0000001111111000);
 
+    snprintf(_infoString, MAX_INFO_LENGTH, "%s %02X", instructionName, constData);
+    INSTRUCTION_DEBUG();
+
     if (mem_getSregZeroFlag()) {
         g_programCounter += (constData + 1);
         g_cycles += 2;
@@ -338,7 +346,6 @@ void brne() {
         g_programCounter += 1;
         g_cycles += 1;
     }
-    INSTRUCTION_DEBUG();
 }
 
 
@@ -359,6 +366,9 @@ void dec() {
 
     bool resultBit7 = uti_getBit(result, 7);
 
+    snprintf(_infoString, MAX_INFO_LENGTH, "%s %s", instructionName, deb_getName(rd_addr));
+    INSTRUCTION_DEBUG();
+
     // S: N ⊕ V, for signed tests.
     mem_setSregSignBitTo(mem_getSregZeroFlag() ^ mem_getSregNegativeFlag());
 
@@ -375,7 +385,6 @@ void dec() {
     mem_dataMemoryWrite8bit(rd_addr, result);
     g_programCounter += 1;
     g_cycles += 1;
-    INSTRUCTION_DEBUG();
 }
 
 
@@ -389,8 +398,11 @@ void rjmp() {
     char *instructionName = "rjmp";
     uint16_t instruction = mem_programMemoryFetchInstruction(g_programCounter);
     int16_t constAddress = (int16_t)_extract_bits(instruction, EXTRACTION_PATTERN_0000111111111111);
+    uint16_t jumpDest_addr = (g_programCounter + constAddress - 0xfff) % (DATA_MEMORY_END + 1);
 
-    g_programCounter += (constAddress + 1) % (DATA_MEMORY_END + 1);
-    g_cycles += 2;
+    snprintf(_infoString, MAX_INFO_LENGTH, "%s %04X", instructionName, jumpDest_addr);
     INSTRUCTION_DEBUG();
+
+    g_programCounter = jumpDest_addr;
+    g_cycles += 2;
 }

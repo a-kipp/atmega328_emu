@@ -50,6 +50,8 @@
         #define R31_Z_REGISTER_HIGH_BYTE 0x001F
     #define GENERAL_PURPOSE_REGISTERS_END 0x001F
     #define IO_REGISTERS_START 0x0020
+        #define DDRB 0x0024
+        #define PORTB 0x0025
         #define GPIOR0 0x003E
         #define EECR 0x003F // EEPROM Control Register, only bit 0 to 5 is used, others must be aleays zero
             #define EERE_FLAG 0

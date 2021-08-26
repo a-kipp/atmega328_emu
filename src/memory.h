@@ -6,6 +6,7 @@
 #include "memory_map.h"
 #include "global_variables.h"
 #include "utility_functions.h"
+#include "loader.h"
 
 uint16_t *_programMemory_ptr;
 uint8_t *_dataMemory_ptr;
@@ -18,7 +19,7 @@ void mem_init(char* filePath) {
     _dataMemory_ptr = calloc(DATA_MEMORY_END + 1, sizeof(uint8_t));
     _eepromMemory_ptr = calloc(EEPROM_END + 1, sizeof(uint8_t));
 
-    uti_loadFile(_programMemory_ptr, filePath, PROGRAM_MEMORY_END);
+    loa_loadHexFile(_programMemory_ptr, filePath, PROGRAM_MEMORY_END);
 }
 
 
