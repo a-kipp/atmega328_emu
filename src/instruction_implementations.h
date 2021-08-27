@@ -8,7 +8,7 @@
 #include "utility_functions.h"
 #include "debug.h"
 
-#define INSTRUCTION_DEBUG() //(printf("%04X  %s\n", g_programCounter, _infoString))
+#define print_infostring() (printf("%04X  %s\n", mem_programCounter, _infoString))
 
 
 // Extraction Patterns
@@ -77,7 +77,7 @@ void unknown() {
     uint16_t instruction = mem_programMemoryFetchInstruction(mem_programCounter);
 
     snprintf(_infoString, MAX_INFO_LENGTH, "%s", instructionName);
-    INSTRUCTION_DEBUG();
+    print_infostring();
 
     mem_programCounter += 1;
     g_cycles += 1;
@@ -94,7 +94,7 @@ void nop() {
     uint16_t instruction = mem_programMemoryFetchInstruction(mem_programCounter);
 
     snprintf(_infoString, MAX_INFO_LENGTH, "%s", instructionName);
-    INSTRUCTION_DEBUG();
+    print_infostring();
 
     mem_programCounter += 1;
     g_cycles += 1;
@@ -123,7 +123,7 @@ void adc() {
     bool resultBit7 = uti_getBit(result, 7);
 
     snprintf(_infoString, MAX_INFO_LENGTH, "%s %s %s", instructionName, deb_getName(rd_addr), deb_getName(rr_addr));
-    INSTRUCTION_DEBUG();
+    print_infostring();
 
     // H: Set if there was a carry from bit 3; cleared otherwise.
     mem_setSregCarryFlagTo(rdBit3 && rrBit3 || rrBit3 && !resultBit3 || !resultBit3 && rdBit3);
@@ -170,7 +170,7 @@ void add() {
     bool resultBit7 = uti_getBit(result, 7);
 
     snprintf(_infoString, MAX_INFO_LENGTH, "%s %s %s", instructionName, deb_getName(rd_addr), deb_getName(rr_addr));
-    INSTRUCTION_DEBUG();
+    print_infostring();
 
     // H: Set if there was a carry from bit 3; cleared otherwise.
     mem_setSregCarryFlagTo(rdBit3 && rrBit3 || rrBit3 && !resultBit3 || !resultBit3 && rdBit3);
@@ -207,7 +207,7 @@ void ldi() {
     uint8_t constData = _extract_bits(instruction, EXTRACTION_PATTERN_0000111100001111);
 
     snprintf(_infoString, MAX_INFO_LENGTH, "%s %s %02X", instructionName, deb_getName(rd_addr), constData);
-    INSTRUCTION_DEBUG();
+    print_infostring();
 
     mem_dataMemoryWrite8bit(rd_addr, constData);
     mem_programCounter += 1;
@@ -230,7 +230,7 @@ void out() {
     uint8_t rrContent = mem_dataMemoryRead8bit(rr_addr);
 
     snprintf(_infoString, MAX_INFO_LENGTH, "%s %s %s", instructionName, deb_getName(ioa_addr), deb_getName(rr_addr));
-    INSTRUCTION_DEBUG();
+    print_infostring();
     
     mem_dataMemoryWrite8bit(ioa_addr, rrContent);
     mem_programCounter += 1;
@@ -260,7 +260,7 @@ void eor() {
     } else {
         snprintf(_infoString, MAX_INFO_LENGTH, "%s %s %s", instructionName, deb_getName(rd_addr), deb_getName(rr_addr));
     }
-    INSTRUCTION_DEBUG();
+    print_infostring();
 
     // S: N ⊕ V, for signed tests.
     mem_setSregSignBitTo(mem_getSregZeroFlag() ^ mem_getSregNegativeFlag());
@@ -299,7 +299,7 @@ void sbiw() {
     bool rdhBit7 = (bool)(rdContent & (1 << 15));
 
     snprintf(_infoString, MAX_INFO_LENGTH, "%s %s %02X", instructionName, deb_getName(rd_addr), constData);
-    INSTRUCTION_DEBUG();  
+    print_infostring();  
 
     // S = N ⊕ V, for signed tests.
     mem_setSregSignBitTo(mem_getSregZeroFlag() ^ mem_getSregNegativeFlag());
@@ -337,7 +337,7 @@ void brne() {
     uint16_t constData = _extract_bits(instruction, EXTRACTION_PATTERN_0000001111111000);
 
     snprintf(_infoString, MAX_INFO_LENGTH, "%s %02X", instructionName, constData);
-    INSTRUCTION_DEBUG();
+    print_infostring();
 
     if (mem_getSregZeroFlag()) {
         mem_programCounter += (constData + 1);
@@ -367,7 +367,7 @@ void dec() {
     bool resultBit7 = uti_getBit(result, 7);
 
     snprintf(_infoString, MAX_INFO_LENGTH, "%s %s", instructionName, deb_getName(rd_addr));
-    INSTRUCTION_DEBUG();
+    print_infostring();
 
     // S: N ⊕ V, for signed tests.
     mem_setSregSignBitTo(mem_getSregZeroFlag() ^ mem_getSregNegativeFlag());
@@ -401,7 +401,7 @@ void rjmp() {
     uint16_t jumpDest_addr = (mem_programCounter + constAddress - 0xfff) % (DATA_MEMORY_END + 1);
 
     snprintf(_infoString, MAX_INFO_LENGTH, "%s %04X", instructionName, jumpDest_addr);
-    INSTRUCTION_DEBUG();
+    print_infostring();
 
     mem_programCounter = jumpDest_addr;
     g_cycles += 2;

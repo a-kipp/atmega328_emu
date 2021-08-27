@@ -15,10 +15,13 @@ uint8_t *_eepromMemory_ptr;
 uint16_t mem_programCounter = 0;
 
 
-void mem_init(char* filePath) {
+void mem_init() {
     _programMemory_ptr = calloc(PROGRAM_MEMORY_END + 1, sizeof(uint8_t));
     _dataMemory_ptr = calloc(DATA_MEMORY_END + 1, sizeof(uint8_t));
     _eepromMemory_ptr = calloc(EEPROM_END + 1, sizeof(uint8_t));
+}
+
+void mem_loadProgram(char* filePath) {
     loa_loadHexFile(_programMemory_ptr, filePath, PROGRAM_MEMORY_END);
 }
 

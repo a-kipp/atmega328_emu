@@ -2,16 +2,27 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
-#include "memory.h"
-#include "cpu.h"
+#include "emulator.h"
 
 
 int main(int argc, char *argv[] ) {
+
+    bool is_running = true;
+
     if(argc != 2) {
         fprintf(stderr, "only one comandline argument allowed\n");
         exit(1);
     }
 
-    mem_init(argv[1]);
-    cpu_start();
+    while(is_running) {
+        char character = getchar();
+        switch (character) {
+            case 'e': is_running = false; break;
+            case 'i': emu_init(); break;
+            case 'l': emu_loadProgram(argv[1]); break;
+            case 's': emu_start(); break;
+            case 'h': emu_stop(); break;
+            default: ; break;
+        }
+    }
 }

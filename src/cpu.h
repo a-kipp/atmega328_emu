@@ -8,7 +8,6 @@
 #include "memory.h"
 ;
 
-#define CPU_RUN 0
 #define CPU_STOP 1
 int _cpuSignal;
 
@@ -22,20 +21,19 @@ void _execute_single_instruction() {
 
 
 void *_run(void *arg) {
-    const int instructionCount = 16000000;
+    int instructionCount = 0;
 
+    _cpuSignal = 0;
     printf("cpu started\n");
     clock_t start = clock(), diff;
 
-    for (int i = 0; i < instructionCount; i++) {
-        if (!_cpuSignal) {
-            _execute_single_instruction();
-        } else {
-            break;
-        }
+    while(!_cpuSignal) {
+        _execute_single_instruction();
+        instructionCount ++;
     }
 
-    _cpuSignal = CPU_RUN;
+    _cpuSignal = 0;
+    printf("cpu stopped\n");
     diff = clock() - start;
 
     int msec = diff * 1000 / CLOCKS_PER_SEC;
@@ -47,12 +45,10 @@ void cpu_start() {
     pthread_t newThread;
     _cpuThread = &newThread;
     pthread_create(_cpuThread, NULL, _run, NULL);
-    pthread_join(*_cpuThread, NULL);
 }
 
 
 void cpu_stop() {
-    if (_cpuThread != NULL) {
-        _cpuSignal = CPU_STOP;
-    }
+    printf("cpu stop called\n");
+    _cpuSignal = CPU_STOP;
 }
