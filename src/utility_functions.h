@@ -1,4 +1,5 @@
 // All functions in this file are free from side effects. No global variables are used.
+
 #pragma once
 
 #include <stdio.h>

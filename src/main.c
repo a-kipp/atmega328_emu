@@ -6,7 +6,6 @@
 #include "cpu.h"
 
 
-
 int main(int argc, char *argv[] ) {
     if(argc != 2) {
         fprintf(stderr, "only one comandline argument allowed\n");
@@ -14,5 +13,5 @@ int main(int argc, char *argv[] ) {
     }
 
     mem_init(argv[1]);
-    cpu_run();
+    cpu_start();
 }

@@ -12,6 +12,7 @@ uint16_t *_programMemory_ptr;
 uint8_t *_dataMemory_ptr;
 uint8_t *_eepromMemory_ptr;
 
+uint16_t mem_programCounter = 0;
 
 
 void mem_init(char* filePath) {
