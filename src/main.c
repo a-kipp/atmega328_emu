@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
-#include "emulator.h"
+#include "emulator/emulator.h"
 
 
 int main(int argc, char *argv[] ) {
