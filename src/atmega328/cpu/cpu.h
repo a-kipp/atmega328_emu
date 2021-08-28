@@ -12,7 +12,6 @@
 #include <unistd.h>
 #include <time.h>
 #include "jump_table.h"
-#include "../timing.h"
 #include "../memory/memory.h"
 #include "../pin.h"
 ;
@@ -41,16 +40,13 @@ struct timespec _calcTimeDiff(struct timespec timeStamp1, struct timespec timeSt
     struct timespec diff;
     diff.tv_sec = 0;
     diff.tv_nsec = (timeStamp2.tv_nsec - timeStamp1.tv_nsec) + (timeStamp2.tv_sec - timeStamp1.tv_sec) * 1000000000;
-    printf("time1 %d %d \n", timeStamp1.tv_sec, timeStamp1.tv_nsec);
-    printf("time2 %d %d \n", timeStamp2.tv_sec, timeStamp2.tv_nsec);
-    printf("diff %d %d \n", diff.tv_sec, diff.tv_nsec);
     return diff;
 }
 
 
 static void *_run(void *arg) {
 
-    if (g_atmegaClockSpeed <= 2) {
+    if (g_atmegaClockSpeed < 2) {
         fprintf(stderr, "clock speed to slow\n");
         exit(1);
     }
@@ -65,11 +61,9 @@ static void *_run(void *arg) {
     struct timespec rmtp;
     struct timespec currentTime;
 
-    //clock_gettime(CLOCK_REALTIME, &currentTime);
 
     struct timespec startTime = currentTime;
     struct timespec timeTaken = currentTime;
-    struct timespec offsetTime = currentTime;
     struct timespec stopTime = currentTime;
 
 
@@ -83,15 +77,9 @@ static void *_run(void *arg) {
 
         requestedSleep.tv_nsec = (g_cpuCycleCount - cycleCountStart) * timePerCycleNanoSec - timeTaken.tv_nsec;
 
-        if (!nanosleep(&requestedSleep, &rmtp)) {
-            printf("habe gut geschlafen\n");
-        } else {
-            printf("habe schlecht geschlafen\n");
-        };
-
-        printf("elapsed cpu cycles %d \n", g_cpuCycleCount - cycleCountStart);
-        printf("instruction to execude %d \n", instructionsToExecude);
-        printf("gehe schlafen für %d Nanosekunden \n", requestedSleep.tv_nsec);
+        if (nanosleep(&requestedSleep, &rmtp)) {
+            fprintf(stderr, "can't sleep\n");
+        }
     }
     _cpuStopSignal = 0;
     printf("cpu stopped\n");

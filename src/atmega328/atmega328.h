@@ -4,6 +4,7 @@
 #include "memory/memory.h"
 #include "cpu/cpu.h"
 #include "pin.h"
+#include "global_variables.h"
 
 #pragma once
 
@@ -20,8 +21,8 @@ void atm_loadProgram(char* filePath) {
     mem_loadProgram(filePath);
 }
 
-void atm_setClock() {
-
+void atm_setClock(int clockSpeed) {
+    g_atmegaClockSpeed = clockSpeed;
 }
 
 void atm_start() {

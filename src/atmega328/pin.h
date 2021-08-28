@@ -1,7 +1,6 @@
 #pragma once
 ;
 #include <stdint.h>
-#include "timing.h"
 
 
 // pin modes
