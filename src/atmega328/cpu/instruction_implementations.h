@@ -80,7 +80,7 @@ void unknown() {
     print_infostring();
 
     mem_programCounter += 1;
-    g_elapsedCpuCycles += 1;
+    g_cpuCycleCount += 1;
     //exit(-1);
 }
 
@@ -97,7 +97,7 @@ void nop() {
     print_infostring();
 
     mem_programCounter += 1;
-    g_elapsedCpuCycles += 1;
+    g_cpuCycleCount += 1;
 
 }
 
@@ -145,7 +145,7 @@ void adc() {
     
     mem_dataMemoryWrite8bit(rd_addr, result);
     mem_programCounter += 1;
-    g_elapsedCpuCycles += 1;
+    g_cpuCycleCount += 1;
 }
 
 
@@ -192,7 +192,7 @@ void add() {
     
     mem_dataMemoryWrite8bit(rd_addr, result);
     mem_programCounter += 1;
-    g_elapsedCpuCycles += 1;
+    g_cpuCycleCount += 1;
 }
 
 
@@ -211,7 +211,7 @@ void ldi() {
 
     mem_dataMemoryWrite8bit(rd_addr, constData);
     mem_programCounter += 1;
-    g_elapsedCpuCycles += 1;
+    g_cpuCycleCount += 1;
 }
 
 
@@ -234,7 +234,7 @@ void out() {
     
     mem_dataMemoryWrite8bit(ioa_addr, rrContent);
     mem_programCounter += 1;
-    g_elapsedCpuCycles += 1;
+    g_cpuCycleCount += 1;
 }
 
 
@@ -276,7 +276,7 @@ void eor() {
 
     mem_dataMemoryWrite8bit(rd_addr, result);
     mem_programCounter += 1;
-    g_elapsedCpuCycles += 1;
+    g_cpuCycleCount += 1;
 
 }
 
@@ -318,7 +318,7 @@ void sbiw() {
 
     mem_dataMemoryWrite16bit(rd_addr, result);
     mem_programCounter += 1;
-    g_elapsedCpuCycles += 2;
+    g_cpuCycleCount += 2;
 }
 
 
@@ -341,10 +341,10 @@ void brne() {
 
     if (mem_getSregZeroFlag()) {
         mem_programCounter += (constData + 1);
-        g_elapsedCpuCycles += 2;
+        g_cpuCycleCount += 2;
     } else {
         mem_programCounter += 1;
-        g_elapsedCpuCycles += 1;
+        g_cpuCycleCount += 1;
     }
 }
 
@@ -384,7 +384,7 @@ void dec() {
 
     mem_dataMemoryWrite8bit(rd_addr, result);
     mem_programCounter += 1;
-    g_elapsedCpuCycles += 1;
+    g_cpuCycleCount += 1;
 }
 
 
@@ -404,5 +404,5 @@ void rjmp() {
     print_infostring();
 
     mem_programCounter = jumpDest_addr;
-    g_elapsedCpuCycles += 2;
+    g_cpuCycleCount += 2;
 }

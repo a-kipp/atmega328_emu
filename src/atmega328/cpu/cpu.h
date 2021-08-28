@@ -4,8 +4,13 @@
 
 #pragma once
 
+#include <unistd.h>
+#include <time.h>
+
 #include <stdint.h>
 #include <pthread.h>
+#include <unistd.h>
+#include <time.h>
 #include "jump_table.h"
 #include "../timing.h"
 #include "../memory/memory.h"
@@ -32,59 +37,67 @@ static void _executeInstructions(int numberOfInstructions) {
     }
 }
 
+struct timespec _calcTimeDiff(struct timespec timeStamp1, struct timespec timeStamp2) {
+    struct timespec diff;
+    diff.tv_sec = 0;
+    diff.tv_nsec = (timeStamp2.tv_nsec - timeStamp1.tv_nsec) + (timeStamp2.tv_sec - timeStamp1.tv_sec) * 1000000000;
+    printf("time1 %d %d \n", timeStamp1.tv_sec, timeStamp1.tv_nsec);
+    printf("time2 %d %d \n", timeStamp2.tv_sec, timeStamp2.tv_nsec);
+    printf("diff %d %d \n", diff.tv_sec, diff.tv_nsec);
+    return diff;
+}
+
 
 static void *_run(void *arg) {
 
-    g_elapsedCpuCycles = 0;
+    if (g_atmegaClockSpeed <= 2) {
+        fprintf(stderr, "clock speed to slow\n");
+        exit(1);
+    }
 
+    g_cpuCycleCount = 0;
     _cpuStopSignal = 0;
 
+    unsigned int instructionsToExecude = g_atmegaClockSpeed / 160000 + 1;
+    long timePerCycleNanoSec = 1000000000 / g_atmegaClockSpeed;
 
-    int timestampCpuStart = tim_getTimeNanoSec();
-    int timestampLastPinChange = tim_getTimeNanoSec();
-    int timestampLastInstruction = tim_getTimeNanoSec();
+    struct timespec requestedSleep;
+    struct timespec rmtp;
+    struct timespec currentTime;
+
+    //clock_gettime(CLOCK_REALTIME, &currentTime);
+
+    struct timespec startTime = currentTime;
+    struct timespec timeTaken = currentTime;
+    struct timespec offsetTime = currentTime;
+    struct timespec stopTime = currentTime;
 
 
     while(!_cpuStopSignal) {
-        while (pin_pinChangePending) {
-            PinConfiguration pendingPinChange = pin_dequeuePinChange();
-            int cycleDiff = tim_convertNanoSecToCycles(pendingPinChange.timestamp - timestampLastPinChange);
-            _executeInstructions(cycleDiff);
-            timestampLastPinChange = pendingPinChange.timestamp;
-            timestampLastInstruction = tim_getTimeNanoSec();
-        }
-        int calculatedCpuCycles = tim_convertNanoSecToCycles(tim_getTimeNanoSec() - timestampCpuStart);
-        if(g_elapsedCpuCycles <= calculatedCpuCycles) {
-            _executeInstructions(calculatedCpuCycles - g_elapsedCpuCycles);
-            timestampLastInstruction = tim_getTimeNanoSec();
-            timestampLastPinChange = tim_getTimeNanoSec();
+        clock_gettime(CLOCK_REALTIME, &startTime);
+        long cycleCountStart = g_cpuCycleCount;
+        _executeInstructions(instructionsToExecude);
+        clock_gettime(CLOCK_REALTIME, &stopTime);
+
+        timeTaken = _calcTimeDiff(startTime, stopTime);
+
+        requestedSleep.tv_nsec = (g_cpuCycleCount - cycleCountStart) * timePerCycleNanoSec - timeTaken.tv_nsec;
+
+        if (!nanosleep(&requestedSleep, &rmtp)) {
+            printf("habe gut geschlafen\n");
         } else {
-            int timeDiff = tim_convertCyclesToNanoSec(g_elapsedCpuCycles - calculatedCpuCycles);
-            tim_sleepNanoSec(timeDiff * 1.2);
-        }
+            printf("habe schlecht geschlafen\n");
+        };
+
+        printf("elapsed cpu cycles %d \n", g_cpuCycleCount - cycleCountStart);
+        printf("instruction to execude %d \n", instructionsToExecude);
+        printf("gehe schlafen für %d Nanosekunden \n", requestedSleep.tv_nsec);
     }
-    _cpuStopSignal = 0;
-}
-
-
-
-static void *_runOld(void *arg) {
-
-    _cpuStopSignal = 0;
-    printf("cpu started\n");
-    clock_t start = clock(), diff;
-
-    while(!_cpuStopSignal) {
-        _executeSingleInstruction();
-    }
-
     _cpuStopSignal = 0;
     printf("cpu stopped\n");
-    diff = clock() - start;
-
-    int msec = diff * 1000 / CLOCKS_PER_SEC;
-    printf("Executing %d cycles took %d seconds %d milliseconds\n",g_elapsedCpuCycles, msec/1000, msec%1000);
 }
+
+
 
 
 // Public

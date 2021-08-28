@@ -2,5 +2,5 @@
 
 #include <stdint.h>
 
-unsigned int g_elapsedCpuCycles = 0;
-int g_atmegaClockSpeed = 1000;
+long g_cpuCycleCount = 0;
+unsigned int g_atmegaClockSpeed = 2; //minimum 2 Hz
