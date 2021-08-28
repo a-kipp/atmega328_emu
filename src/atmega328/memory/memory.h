@@ -4,9 +4,9 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include "memory_map.h"
-#include "global_variables.h"
-#include "utility_functions.h"
 #include "loader.h"
+#include "../global_variables.h"
+#include "../utility_functions.h"
 
 uint16_t *_programMemory_ptr;
 uint8_t *_dataMemory_ptr;

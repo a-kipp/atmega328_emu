@@ -5,9 +5,9 @@
 #include <string.h>
 #include <stdint.h>
 #include "utility_functions.h"
-#include "memory.h"
+#include "memory/memory.h"
 #include "global_variables.h"
-#include "memory_map.h"
+#include "memory/memory_map.h"
 
 
 // Public

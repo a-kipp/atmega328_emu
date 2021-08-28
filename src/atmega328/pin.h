@@ -36,7 +36,7 @@ PinConfiguration pinChangeQueue[QUEUE_SIZE] = {0};
 bool pin_pinChangePending = false;
 
 void pin_enqueuePinChange(uint16_t pinNumber, uint16_t pinValue) {
-    PinConfiguration pin = (PinConfiguration){pinNumber, 0, pinValue, 0, tim_getTime()};
+    PinConfiguration pin = (PinConfiguration){pinNumber, 0, pinValue, 0, tim_getTimeNanoSec()};
 
     _queueRear = (_queueRear + 1) % QUEUE_SIZE;
     pinChangeQueue[_queueRear] = pin;

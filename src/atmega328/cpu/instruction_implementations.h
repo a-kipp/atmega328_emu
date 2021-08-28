@@ -3,10 +3,10 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
-#include "global_variables.h"
-#include "memory.h"
-#include "utility_functions.h"
-#include "debug.h"
+#include "../global_variables.h"
+#include "../utility_functions.h"
+#include "../debug.h"
+#include "../memory/memory.h"
 
 #define print_infostring() (printf("%04X  %s\n", mem_programCounter, _infoString))
 
@@ -80,7 +80,7 @@ void unknown() {
     print_infostring();
 
     mem_programCounter += 1;
-    g_cycles += 1;
+    g_elapsedCpuCycles += 1;
     //exit(-1);
 }
 
@@ -97,7 +97,7 @@ void nop() {
     print_infostring();
 
     mem_programCounter += 1;
-    g_cycles += 1;
+    g_elapsedCpuCycles += 1;
 
 }
 
@@ -145,7 +145,7 @@ void adc() {
     
     mem_dataMemoryWrite8bit(rd_addr, result);
     mem_programCounter += 1;
-    g_cycles += 1;
+    g_elapsedCpuCycles += 1;
 }
 
 
@@ -173,7 +173,7 @@ void add() {
     print_infostring();
 
     // H: Set if there was a carry from bit 3; cleared otherwise.
-    mem_setSregCarryFlagTo(rdBit3 && rrBit3 || rrBit3 && !resultBit3 || !resultBit3 && rdBit3);
+// TODO: muss halfcarry sein mem_setSregCarryFlagTo(rdBit3 && rrBit3 || rrBit3 && !resultBit3 || !resultBit3 && rdBit3);
 
     // S = N ⊕ V, for signed tests.
     mem_setSregSignBitTo(mem_getSregZeroFlag() ^ mem_getSregNegativeFlag());
@@ -192,7 +192,7 @@ void add() {
     
     mem_dataMemoryWrite8bit(rd_addr, result);
     mem_programCounter += 1;
-    g_cycles += 1;
+    g_elapsedCpuCycles += 1;
 }
 
 
@@ -211,7 +211,7 @@ void ldi() {
 
     mem_dataMemoryWrite8bit(rd_addr, constData);
     mem_programCounter += 1;
-    g_cycles += 1;
+    g_elapsedCpuCycles += 1;
 }
 
 
@@ -234,7 +234,7 @@ void out() {
     
     mem_dataMemoryWrite8bit(ioa_addr, rrContent);
     mem_programCounter += 1;
-    g_cycles += 1;
+    g_elapsedCpuCycles += 1;
 }
 
 
@@ -276,7 +276,7 @@ void eor() {
 
     mem_dataMemoryWrite8bit(rd_addr, result);
     mem_programCounter += 1;
-    g_cycles += 1;
+    g_elapsedCpuCycles += 1;
 
 }
 
@@ -318,7 +318,7 @@ void sbiw() {
 
     mem_dataMemoryWrite16bit(rd_addr, result);
     mem_programCounter += 1;
-    g_cycles += 2;
+    g_elapsedCpuCycles += 2;
 }
 
 
@@ -341,10 +341,10 @@ void brne() {
 
     if (mem_getSregZeroFlag()) {
         mem_programCounter += (constData + 1);
-        g_cycles += 2;
+        g_elapsedCpuCycles += 2;
     } else {
         mem_programCounter += 1;
-        g_cycles += 1;
+        g_elapsedCpuCycles += 1;
     }
 }
 
@@ -384,7 +384,7 @@ void dec() {
 
     mem_dataMemoryWrite8bit(rd_addr, result);
     mem_programCounter += 1;
-    g_cycles += 1;
+    g_elapsedCpuCycles += 1;
 }
 
 
@@ -404,5 +404,5 @@ void rjmp() {
     print_infostring();
 
     mem_programCounter = jumpDest_addr;
-    g_cycles += 2;
+    g_elapsedCpuCycles += 2;
 }

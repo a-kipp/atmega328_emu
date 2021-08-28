@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
-#include "atmega328.h"
+#include "atmega328/atmega328.h"
 
 
 int main(int argc, char *argv[] ) {
