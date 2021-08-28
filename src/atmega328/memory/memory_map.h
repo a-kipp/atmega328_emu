@@ -79,6 +79,9 @@
             #define GLOBAL_INTERRUPT_ENABLE 7 // I
     #define IO_REGISTERS_END 0x005F
     #define EXTERN_IO_REGISTERS_START 0x0060
+        #define UBRR0L 0x00C4 // Datasheet page 276
+        #define UBRR0H 0x00C5
+        #define UDR0 0x00C6 // Serial Register
     #define EXTERN_IO_REGISTERS_END 0x00FF
     #define INTERNAL_SRAM_START 0x0100
     #define INTERNAL_SRAM_END 0x08FF

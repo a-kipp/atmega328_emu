@@ -24,6 +24,7 @@ opcode_function_pair = [
     ['1111 01kk kkkk k001', 'brne'],
     ['1001 010d dddd 1010', 'dec'],
     ['1100 kkkk kkkk kkkk', 'rjmp'],
+    ['1001 001d dddd 0000', 'sts']
 ]
 
 

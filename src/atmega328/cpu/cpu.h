@@ -6,7 +6,7 @@
 
 #include <unistd.h>
 #include <time.h>
-
+#include <stdbool.h>
 #include <stdint.h>
 #include <pthread.h>
 #include <unistd.h>
@@ -16,8 +16,10 @@
 #include "../pin.h"
 ;
 
-#define CPU_STOP 1
-int _cpuStopSignal;
+#define CPU_STOP 0
+#define PIN_CHANGE 1
+
+int _cpuSignal;
 
 
 pthread_t *_cpuThread;
@@ -52,9 +54,9 @@ static void *_run(void *arg) {
     }
 
     g_cpuCycleCount = 0;
-    _cpuStopSignal = 0;
+    _cpuSignal = 0;
 
-    unsigned int instructionsToExecude = g_atmegaClockSpeed / 160000 + 1;
+    unsigned int instructionsToExecude = g_atmegaClockSpeed / 1600000 + 1;
     long timePerCycleNanoSec = 1000000000 / g_atmegaClockSpeed;
 
     struct timespec requestedSleep;
@@ -67,21 +69,29 @@ static void *_run(void *arg) {
     struct timespec stopTime = currentTime;
 
 
-    while(!_cpuStopSignal) {
+    while(!_cpuSignal) {
         clock_gettime(CLOCK_REALTIME, &startTime);
-        long cycleCountStart = g_cpuCycleCount;
-        _executeInstructions(instructionsToExecude);
-        clock_gettime(CLOCK_REALTIME, &stopTime);
 
+        if (_cpuSignal) {
+            switch (_cpuSignal) {
+                case PIN_CHANGE:; break;
+                default: break;
+            }
+        }
+
+        long cycleCountStart = g_cpuCycleCount;
+
+        _executeInstructions(instructionsToExecude);
+
+        clock_gettime(CLOCK_REALTIME, &stopTime);
         timeTaken = _calcTimeDiff(startTime, stopTime);
 
         requestedSleep.tv_nsec = (g_cpuCycleCount - cycleCountStart) * timePerCycleNanoSec - timeTaken.tv_nsec;
-
         if (nanosleep(&requestedSleep, &rmtp)) {
             fprintf(stderr, "can't sleep\n");
         }
     }
-    _cpuStopSignal = 0;
+    _cpuSignal = 0;
     printf("cpu stopped\n");
 }
 
@@ -100,5 +110,5 @@ void cpu_start() {
 
 void cpu_stop() {
     printf("cpu stop called\n");
-    _cpuStopSignal = CPU_STOP;
+    _cpuSignal = CPU_STOP;
 }

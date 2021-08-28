@@ -7,10 +7,20 @@
 #include "loader.h"
 #include "../global_variables.h"
 #include "../utility_functions.h"
+#include "../out.h"
 
 uint16_t *_programMemory_ptr;
 uint8_t *_dataMemory_ptr;
 uint8_t *_eepromMemory_ptr;
+
+
+uint8_t _serialRegister0x00C6(uint8_t data, char readWriteFlag) {
+    if(readWriteFlag == 'w') {
+        atm_serialOut(data);
+    } else {
+        //return mem_dataMemoryRead8bit(UDR0);
+    }
+}
 
 
 // Public
@@ -31,6 +41,7 @@ void mem_loadProgram(char* filePath) {
 
 
 uint8_t mem_dataMemoryRead8bit(uint16_t address) {
+    uint val = *(uint8_t*)(_dataMemory_ptr + address);
     return *(uint8_t*)(_dataMemory_ptr + address);
 }
 
@@ -49,7 +60,12 @@ uint16_t mem_dataMemoryRead16bit(uint16_t address) {
 }
 
 void mem_dataMemoryWrite8bit(uint16_t address, uint8_t value) {
+
+    if(address == UDR0) {
+        _serialRegister0x00C6(value, 'w');
+    }
     *(uint8_t*)(_dataMemory_ptr + address) = value;
+
 }
 
 void mem_eepromMemoryWrite8bit(uint16_t address, uint8_t value) {

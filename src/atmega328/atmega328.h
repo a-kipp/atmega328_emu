@@ -1,12 +1,13 @@
 // interface to interact with the emulator
 
+#pragma once
+
 #include <stdbool.h>
 #include "memory/memory.h"
 #include "cpu/cpu.h"
 #include "pin.h"
 #include "global_variables.h"
 
-#pragma once
 
 ;
 // Public
@@ -21,7 +22,7 @@ void atm_loadProgram(char* filePath) {
     mem_loadProgram(filePath);
 }
 
-void atm_setClock(int clockSpeed) {
+void atm_setClockSpeed(int clockSpeed) {
     g_atmegaClockSpeed = clockSpeed;
 }
 
@@ -35,15 +36,5 @@ void atm_stop() {
 
 void atm_setPin(uint16_t pinNumber, uint16_t pinValue) {
     pin_enqueuePinChange(pinNumber, pinValue);
-}
-
-
-
-// Accessing Peripherals
-// ____________________________________________________________________________________________________________________
-
-// everytime an output pin changes it's state this function is called
-void atm_onPinChange(PinConfiguration pin) {
-    // attached peripherals are called here
 }
 

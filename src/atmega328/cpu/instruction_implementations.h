@@ -8,7 +8,7 @@
 #include "../debug.h"
 #include "../memory/memory.h"
 
-#define print_infostring() (printf("%04X  %s\n", mem_programCounter, _infoString))
+#define print_infostring() //(printf("%04X  %s\n", mem_programCounter, _infoString))
 
 
 // Extraction Patterns
@@ -205,6 +205,7 @@ void ldi() {
     uint16_t instruction = mem_programMemoryFetchInstruction(mem_programCounter);
     uint16_t rd_addr =  _extract_bits(instruction, EXTRACTION_PATTERN_0000000011110000) + 16;
     uint8_t constData = _extract_bits(instruction, EXTRACTION_PATTERN_0000111100001111);
+
 
     snprintf(_infoString, MAX_INFO_LENGTH, "%s %s %02X", instructionName, deb_getName(rd_addr), constData);
     print_infostring();
@@ -406,3 +407,30 @@ void rjmp() {
     mem_programCounter = jumpDest_addr;
     g_cpuCycleCount += 2;
 }
+
+
+// STS – Store Direct to Data Space
+// Stores one byte from a Register to the data space. For parts with SRAM, the data space consists of the
+// Register File, I/O memory, and internal SRAM (and external SRAM if applicable). For parts without
+// SRAM, the data space consists of the Register File only. The EEPROM has a separate address space.
+// A 16-bit address must be supplied. Memory access is limited to the current data segment of 64KB. The
+// STS instruction uses the RAMPD Register to access memory above 64KB. To access another data
+// segment in devices with more than 64KB data space, the RAMPD in register in the I/O area has to be
+// changed.
+// This instruction is not available in all devices. Refer to the device specific instruction set summary.
+void sts() {
+    char *instructionName = "sts";
+    uint16_t instructionFirst = mem_programMemoryFetchInstruction(mem_programCounter);
+    int16_t rr_addr = (int16_t)_extract_bits(instructionFirst, EXTRACTION_PATTERN_0000000111110000);
+    uint16_t instructionSecond = mem_programMemoryFetchInstruction(mem_programCounter + 1);
+    uint16_t mem_addr = instructionSecond;
+    uint8_t memContent = mem_dataMemoryRead8bit(rr_addr);
+
+    snprintf(_infoString, MAX_INFO_LENGTH, "%s %04X %04X", instructionName, mem_addr, rr_addr);
+    print_infostring();
+
+    mem_dataMemoryWrite8bit(mem_addr, memContent);
+    mem_programCounter += 2;
+    g_cpuCycleCount += 2;    
+}
+
