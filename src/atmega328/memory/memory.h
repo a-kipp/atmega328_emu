@@ -20,6 +20,42 @@ static uint8_t *_eepromMemory_ptr;
 uint16_t mem_programCounter = 0;
 
 
+// for perfomance reason flags are stored separatly, reading from SREG register will be intercepted.
+bool mem_sregCarryFlagC = 0;
+bool mem_sregZeroFlagZ = 0;
+bool mem_sregNegativeFlagN = 0;
+bool mem_sregTwoComplementsOverflowFlagV = 0;
+bool mem_sregSignBitS = 0;
+bool mem_sregHalfCarryFlagH = 0;
+bool mem_sregBitCopyStorageT = 0;
+bool mem_sregGlobalInterruptEnableI = 0;
+
+static void _writeToSreg(uint8_t value) {
+    bool sregCarryFlagC = value ^ 0b00000001;
+    bool sregZeroFlagZ = value ^ 0b00000010;
+    bool sregNegativeFlagN = value ^ 0b00000100;
+    bool sregTwoComplementsOverflowFlagV = value ^ 0b00001000;
+    bool sregSignBitS = value ^ 0b00010000;
+    bool sregHalfCarryFlagH = value ^ 0b00100000;
+    bool sregBitCopyStorageT = value ^ 0b01000000;
+    bool sregGlobalInterruptEnableI = value ^ 0b10000000;
+}
+
+static uint8_t _readFromSreg() {
+    uint8_t returnVal = mem_sregCarryFlagC;
+    returnVal | mem_sregCarryFlagC;
+    returnVal | mem_sregZeroFlagZ;
+    returnVal | mem_sregNegativeFlagN;
+    returnVal | mem_sregTwoComplementsOverflowFlagV;
+    returnVal | mem_sregSignBitS;
+    returnVal | mem_sregHalfCarryFlagH;
+    returnVal | mem_sregBitCopyStorageT;
+    returnVal | mem_sregGlobalInterruptEnableI;
+    return returnVal;
+}
+
+
+
 void mem_init() {
     _programMemory_ptr = calloc(PROGRAM_MEMORY_END + 1, sizeof(uint8_t));
     _dataMemory_ptr = calloc(DATA_MEMORY_END + 1, sizeof(uint8_t));
@@ -33,6 +69,9 @@ void mem_loadProgram(char* filePath) {
 
 
 uint8_t mem_dataMemoryRead8bit(uint16_t address) {
+    if (address = SREG) {
+        return _readFromSreg();
+    }
     uint val = *(uint8_t*)(_dataMemory_ptr + address);
     return *(uint8_t*)(_dataMemory_ptr + address);
 }
@@ -58,11 +97,12 @@ uint16_t mem_dataMemoryRead16bit(uint16_t address) {
 // this function shall only be used by the CPU to write to memory
 void mem_dataMemoryWrite8bitCpu(uint16_t address, uint8_t value) {
     if (address <= GENERAL_PURPOSE_REGISTERS_END) {
-        // TODO write some code
-        *(uint8_t*)(_dataMemory_ptr + address) = value;
+        if (address = SREG) {
+            _writeToSreg(value);
+            return;
+        }
     }    
     else if (address <= IO_REGISTERS_END) {
-        // TODO write some code
         *(uint8_t*)(_dataMemory_ptr + address) = value;
     }
     else if (address <= EXTERN_IO_REGISTERS_END) {
@@ -72,7 +112,6 @@ void mem_dataMemoryWrite8bitCpu(uint16_t address, uint8_t value) {
         }
     }
     else if (address <= INTERNAL_SRAM_END) {
-        // TODO write some code
         *(uint8_t*)(_dataMemory_ptr + address) = value;
     }
     else {
@@ -100,108 +139,6 @@ void mem_eepromMemoryWrite8bit(uint16_t address, uint8_t value) {
 
 void mem_dataMemoryWrite16bit(uint16_t address, uint16_t value) {
     *(uint16_t*)(_dataMemory_ptr + address) = value;
-}
-
-
-bool mem_getSregCarryFlag() {
-    return (bool)uti_getBit(mem_dataMemoryRead8bit(SREG), CARRY_FLAG);
-}
-
-
-bool mem_getSregZeroFlag() {
-    return (bool)uti_getBit(mem_dataMemoryRead8bit(SREG), ZERO_FLAG);
-}
-
-
-bool mem_getSregNegativeFlag() {
-    return (bool)uti_getBit(mem_dataMemoryRead8bit(SREG), NEGATIVE_FLAG);
-}
-
-
-bool mem_getSregTwosComplementOverflowFlag() {
-    return (bool)uti_getBit(mem_dataMemoryRead8bit(SREG), TWOS_COMPLEMENT_OVERFLOW_FLAG);
-}
-
-
-bool mem_getSregSignBit() {
-    return (bool)uti_getBit(mem_dataMemoryRead8bit(SREG), SIGN_BIT);
-}
-
-
-bool mem_getSregHalfCarryFlag() {
-    return (bool)uti_getBit(mem_dataMemoryRead8bit(SREG), HALF_CARRY_FLAG);
-}
-
-
-void mem_setSregCarryFlagTo(bool val) {
-    if (val) {
-        uti_setBit(_dataMemory_ptr + SREG, CARRY_FLAG);
-    } else {
-        uti_clearBit(_dataMemory_ptr + SREG, CARRY_FLAG);
-    }
-}
-
-
-void mem_setSregZeroFlagTo(bool val) {
-    if (val) {
-        uti_setBit(_dataMemory_ptr + SREG, ZERO_FLAG);
-    } else {
-        uti_clearBit(_dataMemory_ptr + SREG, ZERO_FLAG);
-    }
-}
-
-
-void mem_setSregNegativeFlagTo(bool val) {
-    if (val) {
-        uti_setBit(_dataMemory_ptr + SREG, NEGATIVE_FLAG);
-    } else {
-        uti_clearBit(_dataMemory_ptr + SREG, NEGATIVE_FLAG);
-    }
-}
-
-
-void mem_setSregTwosComplementOverflowFlagTo(bool val) {
-    if (val) {
-        uti_setBit(_dataMemory_ptr + SREG, TWOS_COMPLEMENT_OVERFLOW_FLAG);
-    } else {
-        uti_clearBit(_dataMemory_ptr + SREG, TWOS_COMPLEMENT_OVERFLOW_FLAG);
-    }
-}
-
-
-void mem_setSregSignBitTo(bool val) {
-    if (val) {
-        uti_setBit(_dataMemory_ptr + SREG, SIGN_BIT);
-    } else {
-        uti_clearBit(_dataMemory_ptr + SREG, SIGN_BIT);
-    }
-}
-
-
-void mem_setSregHalfCarryFlagTo(bool val) {
-    if (val) {
-        uti_setBit(_dataMemory_ptr + SREG, HALF_CARRY_FLAG);
-    } else {
-        uti_clearBit(_dataMemory_ptr + SREG, HALF_CARRY_FLAG);
-    }
-}
-
-
-void mem_externalSourceWriteToSerialRegister(uint8_t value) {
-    *(uint8_t*)(_dataMemory_ptr + UDR0) = value;
-}
-
-
-
-
-
-void mem_externalSourceWriteToPortC(uint8_t value) {
-    *(uint8_t*)(_dataMemory_ptr + UDR0) = value;
-}
-
-
-void mem_externalSourceWriteToPortD(uint8_t value) {
-    *(uint8_t*)(_dataMemory_ptr + UDR0) = value;
 }
 
 
