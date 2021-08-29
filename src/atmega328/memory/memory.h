@@ -81,6 +81,17 @@ void mem_dataMemoryWrite8bitCpu(uint16_t address, uint8_t value) {
 }
 
 
+// this function provides restricted acces to the memory from external
+void mem_externalSourceWrite8bit(uint16_t address, uint8_t value) {
+    switch (address) {
+        case UDR0: *(uint8_t*)(_dataMemory_ptr + address) = value; break;
+        case PORTB: *(uint8_t*)(_dataMemory_ptr + address) = value; break;
+        case PORTC: *(uint8_t*)(_dataMemory_ptr + address) = value; break;
+        case PORTD: *(uint8_t*)(_dataMemory_ptr + address) = value; break;
+        default: fprintf(stderr, "no external acces to memory address: %04X\n", address); break;
+    }
+}
+
 
 void mem_eepromMemoryWrite8bit(uint16_t address, uint8_t value) {
     *(uint8_t*)(_eepromMemory_ptr + address) = value;
@@ -194,13 +205,3 @@ void mem_externalSourceWriteToPortD(uint8_t value) {
 }
 
 
-// this function provides restricted acces to the memory from external
-void mem_externalSourceWrite8bit(uint16_t address, uint8_t value) {
-    switch (address) {
-        case UDR0: *(uint8_t*)(_dataMemory_ptr + address) = value; break;
-        case PORTB: *(uint8_t*)(_dataMemory_ptr + address) = value; break;
-        case PORTC: *(uint8_t*)(_dataMemory_ptr + address) = value; break;
-        case PORTD: *(uint8_t*)(_dataMemory_ptr + address) = value; break;
-        default: fprintf(stderr, "no external acces to memory address: %04X\n", address); break;
-    }
-}

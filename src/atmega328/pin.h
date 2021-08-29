@@ -16,7 +16,7 @@
 typedef struct pinState {
     int pinNumber;
     uint16_t mode;
-    uint16_t value;
+    int value;
     uint16_t freq;
     struct timespec currentTime;
 } pinState;
@@ -45,6 +45,14 @@ static pinState _dequeuePinChange() {
 }
 
 
+static void _setBitInRegisterTo(uint16_t address, int bitNum, bool isSet) {
+    if (isSet) {
+        mem_externalSourceWrite8bit(address, mem_dataMemoryRead8bit(address) | (1 << bitNum));
+    } else {
+        mem_externalSourceWrite8bit(address, mem_dataMemoryRead8bit(address) ^ (1 << bitNum));
+    }
+}
+
 
 // Public
 // ____________________________________________________________________________________________________________________
@@ -66,34 +74,34 @@ void pin_handlePinChanges() {
     if (_pinChangePending) {
         pinState newPinState = _dequeuePinChange();
         switch (newPinState.pinNumber) {
-            case 1: mem_externalSourceWrite8bit(PORTC, mem_dataMemoryRead8bit(PORTC) ^ (1 << PORTC6_PIN_1)); break;
-            case 2: mem_externalSourceWrite8bit(PORTD, mem_dataMemoryRead8bit(PORTD) ^ (1 << PORTD0_PIN_2)); break;
-            case 3: mem_externalSourceWrite8bit(PORTD, mem_dataMemoryRead8bit(PORTD) ^ (1 << PORTD1_PIN_3)); break;
-            case 4: mem_externalSourceWrite8bit(PORTD, mem_dataMemoryRead8bit(PORTD) ^ (1 << PORTD2_PIN_4)); break;
-            case 5: mem_externalSourceWrite8bit(PORTD, mem_dataMemoryRead8bit(PORTD) ^ (1 << PORTD3_PIN_5)); break;
-            case 6: mem_externalSourceWrite8bit(PORTD, mem_dataMemoryRead8bit(PORTD) ^ (1 << PORTD6_PIN_12)); break;
+            case 1: _setBitInRegisterTo(PORTC, PORTC6_PIN_1, (bool)newPinState.value); break;
+            case 2: _setBitInRegisterTo(PORTD, PORTD0_PIN_2, (bool)newPinState.value); break;
+            case 3: _setBitInRegisterTo(PORTD, PORTD1_PIN_3, (bool)newPinState.value); break;
+            case 4: _setBitInRegisterTo(PORTD, PORTD2_PIN_4, (bool)newPinState.value); break;
+            case 5: _setBitInRegisterTo(PORTD, PORTD3_PIN_5, (bool)newPinState.value); break;
+            case 6: _setBitInRegisterTo(PORTD, PORTD6_PIN_12, (bool)newPinState.value); break;
             case 7: ; break;
             case 8: ; break;
-            case 9: mem_externalSourceWrite8bit(PORTB, mem_dataMemoryRead8bit(PORTB) ^ (1 << PORTB6_PIN_9)); break;
-            case 10: mem_externalSourceWrite8bit(PORTB, mem_dataMemoryRead8bit(PORTB) ^ (1 << PORTB7_PIN_10)); break;
-            case 11: mem_externalSourceWrite8bit(PORTD, mem_dataMemoryRead8bit(PORTD) ^ (1 << PORTD5_PIN_11)); break;
-            case 12: mem_externalSourceWrite8bit(PORTD, mem_dataMemoryRead8bit(PORTD) ^ (1 << PORTD6_PIN_12)); break;
-            case 13: mem_externalSourceWrite8bit(PORTD, mem_dataMemoryRead8bit(PORTD) ^ (1 << PORTD7_PIN_13)); break;
-            case 14: mem_externalSourceWrite8bit(PORTB, mem_dataMemoryRead8bit(PORTB) ^ (1 << PORTB0_PIN_14)); break;
-            case 15: mem_externalSourceWrite8bit(PORTB, mem_dataMemoryRead8bit(PORTB) ^ (1 << PORTB1_PIN_15)); break;
-            case 16: mem_externalSourceWrite8bit(PORTB, mem_dataMemoryRead8bit(PORTB) ^ (1 << PORTB2_PIN_16)); break;
-            case 17: mem_externalSourceWrite8bit(PORTB, mem_dataMemoryRead8bit(PORTB) ^ (1 << PORTB3_PIN_17)); break;
-            case 18: mem_externalSourceWrite8bit(PORTB, mem_dataMemoryRead8bit(PORTB) ^ (1 << PORTB4_PIN_18)); break;
-            case 19: mem_externalSourceWrite8bit(PORTB, mem_dataMemoryRead8bit(PORTB) ^ (1 << PORTB5_PIN_19)); break;
+            case 9: _setBitInRegisterTo(PORTB, PORTB6_PIN_9 , (bool)newPinState.value); break;
+            case 10: _setBitInRegisterTo(PORTB, PORTB7_PIN_10, (bool)newPinState.value); break;
+            case 11: _setBitInRegisterTo(PORTD, PORTD5_PIN_11, (bool)newPinState.value); break;
+            case 12: _setBitInRegisterTo(PORTD, PORTD6_PIN_12, (bool)newPinState.value); break;
+            case 13: _setBitInRegisterTo(PORTD, PORTD7_PIN_13, (bool)newPinState.value); break;
+            case 14: _setBitInRegisterTo(PORTB, PORTB0_PIN_14, (bool)newPinState.value); break;
+            case 15: _setBitInRegisterTo(PORTB, PORTB1_PIN_15, (bool)newPinState.value); break;
+            case 16: _setBitInRegisterTo(PORTB, PORTB2_PIN_16, (bool)newPinState.value); break;
+            case 17: _setBitInRegisterTo(PORTB, PORTB3_PIN_17, (bool)newPinState.value); break;
+            case 18: _setBitInRegisterTo(PORTB, PORTB4_PIN_18, (bool)newPinState.value); break;
+            case 19: _setBitInRegisterTo(PORTB, PORTB5_PIN_19, (bool)newPinState.value); break;
             case 20: ; break;
             case 21: ; break;
-            case 22: mem_externalSourceWrite8bit(PORTC, mem_dataMemoryRead8bit(PORTC) ^ (1 << PORTC0_PIN_22)); break;
+            case 22: _setBitInRegisterTo(PORTC, PORTC0_PIN_22, (bool)newPinState.value); break;
             case 23: ; break;
-            case 24: mem_externalSourceWrite8bit(PORTC, mem_dataMemoryRead8bit(PORTC) ^ (1 << PORTC1_PIN_24)); break;
-            case 25: mem_externalSourceWrite8bit(PORTC, mem_dataMemoryRead8bit(PORTC) ^ (1 << PORTC2_PIN_25)); break;
-            case 26: mem_externalSourceWrite8bit(PORTC, mem_dataMemoryRead8bit(PORTC) ^ (1 << PORTC3_PIN_26)); break;
-            case 27: mem_externalSourceWrite8bit(PORTC, mem_dataMemoryRead8bit(PORTC) ^ (1 << PORTC4_PIN_27)); break;
-            case 28: mem_externalSourceWrite8bit(PORTC, mem_dataMemoryRead8bit(PORTC) ^ (1 << PORTC5_PIN_28)); break;
+            case 24: _setBitInRegisterTo(PORTC, PORTC1_PIN_24, (bool)newPinState.value); break;
+            case 25: _setBitInRegisterTo(PORTC, PORTC2_PIN_25, (bool)newPinState.value); break;
+            case 26: _setBitInRegisterTo(PORTC, PORTC3_PIN_26, (bool)newPinState.value); break;
+            case 27: _setBitInRegisterTo(PORTC, PORTC4_PIN_27, (bool)newPinState.value); break;
+            case 28: _setBitInRegisterTo(PORTC, PORTC5_PIN_28, (bool)newPinState.value); break;
             default: ; break;
         }
     }

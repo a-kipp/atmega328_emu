@@ -72,16 +72,11 @@ static void *_run(void *arg) {
     while(!_cpuSignal) {
         clock_gettime(CLOCK_REALTIME, &startTime);
 
-        if (_cpuSignal) {
-            switch (_cpuSignal) {
-                case PIN_CHANGE:; break;
-                default: break;
-            }
-        }
-
         long cycleCountStart = g_cpuCycleCount;
 
         _executeInstructions(instructionsToExecude);
+
+        pin_handlePinChanges();
 
         clock_gettime(CLOCK_REALTIME, &stopTime);
         timeTaken = _calcTimeDiff(startTime, stopTime);

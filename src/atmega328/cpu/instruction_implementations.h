@@ -11,59 +11,48 @@
 #define print_infostring() //(printf("%04X  %s\n", mem_programCounter, _infoString))
 
 
-// Extraction Patterns
-#define EXTRACTION_PATTERN_0000000111110000 0
-#define EXTRACTION_PATTERN_0000000011110000 1
-#define EXTRACTION_PATTERN_0000111100001111 2
-#define EXTRACTION_PATTERN_0000011000001111 3
-#define EXTRACTION_PATTERN_0000001000001111 4
-#define EXTRACTION_PATTERN_0000000000110000 5
-#define EXTRACTION_PATTERN_0000000011001111 6
-#define EXTRACTION_PATTERN_0000001111111000 7
-#define EXTRACTION_PATTERN_0000111111111111 8
-
-
-
-
 // info string, contains instruction name, immediate values and jump addresses.
 #define MAX_INFO_LENGTH 120
 char _infoString[MAX_INFO_LENGTH] = {0};
 
 
 // extract addresses and immediate values from an instruction
-uint16_t _extract_bits(uint16_t instruction, int extractionPattern) {
-    switch (extractionPattern) {
-    case EXTRACTION_PATTERN_0000000111110000:
-        return (instruction & 0b0000000111110000) >> 4; break;
-
-    case EXTRACTION_PATTERN_0000000011110000:
-        return (instruction & 0b0000000011110000) >> 4; break;
-
-    case EXTRACTION_PATTERN_0000111100001111:
-        return (instruction & 0b0000111100000000) >> 4 | (instruction & 0b0000000000001111); break;
-
-    case EXTRACTION_PATTERN_0000011000001111:
-        return (instruction & 0b0000011000000000) >> 5 | (instruction & 0b0000000000001111); break;
-
-    case EXTRACTION_PATTERN_0000001000001111:
-        return (instruction & 0b0000001000000000) >> 5 | (instruction & 0b0000000000001111); break;
-
-    case EXTRACTION_PATTERN_0000000000110000:
-        return (instruction & 0b0000000000110000) >> 4; break;
-
-    case EXTRACTION_PATTERN_0000000011001111:
-        return (instruction & 0b0000000011000000) >> 6 | (instruction & 0b0000000000001111); break;
-
-    case EXTRACTION_PATTERN_0000001111111000:
-        return (instruction & 0b0000001111111000) >> 3; break;
-
-    case EXTRACTION_PATTERN_0000111111111111:
-        return (instruction & 0b0000111111111111); break;
-
-    default:
-        break;
-    }
+uint16_t _extractBits0000000111110000(uint16_t instruction) {
+    return (instruction & 0b0000000111110000) >> 4;
 }
+
+uint16_t _extractBits0000000011110000(uint16_t instruction) {
+    return (instruction & 0b0000000011110000) >> 4;
+}
+
+uint16_t _extractBits0000111100001111(uint16_t instruction) {
+    return (instruction & 0b0000111100000000) >> 4 | (instruction & 0b0000000000001111);
+}
+
+uint16_t _extractBits0000011000001111(uint16_t instruction) {
+    return (instruction & 0b0000011000000000) >> 5 | (instruction & 0b0000000000001111);
+}
+
+uint16_t _extractBits0000001000001111(uint16_t instruction) {
+    return (instruction & 0b0000001000000000) >> 5 | (instruction & 0b0000000000001111);
+}
+
+uint16_t _extractBits0000000000110000(uint16_t instruction) {
+    return (instruction & 0b0000000000110000) >> 4;
+}
+
+uint16_t _extractBits0000000011001111(uint16_t instruction) {
+    return (instruction & 0b0000000011000000) >> 6 | (instruction & 0b0000000000001111);
+}
+
+uint16_t _extractBits0000001111111000(uint16_t instruction) {
+    return (instruction & 0b0000001111111000) >> 3;
+}
+
+uint16_t _extractBits0000111111111111(uint16_t instruction) {
+    return (instruction & 0b0000111111111111);
+}
+
 
 
 
@@ -109,8 +98,8 @@ void nop() {
 void adc() {
     char *instructionName = "adc";
     uint16_t instruction = mem_programMemoryFetchInstruction(mem_programCounter);
-    uint16_t rd_addr = _extract_bits(instruction, EXTRACTION_PATTERN_0000000111110000);
-    uint16_t rr_addr = _extract_bits(instruction, EXTRACTION_PATTERN_0000001000001111);
+    uint16_t rd_addr = _extractBits0000000111110000(instruction);
+    uint16_t rr_addr = _extractBits0000001000001111(instruction);
     uint8_t rdContent = mem_dataMemoryRead8bit(rd_addr);
     uint8_t rrContent = mem_dataMemoryRead8bit(rr_addr);
     uint8_t result = rdContent + rrContent + (uint8_t)mem_getSregCarryFlag();
@@ -156,8 +145,8 @@ void adc() {
 void add() {
     char *instructionName = "add";
     uint16_t instruction = mem_programMemoryFetchInstruction(mem_programCounter);
-    uint16_t rd_addr = _extract_bits(instruction, EXTRACTION_PATTERN_0000000111110000);
-    uint16_t rr_addr = _extract_bits(instruction, EXTRACTION_PATTERN_0000001000001111);
+    uint16_t rd_addr = _extractBits0000000111110000(instruction);
+    uint16_t rr_addr = _extractBits0000001000001111(instruction);
     uint8_t rdContent = mem_dataMemoryRead8bit(rd_addr);
     uint8_t rrContent = mem_dataMemoryRead8bit(rr_addr);
     uint8_t result = rdContent + rrContent;
@@ -203,8 +192,8 @@ void add() {
 void ldi() {
     char *instructionName = "ldi";
     uint16_t instruction = mem_programMemoryFetchInstruction(mem_programCounter);
-    uint16_t rd_addr =  _extract_bits(instruction, EXTRACTION_PATTERN_0000000011110000) + 16;
-    uint8_t constData = _extract_bits(instruction, EXTRACTION_PATTERN_0000111100001111);
+    uint16_t rd_addr =  _extractBits0000000011110000(instruction) + 16;
+    uint8_t constData = _extractBits0000111100001111(instruction);
 
 
     snprintf(_infoString, MAX_INFO_LENGTH, "%s %s %02X", instructionName, deb_getName(rd_addr), constData);
@@ -226,8 +215,8 @@ void ldi() {
 void out() {
     char *instructionName = "out";
     uint16_t instruction = mem_programMemoryFetchInstruction(mem_programCounter);
-    uint16_t ioa_addr = _extract_bits(instruction, EXTRACTION_PATTERN_0000011000001111) + 0x20;
-    uint16_t rr_addr =  _extract_bits(instruction, EXTRACTION_PATTERN_0000000111110000);
+    uint16_t ioa_addr = _extractBits0000011000001111(instruction) + 0x20;
+    uint16_t rr_addr =  _extractBits0000000111110000(instruction);
     uint8_t rrContent = mem_dataMemoryRead8bit(rr_addr);
 
     snprintf(_infoString, MAX_INFO_LENGTH, "%s %s %s", instructionName, deb_getName(ioa_addr), deb_getName(rr_addr));
@@ -248,8 +237,8 @@ void out() {
 void eor() {
     char *instructionName = "eor";
     uint16_t instruction = mem_programMemoryFetchInstruction(mem_programCounter);
-    uint16_t rd_addr = _extract_bits(instruction, EXTRACTION_PATTERN_0000000111110000);
-    uint16_t rr_addr = _extract_bits(instruction, EXTRACTION_PATTERN_0000001000001111);
+    uint16_t rd_addr = _extractBits0000000111110000(instruction);
+    uint16_t rr_addr = _extractBits0000001000001111(instruction);
     uint8_t rdContent = mem_dataMemoryRead8bit(rd_addr);
     uint8_t rrContent = mem_dataMemoryRead8bit(rr_addr);
     uint8_t result = rdContent ^ rrContent;
@@ -291,8 +280,8 @@ void eor() {
 void sbiw() {
     char *instructionName = "sbiw";
     uint16_t instruction = mem_programMemoryFetchInstruction(mem_programCounter);
-    uint16_t rd_addr =   _extract_bits(instruction, EXTRACTION_PATTERN_0000000000110000) * 2 + R24;
-    uint16_t constData = _extract_bits(instruction, EXTRACTION_PATTERN_0000000011001111);
+    uint16_t rd_addr =   _extractBits0000000000110000(instruction) * 2 + R24;
+    uint16_t constData = _extractBits0000000011001111(instruction);
     uint16_t rdContent = mem_dataMemoryRead16bit(rd_addr);
     uint16_t result = rdContent - constData;
 
@@ -335,7 +324,7 @@ void sbiw() {
 void brne() {
     char *instructionName = "brne";
     uint16_t instruction = mem_programMemoryFetchInstruction(mem_programCounter);
-    uint16_t constData = _extract_bits(instruction, EXTRACTION_PATTERN_0000001111111000);
+    uint16_t constData = _extractBits0000001111111000(instruction);
 
     snprintf(_infoString, MAX_INFO_LENGTH, "%s %02X", instructionName, constData);
     print_infostring();
@@ -361,7 +350,7 @@ void brne() {
 void dec() {
     char *instructionName = "dec";
     uint16_t instruction = mem_programMemoryFetchInstruction(mem_programCounter);
-    uint16_t rd_addr = _extract_bits(instruction, EXTRACTION_PATTERN_0000000111110000);
+    uint16_t rd_addr = _extractBits0000000111110000(instruction);
     uint8_t rdContent = mem_dataMemoryRead8bit(rd_addr);
     uint8_t result = rdContent - 1;
 
@@ -398,7 +387,7 @@ void dec() {
 void rjmp() {
     char *instructionName = "rjmp";
     uint16_t instruction = mem_programMemoryFetchInstruction(mem_programCounter);
-    int16_t constAddress = (int16_t)_extract_bits(instruction, EXTRACTION_PATTERN_0000111111111111);
+    int16_t constAddress = (int16_t)_extractBits0000111111111111(instruction);
     uint16_t jumpDest_addr = (mem_programCounter + constAddress - 0xfff) % (DATA_MEMORY_END + 1);
 
     snprintf(_infoString, MAX_INFO_LENGTH, "%s %04X", instructionName, jumpDest_addr);
@@ -421,7 +410,7 @@ void rjmp() {
 void sts() {
     char *instructionName = "sts";
     uint16_t instructionFirst = mem_programMemoryFetchInstruction(mem_programCounter);
-    int16_t rr_addr = (int16_t)_extract_bits(instructionFirst, EXTRACTION_PATTERN_0000000111110000);
+    uint16_t rr_addr = _extractBits0000000111110000(instructionFirst);
     uint16_t instructionSecond = mem_programMemoryFetchInstruction(mem_programCounter + 1);
     uint16_t mem_addr = instructionSecond;
     uint8_t memContent = mem_dataMemoryRead8bit(rr_addr);
