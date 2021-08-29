@@ -143,7 +143,7 @@ void adc() {
     // C: Set if there was carry from the MSB of the result; cleared otherwise.
     mem_setSregCarryFlagTo(rdBit7 && rrBit7 || rrBit7 && !resultBit7 || !resultBit7 && rdBit7);
     
-    mem_dataMemoryWrite8bit(rd_addr, result);
+    mem_dataMemoryWrite8bitCpu(rd_addr, result);
     mem_programCounter += 1;
     g_cpuCycleCount += 1;
 }
@@ -190,7 +190,7 @@ void add() {
     // C: Set if there was carry from the MSB of the result; cleared otherwise.
     mem_setSregCarryFlagTo(rdBit7 && rrBit7 || rrBit7 && !resultBit7 || !resultBit7 && rdBit7);
     
-    mem_dataMemoryWrite8bit(rd_addr, result);
+    mem_dataMemoryWrite8bitCpu(rd_addr, result);
     mem_programCounter += 1;
     g_cpuCycleCount += 1;
 }
@@ -210,7 +210,7 @@ void ldi() {
     snprintf(_infoString, MAX_INFO_LENGTH, "%s %s %02X", instructionName, deb_getName(rd_addr), constData);
     print_infostring();
 
-    mem_dataMemoryWrite8bit(rd_addr, constData);
+    mem_dataMemoryWrite8bitCpu(rd_addr, constData);
     mem_programCounter += 1;
     g_cpuCycleCount += 1;
 }
@@ -233,7 +233,7 @@ void out() {
     snprintf(_infoString, MAX_INFO_LENGTH, "%s %s %s", instructionName, deb_getName(ioa_addr), deb_getName(rr_addr));
     print_infostring();
     
-    mem_dataMemoryWrite8bit(ioa_addr, rrContent);
+    mem_dataMemoryWrite8bitCpu(ioa_addr, rrContent);
     mem_programCounter += 1;
     g_cpuCycleCount += 1;
 }
@@ -275,7 +275,7 @@ void eor() {
     // Z is set if the result is $00; cleared otherwise.
     mem_setSregZeroFlagTo(result == 0x00);
 
-    mem_dataMemoryWrite8bit(rd_addr, result);
+    mem_dataMemoryWrite8bitCpu(rd_addr, result);
     mem_programCounter += 1;
     g_cpuCycleCount += 1;
 
@@ -383,7 +383,7 @@ void dec() {
     // Z is set if the result is $00; cleared otherwise.
     mem_setSregZeroFlagTo(result == 0x00);
 
-    mem_dataMemoryWrite8bit(rd_addr, result);
+    mem_dataMemoryWrite8bitCpu(rd_addr, result);
     mem_programCounter += 1;
     g_cpuCycleCount += 1;
 }
@@ -429,7 +429,7 @@ void sts() {
     snprintf(_infoString, MAX_INFO_LENGTH, "%s %04X %04X", instructionName, mem_addr, rr_addr);
     print_infostring();
 
-    mem_dataMemoryWrite8bit(mem_addr, memContent);
+    mem_dataMemoryWrite8bitCpu(mem_addr, memContent);
     mem_programCounter += 2;
     g_cpuCycleCount += 2;    
 }

@@ -51,7 +51,32 @@
     #define GENERAL_PURPOSE_REGISTERS_END 0x001F
     #define IO_REGISTERS_START 0x0020
         #define DDRB 0x0024
-        #define PORTB 0x0025
+        #define PORTB 0x0025 // Pin Input Register
+            #define PORTB7_PIN_10 7
+            #define PORTB6_PIN_9 6
+            #define PORTB5_PIN_19 5
+            #define PORTB4_PIN_18 4
+            #define PORTB3_PIN_17 3
+            #define PORTB2_PIN_16 2 
+            #define PORTB1_PIN_15 1
+            #define PORTB0_PIN_14 0
+        #define PORTC 0x0028 // Pin Input Register
+            #define PORTC6_PIN_1 6
+            #define PORTC5_PIN_28 5
+            #define PORTC4_PIN_27 4
+            #define PORTC3_PIN_26 3
+            #define PORTC2_PIN_25 2 
+            #define PORTC1_PIN_24 1
+            #define PORTC0_PIN_22 0
+        #define PORTD 0x002B // Pin Input Register
+            #define PORTD7_PIN_13 7
+            #define PORTD6_PIN_12 6
+            #define PORTD5_PIN_11 5
+            #define PORTD4_PIN_6 4
+            #define PORTD3_PIN_5 3
+            #define PORTD2_PIN_4 2 
+            #define PORTD1_PIN_3 1
+            #define PORTD0_PIN_2 0
         #define GPIOR0 0x003E
         #define EECR 0x003F // EEPROM Control Register, only bit 0 to 5 is used, others must be aleays zero
             #define EERE_FLAG 0

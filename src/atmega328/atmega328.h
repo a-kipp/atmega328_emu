@@ -34,7 +34,7 @@ void atm_stop() {
     cpu_stop();
 }
 
-void atm_setPin(uint16_t pinNumber, uint16_t pinValue) {
+void atm_setPin(int pinNumber, bool pinValue) {
     pin_enqueuePinChange(pinNumber, pinValue);
 }
 

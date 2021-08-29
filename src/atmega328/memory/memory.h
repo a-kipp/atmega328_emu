@@ -9,18 +9,9 @@
 #include "../utility_functions.h"
 #include "../out.h"
 
-uint16_t *_programMemory_ptr;
-uint8_t *_dataMemory_ptr;
-uint8_t *_eepromMemory_ptr;
-
-
-uint8_t _serialRegister0x00C6(uint8_t data, char readWriteFlag) {
-    if(readWriteFlag == 'w') {
-        atm_serialOut(data);
-    } else {
-        //return mem_dataMemoryRead8bit(UDR0);
-    }
-}
+static uint16_t *_programMemory_ptr;
+static uint8_t *_dataMemory_ptr;
+static uint8_t *_eepromMemory_ptr;
 
 
 // Public
@@ -35,6 +26,7 @@ void mem_init() {
     _eepromMemory_ptr = calloc(EEPROM_END + 1, sizeof(uint8_t));
 }
 
+
 void mem_loadProgram(char* filePath) {
     loa_loadHexFile(_programMemory_ptr, filePath, PROGRAM_MEMORY_END);
 }
@@ -45,60 +37,90 @@ uint8_t mem_dataMemoryRead8bit(uint16_t address) {
     return *(uint8_t*)(_dataMemory_ptr + address);
 }
 
+
 uint8_t mem_eepromMemoryRead8bit(uint16_t address) {
     return *(uint8_t*)(_eepromMemory_ptr + address);
 }
+
 
 uint16_t mem_programMemoryFetchInstruction(uint16_t address) {
     uint16_t instruction = *(uint16_t*)(_programMemory_ptr + address);
     return uti_byteswap16bit(instruction);
 }
 
+
 uint16_t mem_dataMemoryRead16bit(uint16_t address) {
     uint16_t value = *(uint16_t*)(_dataMemory_ptr + address);
     return value;
 }
 
-void mem_dataMemoryWrite8bit(uint16_t address, uint8_t value) {
 
-    if(address == UDR0) {
-        _serialRegister0x00C6(value, 'w');
+// this function shall only be used by the CPU to write to memory
+void mem_dataMemoryWrite8bitCpu(uint16_t address, uint8_t value) {
+    if (address <= GENERAL_PURPOSE_REGISTERS_END) {
+        // TODO write some code
+        *(uint8_t*)(_dataMemory_ptr + address) = value;
+    }    
+    else if (address <= IO_REGISTERS_END) {
+        // TODO write some code
+        *(uint8_t*)(_dataMemory_ptr + address) = value;
     }
-    *(uint8_t*)(_dataMemory_ptr + address) = value;
-
+    else if (address <= EXTERN_IO_REGISTERS_END) {
+        switch (address) {
+            case UDR0: out_serialOut(value); break;
+            default: *(uint8_t*)(_dataMemory_ptr + address) = value; break;
+        }
+    }
+    else if (address <= INTERNAL_SRAM_END) {
+        // TODO write some code
+        *(uint8_t*)(_dataMemory_ptr + address) = value;
+    }
+    else {
+        fprintf(stderr, "data memory address out of range max: %03X\n", DATA_MEMORY_END);
+    }
 }
+
+
 
 void mem_eepromMemoryWrite8bit(uint16_t address, uint8_t value) {
     *(uint8_t*)(_eepromMemory_ptr + address) = value;
 }
 
+
 void mem_dataMemoryWrite16bit(uint16_t address, uint16_t value) {
     *(uint16_t*)(_dataMemory_ptr + address) = value;
 }
+
 
 bool mem_getSregCarryFlag() {
     return (bool)uti_getBit(mem_dataMemoryRead8bit(SREG), CARRY_FLAG);
 }
 
+
 bool mem_getSregZeroFlag() {
     return (bool)uti_getBit(mem_dataMemoryRead8bit(SREG), ZERO_FLAG);
 }
+
 
 bool mem_getSregNegativeFlag() {
     return (bool)uti_getBit(mem_dataMemoryRead8bit(SREG), NEGATIVE_FLAG);
 }
 
+
 bool mem_getSregTwosComplementOverflowFlag() {
     return (bool)uti_getBit(mem_dataMemoryRead8bit(SREG), TWOS_COMPLEMENT_OVERFLOW_FLAG);
 }
+
 
 bool mem_getSregSignBit() {
     return (bool)uti_getBit(mem_dataMemoryRead8bit(SREG), SIGN_BIT);
 }
 
+
 bool mem_getSregHalfCarryFlag() {
     return (bool)uti_getBit(mem_dataMemoryRead8bit(SREG), HALF_CARRY_FLAG);
 }
+
 
 void mem_setSregCarryFlagTo(bool val) {
     if (val) {
@@ -108,6 +130,7 @@ void mem_setSregCarryFlagTo(bool val) {
     }
 }
 
+
 void mem_setSregZeroFlagTo(bool val) {
     if (val) {
         uti_setBit(_dataMemory_ptr + SREG, ZERO_FLAG);
@@ -115,6 +138,7 @@ void mem_setSregZeroFlagTo(bool val) {
         uti_clearBit(_dataMemory_ptr + SREG, ZERO_FLAG);
     }
 }
+
 
 void mem_setSregNegativeFlagTo(bool val) {
     if (val) {
@@ -124,6 +148,7 @@ void mem_setSregNegativeFlagTo(bool val) {
     }
 }
 
+
 void mem_setSregTwosComplementOverflowFlagTo(bool val) {
     if (val) {
         uti_setBit(_dataMemory_ptr + SREG, TWOS_COMPLEMENT_OVERFLOW_FLAG);
@@ -131,6 +156,7 @@ void mem_setSregTwosComplementOverflowFlagTo(bool val) {
         uti_clearBit(_dataMemory_ptr + SREG, TWOS_COMPLEMENT_OVERFLOW_FLAG);
     }
 }
+
 
 void mem_setSregSignBitTo(bool val) {
     if (val) {
@@ -140,10 +166,41 @@ void mem_setSregSignBitTo(bool val) {
     }
 }
 
+
 void mem_setSregHalfCarryFlagTo(bool val) {
     if (val) {
         uti_setBit(_dataMemory_ptr + SREG, HALF_CARRY_FLAG);
     } else {
         uti_clearBit(_dataMemory_ptr + SREG, HALF_CARRY_FLAG);
+    }
+}
+
+
+void mem_externalSourceWriteToSerialRegister(uint8_t value) {
+    *(uint8_t*)(_dataMemory_ptr + UDR0) = value;
+}
+
+
+
+
+
+void mem_externalSourceWriteToPortC(uint8_t value) {
+    *(uint8_t*)(_dataMemory_ptr + UDR0) = value;
+}
+
+
+void mem_externalSourceWriteToPortD(uint8_t value) {
+    *(uint8_t*)(_dataMemory_ptr + UDR0) = value;
+}
+
+
+// this function provides restricted acces to the memory from external
+void mem_externalSourceWrite8bit(uint16_t address, uint8_t value) {
+    switch (address) {
+        case UDR0: *(uint8_t*)(_dataMemory_ptr + address) = value; break;
+        case PORTB: *(uint8_t*)(_dataMemory_ptr + address) = value; break;
+        case PORTC: *(uint8_t*)(_dataMemory_ptr + address) = value; break;
+        case PORTD: *(uint8_t*)(_dataMemory_ptr + address) = value; break;
+        default: fprintf(stderr, "no external acces to memory address: %04X\n", address); break;
     }
 }
