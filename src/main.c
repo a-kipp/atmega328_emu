@@ -18,7 +18,6 @@ int main(int argc, char *argv[] ) {
         char character = getchar();
         switch (character) {
             case 'e': is_running = false; break;
-            case 'i': atm_init(); break;
             case 'l': atm_loadProgram(argv[1]); break;
             case 's': atm_start(); break;
             case 'h': atm_stop(); break;

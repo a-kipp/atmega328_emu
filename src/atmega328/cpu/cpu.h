@@ -16,10 +16,7 @@
 #include "../pin.h"
 ;
 
-#define CPU_STOP 0
-#define PIN_CHANGE 1
-
-int _cpuSignal;
+int _cpuStopSignal;
 
 
 pthread_t *_cpuThread;
@@ -54,7 +51,7 @@ static void *_run(void *arg) {
     }
 
     g_cpuCycleCount = 0;
-    _cpuSignal = 0;
+    _cpuStopSignal = 0;
 
     unsigned int instructionsToExecude = g_atmegaClockSpeed / 1600000 + 1;
     long timePerCycleNanoSec = 1000000000 / g_atmegaClockSpeed;
@@ -69,7 +66,7 @@ static void *_run(void *arg) {
     struct timespec stopTime = currentTime;
 
 
-    while(!_cpuSignal) {
+    while(!_cpuStopSignal) {
         clock_gettime(CLOCK_REALTIME, &startTime);
 
         long cycleCountStart = g_cpuCycleCount;
@@ -86,7 +83,7 @@ static void *_run(void *arg) {
             fprintf(stderr, "can't sleep\n");
         }
     }
-    _cpuSignal = 0;
+    _cpuStopSignal = 0;
     printf("cpu stopped\n");
 }
 
@@ -105,5 +102,5 @@ void cpu_start() {
 
 void cpu_stop() {
     printf("cpu stop called\n");
-    _cpuSignal = CPU_STOP;
+    _cpuStopSignal = true;
 }

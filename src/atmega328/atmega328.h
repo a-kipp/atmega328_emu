@@ -14,10 +14,6 @@
 // ____________________________________________________________________________________________________________________
 
 
-void atm_init() {
-    mem_init();
-}
-
 void atm_loadProgram(char* filePath) {
     mem_loadProgram(filePath);
 }

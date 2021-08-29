@@ -9,9 +9,13 @@
 #include "../utility_functions.h"
 #include "../out.h"
 
-static uint16_t *_programMemory_ptr;
-static uint8_t *_dataMemory_ptr;
-static uint8_t *_eepromMemory_ptr;
+static uint16_t _programMemory[PROGRAM_MEMORY_END] = {0};
+static uint8_t _dataMemory[DATA_MEMORY_END] = {0};
+static uint8_t _eepromMemory[EEPROM_END] = {0};
+
+static uint16_t *_programMemory_ptr = _programMemory;
+static uint8_t *_dataMemory_ptr = _dataMemory;
+static uint8_t *_eepromMemory_ptr = _eepromMemory;
 
 
 // Public
@@ -20,7 +24,7 @@ static uint8_t *_eepromMemory_ptr;
 uint16_t mem_programCounter = 0;
 
 
-// for perfomance reason flags are stored separatly, reading from SREG register will be intercepted.
+// for easier access flags are stored separatly, readings and writes from SREG register will be intercepted.
 bool mem_sregCarryFlagC = 0;
 bool mem_sregZeroFlagZ = 0;
 bool mem_sregNegativeFlagN = 0;
@@ -55,25 +59,17 @@ static uint8_t _readFromSreg() {
 }
 
 
-
-void mem_init() {
-    _programMemory_ptr = calloc(PROGRAM_MEMORY_END + 1, sizeof(uint8_t));
-    _dataMemory_ptr = calloc(DATA_MEMORY_END + 1, sizeof(uint8_t));
-    _eepromMemory_ptr = calloc(EEPROM_END + 1, sizeof(uint8_t));
-}
-
-
 void mem_loadProgram(char* filePath) {
     loa_loadHexFile(_programMemory_ptr, filePath, PROGRAM_MEMORY_END);
 }
 
 
 uint8_t mem_dataMemoryRead8bit(uint16_t address) {
-    if (address = SREG) {
+    if (address == SREG) {
         return _readFromSreg();
+    } else {
+        return *(uint8_t*)(_dataMemory_ptr + address);
     }
-    uint val = *(uint8_t*)(_dataMemory_ptr + address);
-    return *(uint8_t*)(_dataMemory_ptr + address);
 }
 
 
@@ -96,26 +92,10 @@ uint16_t mem_dataMemoryRead16bit(uint16_t address) {
 
 // this function shall only be used by the CPU to write to memory
 void mem_dataMemoryWrite8bitCpu(uint16_t address, uint8_t value) {
-    if (address <= GENERAL_PURPOSE_REGISTERS_END) {
-        if (address = SREG) {
-            _writeToSreg(value);
-            return;
-        }
-    }    
-    else if (address <= IO_REGISTERS_END) {
-        *(uint8_t*)(_dataMemory_ptr + address) = value;
-    }
-    else if (address <= EXTERN_IO_REGISTERS_END) {
-        switch (address) {
-            case UDR0: out_serialOut(value); break;
-            default: *(uint8_t*)(_dataMemory_ptr + address) = value; break;
-        }
-    }
-    else if (address <= INTERNAL_SRAM_END) {
-        *(uint8_t*)(_dataMemory_ptr + address) = value;
-    }
-    else {
-        fprintf(stderr, "data memory address out of range max: %03X\n", DATA_MEMORY_END);
+    switch (address) {
+        case SREG: _writeToSreg(value); break;
+        case UDR0: out_serialOut(value); break;
+        default: *(uint8_t*)(_dataMemory_ptr + address) = value; break;
     }
 }
 
