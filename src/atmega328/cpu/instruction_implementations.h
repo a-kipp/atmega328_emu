@@ -7,13 +7,8 @@
 #include "../utility_functions.h"
 #include "../debug.h"
 #include "../memory/memory.h"
-#include "../disassembler.h"
+#include "jump_table.h"
 
-#define print_infostring() //(printf("%04X  %s\n", mem_programCounter, _infoString))
-
-
-// info string, contains instruction name, immediate values and jump addresses.
-char _infoString[MAX_INFO_LENGTH] = {0};
 
 
 // extract addresses and immediate values from an instruction
@@ -54,9 +49,16 @@ static uint16_t _extractBits0000111111111111(uint16_t instruction) {
 }
 
 
+// disassembly
+#define MAX_LENGTH_DISASSEMBLY_STRING 80
+typedef char InstructionString[MAX_LENGTH_DISASSEMBLY_STRING];
+
 
 // Public
 // ____________________________________________________________________________________________________________________
+
+uint16_t ins_lineCounter = 0;
+InstructionString ins_disassembledInstructions[PROGRAM_MEMORY_END] = {0};
 
 
 // unknown opcode
@@ -64,33 +66,38 @@ void unknown() {
     char *instructionName = "unknown";
     uint16_t instruction = mem_programMemoryFetchInstruction(mem_programCounter);
 
-    static bool isLogged = false;
-    if (!isLogged) {
-        snprintf(dis_instructionStrings[mem_programCounter], MAX_INFO_LENGTH, "%s", instructionName);
-        isLogged = true;
-    }
-    print_infostring();
-
     mem_programCounter += 1;
     g_cpuCycleCount += 1;
     //exit(-1);
 }
 
+void unknown_disassemble() {
+    char *instructionName = "unknown";
+    uint16_t instruction = mem_programMemoryFetchInstruction(mem_programCounter);
+
+    snprintf(ins_disassembledInstructions[ins_lineCounter], MAX_LENGTH_DISASSEMBLY_STRING, "%s", instructionName);
+
+    ins_lineCounter += 1;
+}
 
 // NOP - No Operation
 // 16-bit Opcode: 0000 0000 0000 0000
 // This instruction performs a single cycle No Operation.
 // AVR Instruction Manual page 131
 void nop() {
-    char *instructionName = "nop";
     uint16_t instruction = mem_programMemoryFetchInstruction(mem_programCounter);
-
-    // snprintf(_infoString, MAX_INFO_LENGTH, "%s", instructionName);
-    print_infostring();
 
     mem_programCounter += 1;
     g_cpuCycleCount += 1;
+}
 
+void nop_disassemble() {
+    char *instructionName = "nop";
+    uint16_t instruction = mem_programMemoryFetchInstruction(ins_lineCounter);
+
+    snprintf(ins_disassembledInstructions[ins_lineCounter], MAX_LENGTH_DISASSEMBLY_STRING, "%s", instructionName);
+
+    ins_lineCounter += 1;
 }
 
 
@@ -99,7 +106,6 @@ void nop() {
 // Adds two registers and the contents of the C Flag and places the result in the destination register Rd.
 // AVR Instruction Manual page 30
 void adc() {
-    char *instructionName = "adc";
     uint16_t instruction = mem_programMemoryFetchInstruction(mem_programCounter);
     uint16_t rd_addr = _extractBits0000000111110000(instruction);
     uint16_t rr_addr = _extractBits0000001000001111(instruction);
@@ -114,9 +120,6 @@ void adc() {
     bool rrBit7 = uti_getBit(rrContent, 7);
     bool resultBit7 = uti_getBit(result, 7);
 
-    // snprintf(_infoString, MAX_INFO_LENGTH, "%s %s %s", instructionName, deb_getName(rd_addr), deb_getName(rr_addr));
-    print_infostring();
-
     // H: Set if there was a carry from bit 3; cleared otherwise.
     mem_sregHalfCarryFlagH = rdBit3 && rrBit3 || rrBit3 && !resultBit3 || !resultBit3 && rdBit3;
 
@@ -140,13 +143,23 @@ void adc() {
     g_cpuCycleCount += 1;
 }
 
+void adc_disassemble() {
+    char *instructionName = "adc";
+    uint16_t instruction = mem_programMemoryFetchInstruction(mem_programCounter);
+    uint16_t rd_addr = _extractBits0000000111110000(instruction);
+    uint16_t rr_addr = _extractBits0000001000001111(instruction);
+
+    snprintf(ins_disassembledInstructions[ins_lineCounter], MAX_LENGTH_DISASSEMBLY_STRING, "%s %s %s", instructionName, deb_getName(rd_addr), deb_getName(rr_addr));
+
+    ins_lineCounter += 1;
+}
+
 
 // ADD - Add without Carry
 // 16-bit Opcode: 0000 11rd dddd rrrr
 // Adds two registers without the C Flag and places the result in the destination register Rd.
 // AVR Instruction Manual page 32
 void add() {
-    char *instructionName = "add";
     uint16_t instruction = mem_programMemoryFetchInstruction(mem_programCounter);
     uint16_t rd_addr = _extractBits0000000111110000(instruction);
     uint16_t rr_addr = _extractBits0000001000001111(instruction);
@@ -161,8 +174,6 @@ void add() {
     bool rrBit7 = uti_getBit(rrContent, 7);
     bool resultBit7 = uti_getBit(result, 7);
 
-    // snprintf(_infoString, MAX_INFO_LENGTH, "%s %s %s", instructionName, deb_getName(rd_addr), deb_getName(rr_addr));
-    print_infostring();
 
     // H: Set if there was a carry from bit 3; cleared otherwise.
     mem_sregHalfCarryFlagH = rdBit3 && rrBit3 || rrBit3 && !resultBit3 || !resultBit3 && rdBit3;
@@ -187,26 +198,41 @@ void add() {
     g_cpuCycleCount += 1;
 }
 
+void add_disassemble() {
+    char *instructionName = "add";
+    uint16_t instruction = mem_programMemoryFetchInstruction(mem_programCounter);
+    uint16_t rd_addr = _extractBits0000000111110000(instruction);
+    uint16_t rr_addr = _extractBits0000001000001111(instruction);
+
+    snprintf(ins_disassembledInstructions[ins_lineCounter], MAX_LENGTH_DISASSEMBLY_STRING, "%s %s %s", instructionName, deb_getName(rd_addr), deb_getName(rr_addr));
+
+    ins_lineCounter += 1;
+}
 
 // LDI – Load Immediate
 // 16-bit Opcode: 1110 KKKK dddd KKKK
 // Loads an 8-bit constant directly to register 16 to 31.
 // AVR Instruction Manual page 115
 void ldi() {
-    char *instructionName = "ldi";
     uint16_t instruction = mem_programMemoryFetchInstruction(mem_programCounter);
     uint16_t rd_addr =  _extractBits0000000011110000(instruction) + 16;
     uint8_t constData = _extractBits0000111100001111(instruction);
-
-
-    // snprintf(_infoString, MAX_INFO_LENGTH, "%s %s %02X", instructionName, deb_getName(rd_addr), constData);
-    print_infostring();
 
     mem_dataMemoryWrite8bitCpu(rd_addr, constData);
     mem_programCounter += 1;
     g_cpuCycleCount += 1;
 }
 
+void ldi_disassemble() {
+    char *instructionName = "ldi";
+    uint16_t instruction = mem_programMemoryFetchInstruction(mem_programCounter);
+    uint16_t rd_addr =  _extractBits0000000011110000(instruction) + 16;
+    uint8_t constData = _extractBits0000111100001111(instruction);
+
+    snprintf(ins_disassembledInstructions[ins_lineCounter], MAX_LENGTH_DISASSEMBLY_STRING, "%s %s %02X", instructionName, deb_getName(rd_addr), constData);
+
+    ins_lineCounter += 1;
+}
 
 // OUT – Store Register to I/O Location
 // 16-bit Opcode: 1011 1AAr rrrr AAAA
@@ -216,29 +242,35 @@ void ldi() {
 // Atmega328 datasheet page 624
 // AVR Instruction Manual page 134
 void out() {
-    char *instructionName = "out";
     uint16_t instruction = mem_programMemoryFetchInstruction(mem_programCounter);
     uint16_t ioa_addr = _extractBits0000011000001111(instruction) + 0x20;
     uint16_t rr_addr =  _extractBits0000000111110000(instruction);
     uint8_t rrContent = mem_dataMemoryRead8bit(rr_addr);
 
-    // snprintf(_infoString, MAX_INFO_LENGTH, "%s %s %s", instructionName, deb_getName(ioa_addr), deb_getName(rr_addr));
-    print_infostring();
-    
     mem_dataMemoryWrite8bitCpu(ioa_addr, rrContent);
     mem_programCounter += 1;
     g_cpuCycleCount += 1;
 }
 
+void out_disassemble() {
+    char *instructionName = "out";
+    uint16_t instruction = mem_programMemoryFetchInstruction(mem_programCounter);
+    uint16_t ioa_addr = _extractBits0000011000001111(instruction) + 0x20;
+    uint16_t rr_addr =  _extractBits0000000111110000(instruction);
 
-// EOR – Exclusive OR and CLR – Clear Register
+    snprintf(ins_disassembledInstructions[ins_lineCounter], MAX_LENGTH_DISASSEMBLY_STRING, "%s %s %s", instructionName, deb_getName(ioa_addr), deb_getName(rr_addr));
+
+    ins_lineCounter += 1;
+}
+
+// EOR – Exclusive OR
+// CLR – Clear Register
 // 16-bit Opcode: 0010 01rd dddd rrrr
 // Performs the logical EOR between the contents of register Rd and register Rr and places the result in the
 // destination register Rd.
 // If the both registers are the same this instruction becomes the clr instruction.
 // AVR Instruction Manual page 91 and 71
 void eor() {
-    char *instructionName = "eor";
     uint16_t instruction = mem_programMemoryFetchInstruction(mem_programCounter);
     uint16_t rd_addr = _extractBits0000000111110000(instruction);
     uint16_t rr_addr = _extractBits0000001000001111(instruction);
@@ -247,13 +279,6 @@ void eor() {
     uint8_t result = rdContent ^ rrContent;
 
     bool resultBit7 = uti_getBit(result, 7);
-    
-    if (rdContent == rrContent) {
-        // snprintf(_infoString, MAX_INFO_LENGTH, "%s %s", "clr", deb_getName(rd_addr));
-    } else {
-        // snprintf(_infoString, MAX_INFO_LENGTH, "%s %s %s", instructionName, deb_getName(rd_addr), deb_getName(rr_addr));
-    }
-    print_infostring();
 
     // S: N ⊕ V, for signed tests.
     mem_sregSignBitS = mem_sregNegativeFlagN ^ mem_sregTwoComplementsOverflowFlagV;
@@ -270,7 +295,21 @@ void eor() {
     mem_dataMemoryWrite8bitCpu(rd_addr, result);
     mem_programCounter += 1;
     g_cpuCycleCount += 1;
+}
 
+void eor_disassemble() {
+    char *instructionName = "eor";
+    uint16_t instruction = mem_programMemoryFetchInstruction(mem_programCounter);
+    uint16_t rd_addr = _extractBits0000000111110000(instruction);
+    uint16_t rr_addr = _extractBits0000001000001111(instruction);
+
+    if (rd_addr == rr_addr) {
+        snprintf(ins_disassembledInstructions[ins_lineCounter], MAX_LENGTH_DISASSEMBLY_STRING, "%s %s", "clr", deb_getName(rd_addr));
+    } else {
+        snprintf(ins_disassembledInstructions[ins_lineCounter], MAX_LENGTH_DISASSEMBLY_STRING, "%s %s %s", instructionName, deb_getName(rd_addr), deb_getName(rr_addr));
+    }
+
+    ins_lineCounter += 1;
 }
 
 
@@ -281,7 +320,6 @@ void eor() {
 // Pointer Registers.
 // AVR Instruction Manual page 154
 void sbiw() {
-    char *instructionName = "sbiw";
     uint16_t instruction = mem_programMemoryFetchInstruction(mem_programCounter);
     uint16_t rd_addr =   _extractBits0000000000110000(instruction) * 2 + R24;
     uint16_t constData = _extractBits0000000011001111(instruction);
@@ -290,9 +328,6 @@ void sbiw() {
 
     bool resultBit15 = (bool)(result & (1 << 15));
     bool rdhBit7 = (bool)(rdContent & (1 << 15));
-
-    // snprintf(_infoString, MAX_INFO_LENGTH, "%s %s %02X", instructionName, deb_getName(rd_addr), constData);
-    print_infostring();  
 
     // S = N ⊕ V, for signed tests.
     mem_sregSignBitS = mem_sregNegativeFlagN ^ mem_sregTwoComplementsOverflowFlagV;
@@ -314,6 +349,16 @@ void sbiw() {
     g_cpuCycleCount += 2;
 }
 
+void sbiw_disassemble() {
+    char *instructionName = "sbiw";
+    uint16_t instruction = mem_programMemoryFetchInstruction(mem_programCounter);
+    uint16_t rd_addr =   _extractBits0000000000110000(instruction) * 2 + R24;
+    uint16_t constData = _extractBits0000000011001111(instruction);
+
+    snprintf(ins_disassembledInstructions[ins_lineCounter], MAX_LENGTH_DISASSEMBLY_STRING, "%s %s %02X", instructionName, deb_getName(rd_addr), constData);
+
+    ins_lineCounter += 1;
+}
 
 // BRNE – Branch if Not Equal
 // 16-bit Opcode: 1111 01kk kkkk k001
@@ -325,25 +370,26 @@ void sbiw() {
 // complement form. (Equivalent to instruction BRBC 1,k.)
 // AVR Instruction Manual page 54
 void brne() {
-    char *instructionName = "brne";
     uint16_t instruction = mem_programMemoryFetchInstruction(mem_programCounter);
-    uint16_t constData = _extractBits0000001111111000(instruction);
-
-    static bool isLogged = false;
-    if (!isLogged) {
-        snprintf(dis_instructionStrings[mem_programCounter], MAX_INFO_LENGTH, "%s %02X", instructionName, constData);
-        isLogged = true;
-    }
-    // snprintf(_infoString, MAX_INFO_LENGTH, "%s %02X", instructionName, constData);
-    print_infostring();
+    int16_t constData = (int16_t)_extractBits0000001111111000(instruction);
 
     if (mem_sregZeroFlagZ) {
-        mem_programCounter += (constData + 1);
+        mem_programCounter += constData;
         g_cpuCycleCount += 2;
     } else {
         mem_programCounter += 1;
         g_cpuCycleCount += 1;
     }
+}
+
+void brne_disassemble() {
+    char *instructionName = "brne";
+    uint16_t instruction = mem_programMemoryFetchInstruction(mem_programCounter);
+    int16_t constData = (int16_t)_extractBits0000001111111000(instruction);
+
+    snprintf(ins_disassembledInstructions[ins_lineCounter], MAX_LENGTH_DISASSEMBLY_STRING, "%s %02X", instructionName, constData);
+    
+    ins_lineCounter += 1;
 }
 
 
@@ -356,16 +402,12 @@ void brne() {
 // consistently. When operating on two’s complement values, all signed branches are available.
 // AVR Instruction Manual page 84
 void dec() {
-    char *instructionName = "dec";
     uint16_t instruction = mem_programMemoryFetchInstruction(mem_programCounter);
     uint16_t rd_addr = _extractBits0000000111110000(instruction);
     uint8_t rdContent = mem_dataMemoryRead8bit(rd_addr);
     uint8_t result = rdContent - 1;
 
     bool resultBit7 = uti_getBit(result, 7);
-
-    // snprintf(_infoString, MAX_INFO_LENGTH, "%s %s", instructionName, deb_getName(rd_addr));
-    print_infostring();
 
     // S: N ⊕ V, for signed tests.
     mem_sregSignBitS = mem_sregNegativeFlagN ^ mem_sregTwoComplementsOverflowFlagV;
@@ -385,6 +427,16 @@ void dec() {
     g_cpuCycleCount += 1;
 }
 
+void dec_disassemble() {
+    char *instructionName = "dec";
+    uint16_t instruction = mem_programMemoryFetchInstruction(mem_programCounter);
+    uint16_t rd_addr = _extractBits0000000111110000(instruction);
+
+    snprintf(ins_disassembledInstructions[ins_lineCounter], MAX_LENGTH_DISASSEMBLY_STRING, "%s %s", instructionName, deb_getName(rd_addr));
+
+    ins_lineCounter += 1;
+}
+
 
 // RJMP – Relative Jump
 // 16-bit Opcode: 1100 kkkk kkkk kkkk
@@ -393,16 +445,23 @@ void dec() {
 // every address location. See also JMP.
 // AVR Instruction Manual page 142
 void rjmp() {
-    char *instructionName = "rjmp";
     uint16_t instruction = mem_programMemoryFetchInstruction(mem_programCounter);
     int16_t constAddress = (int16_t)_extractBits0000111111111111(instruction);
     uint16_t jumpDest_addr = (mem_programCounter + constAddress - 0xfff) % (DATA_MEMORY_END + 1);
 
-    // snprintf(_infoString, MAX_INFO_LENGTH, "%s %04X", instructionName, jumpDest_addr);
-    print_infostring();
-
     mem_programCounter = jumpDest_addr;
+    
     g_cpuCycleCount += 2;
+}
+
+void rjmp_disassemble() {
+    char *instructionName = "rjmp";
+    uint16_t instruction = mem_programMemoryFetchInstruction(mem_programCounter);
+    int16_t constAddress = (int16_t)_extractBits0000111111111111(instruction);
+
+    snprintf(ins_disassembledInstructions[ins_lineCounter], MAX_LENGTH_DISASSEMBLY_STRING, "%s %04X", instructionName, constAddress);
+
+    ins_lineCounter += 1;
 }
 
 
@@ -417,19 +476,27 @@ void rjmp() {
 // changed.
 // This instruction is not available in all devices. Refer to the device specific instruction set summary.
 void sts() {
-    char *instructionName = "sts";
     uint16_t instructionFirst = mem_programMemoryFetchInstruction(mem_programCounter);
     uint16_t rr_addr = _extractBits0000000111110000(instructionFirst);
     uint16_t instructionSecond = mem_programMemoryFetchInstruction(mem_programCounter + 1);
     uint16_t mem_addr = instructionSecond;
     uint8_t memContent = mem_dataMemoryRead8bit(rr_addr);
 
-    // snprintf(_infoString, MAX_INFO_LENGTH, "%s %04X %04X", instructionName, mem_addr, rr_addr);
-    print_infostring();
-
     mem_dataMemoryWrite8bitCpu(mem_addr, memContent);
     mem_programCounter += 2;
     g_cpuCycleCount += 2;    
+}
+
+void sts_disassemble() {
+    char *instructionName = "sts";
+    uint16_t instructionFirst = mem_programMemoryFetchInstruction(mem_programCounter);
+    uint16_t rr_addr = _extractBits0000000111110000(instructionFirst);
+    uint16_t instructionSecond = mem_programMemoryFetchInstruction(mem_programCounter + 1);
+    uint16_t mem_addr = instructionSecond;
+
+    snprintf(ins_disassembledInstructions[ins_lineCounter], MAX_LENGTH_DISASSEMBLY_STRING, "%s %04X %04X", instructionName, mem_addr, rr_addr);
+
+    ins_lineCounter += 2;
 }
 
 
@@ -438,7 +505,6 @@ void sts() {
 // This instruction performs a compare between two registers Rd and Rr. None of the registers are changed.
 // All conditional branches can be used after this instruction.
 void cp() {
-    char *instructionName = "cp";
     uint16_t instructionFirst = mem_programMemoryFetchInstruction(mem_programCounter);
     uint16_t rd_addr = _extractBits0000000111110000(instructionFirst);
     uint16_t rr_addr = _extractBits0000001000001111(instructionFirst);
@@ -472,11 +538,18 @@ void cp() {
     // otherwise.
     mem_sregCarryFlagC = rrContent > rdContent;
 
-    // snprintf(_infoString, MAX_INFO_LENGTH, "%s %04X %04X", instructionName, rd_addr, rr_addr);
-    print_infostring();
-
     mem_programCounter += 1;
     g_cpuCycleCount += 1;    
 }
 
+void cp_disassemble() {
+    char *instructionName = "cp";
+    uint16_t instructionFirst = mem_programMemoryFetchInstruction(mem_programCounter);
+    uint16_t rd_addr = _extractBits0000000111110000(instructionFirst);
+    uint16_t rr_addr = _extractBits0000001000001111(instructionFirst);
+
+    snprintf(ins_disassembledInstructions[ins_lineCounter], MAX_LENGTH_DISASSEMBLY_STRING, "%s %04X %04X", instructionName, rd_addr, rr_addr);
+
+    ins_lineCounter += 1;
+}
 

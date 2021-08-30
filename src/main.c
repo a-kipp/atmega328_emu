@@ -26,6 +26,7 @@ int main(int argc, char *argv[] ) {
             case 'h': atm_stop(); break;
             case 'c': is_running = false; break;
             case 'm': tim_triggerSpeedTest(); break;
+            case 'd': atm_disassemble(); break;
             default: ; break;
         }
     }

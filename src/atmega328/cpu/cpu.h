@@ -29,7 +29,7 @@ static void _executeSingleInstruction() {
 
 
 static void _executeInstructions(int numberOfInstructions) {
-    for (int i = 0; i < numberOfInstructions; i++) {
+    for (int i = 0; i < 10000; i++) {
         uint16_t instruction = mem_programMemoryFetchInstruction(mem_programCounter);
         jump_table[instruction]();
     }

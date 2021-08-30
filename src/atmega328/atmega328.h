@@ -7,6 +7,7 @@
 #include "cpu/cpu.h"
 #include "pin.h"
 #include "global_variables.h"
+#include "disassembler.h"
 
 
 ;
@@ -34,3 +35,6 @@ void atm_setPin(int pinNumber, bool pinValue) {
     pin_enqueuePinChange(pinNumber, pinValue);
 }
 
+void atm_disassemble() {
+    dis_printDisassembledInstructions();
+}
