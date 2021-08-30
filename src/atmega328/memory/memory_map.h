@@ -107,6 +107,11 @@
         #define UBRR0L 0x00C4 // Datasheet page 276
         #define UBRR0H 0x00C5
         #define UDR0 0x00C6 // Serial Register
+        #define SIGNAL_EMULATOR 0x00FA
+        #define CONSOLE_PRINT_BIN 0x00FB
+        #define CONSOLE_PRINT_CHAR 0x00FC
+        #define CONSOLE_PRINT_DEC 0x00FD
+        #define CONSOLE_PRINT_HEX 0x00FE
     #define EXTERN_IO_REGISTERS_END 0x00FF
     #define INTERNAL_SRAM_START 0x0100
     #define INTERNAL_SRAM_END 0x08FF

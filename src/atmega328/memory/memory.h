@@ -9,13 +9,12 @@
 #include "../utility_functions.h"
 #include "../out.h"
 
-static uint16_t _programMemory[PROGRAM_MEMORY_END] = {0};
-static uint8_t _dataMemory[DATA_MEMORY_END] = {0};
-static uint8_t _eepromMemory[EEPROM_END] = {0};
-
-static uint16_t *_programMemory_ptr = _programMemory;
-static uint8_t *_dataMemory_ptr = _dataMemory;
-static uint8_t *_eepromMemory_ptr = _eepromMemory;
+uint16_t _programMemory[PROGRAM_MEMORY_END] = {0};
+uint8_t _dataMemory[DATA_MEMORY_END] = {0};
+uint8_t _eepromMemory[EEPROM_END] = {0};
+uint16_t *_programMemory_ptr = _programMemory;
+uint8_t *_dataMemory_ptr = _dataMemory;
+uint8_t *_eepromMemory_ptr = _eepromMemory;
 
 
 // Public
@@ -34,7 +33,7 @@ bool mem_sregHalfCarryFlagH = 0;
 bool mem_sregBitCopyStorageT = 0;
 bool mem_sregGlobalInterruptEnableI = 0;
 
-static void _writeToSreg(uint8_t value) {
+void sregRedirectWrite(uint8_t value) {
     bool sregCarryFlagC = value ^ 0b00000001;
     bool sregZeroFlagZ = value ^ 0b00000010;
     bool sregNegativeFlagN = value ^ 0b00000100;
@@ -45,7 +44,7 @@ static void _writeToSreg(uint8_t value) {
     bool sregGlobalInterruptEnableI = value ^ 0b10000000;
 }
 
-static uint8_t _readFromSreg() {
+uint8_t _sregRedirectRead() {
     uint8_t returnVal = mem_sregCarryFlagC;
     returnVal | mem_sregCarryFlagC;
     returnVal | mem_sregZeroFlagZ;
@@ -66,7 +65,7 @@ void mem_loadProgram(char* filePath) {
 
 uint8_t mem_dataMemoryRead8bit(uint16_t address) {
     if (address == SREG) {
-        return _readFromSreg();
+        return _sregRedirectRead();
     } else {
         return *(uint8_t*)(_dataMemory_ptr + address);
     }
@@ -79,6 +78,9 @@ uint8_t mem_eepromMemoryRead8bit(uint16_t address) {
 
 
 uint16_t mem_programMemoryFetchInstruction(uint16_t address) {
+    if (address > PROGRAM_MEMORY_END) {
+        fprintf(stderr, "end of Program Memory reached\n");
+    }
     uint16_t instruction = *(uint16_t*)(_programMemory_ptr + address);
     return uti_byteswap16bit(instruction);
 }
@@ -92,9 +94,17 @@ uint16_t mem_dataMemoryRead16bit(uint16_t address) {
 
 // this function shall only be used by the CPU to write to memory
 void mem_dataMemoryWrite8bitCpu(uint16_t address, uint8_t value) {
+    if (address > DATA_MEMORY_END) {
+        fprintf(stderr, "invalid address in datamemory called\n");
+    }
     switch (address) {
-        case SREG: _writeToSreg(value); break;
-        case UDR0: out_serialOut(value); break;
+        case SREG: sregRedirectWrite(value); break;
+        case UDR0: out_serialOutBin(value); break;
+        case SIGNAL_EMULATOR: out_handleSignal(value); break;
+        case CONSOLE_PRINT_BIN: out_serialOutBin(value); break;
+        case CONSOLE_PRINT_CHAR: out_serialOutChar(value); break;
+        case CONSOLE_PRINT_DEC: out_serialOutDec(value); break;
+        case CONSOLE_PRINT_HEX: out_serialOutHex(value); break;
         default: *(uint8_t*)(_dataMemory_ptr + address) = value; break;
     }
 }
@@ -113,11 +123,13 @@ void mem_externalSourceWrite8bit(uint16_t address, uint8_t value) {
 
 
 void mem_eepromMemoryWrite8bit(uint16_t address, uint8_t value) {
+    address %= EEPROM_END;
     *(uint8_t*)(_eepromMemory_ptr + address) = value;
 }
 
 
 void mem_dataMemoryWrite16bit(uint16_t address, uint16_t value) {
+    address %= DATA_MEMORY_END;
     *(uint16_t*)(_dataMemory_ptr + address) = value;
 }
 

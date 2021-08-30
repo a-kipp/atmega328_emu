@@ -53,7 +53,7 @@ static void *_run(void *arg) {
     g_cpuCycleCount = 0;
     _cpuStopSignal = 0;
 
-    unsigned int instructionsToExecude = g_atmegaClockSpeed / 1600000 + 1;
+    unsigned int instructionsToExecude = g_atmegaClockSpeed / 160000 + 1;
     long timePerCycleNanoSec = 1000000000 / g_atmegaClockSpeed;
 
     struct timespec requestedSleep;
@@ -71,17 +71,17 @@ static void *_run(void *arg) {
 
         long cycleCountStart = g_cpuCycleCount;
 
-        _executeInstructions(instructionsToExecude);
+        _executeInstructions(100000);
 
         pin_handlePinChanges();
 
         clock_gettime(CLOCK_REALTIME, &stopTime);
         timeTaken = _calcTimeDiff(startTime, stopTime);
 
-        requestedSleep.tv_nsec = (g_cpuCycleCount - cycleCountStart) * timePerCycleNanoSec - timeTaken.tv_nsec;
-        if (nanosleep(&requestedSleep, &rmtp)) {
-            fprintf(stderr, "can't sleep\n");
-        }
+        //requestedSleep.tv_nsec = (g_cpuCycleCount - cycleCountStart) * timePerCycleNanoSec - timeTaken.tv_nsec;
+        //if (nanosleep(&requestedSleep, &rmtp)) {
+        //    fprintf(stderr, "can't sleep\n");
+        //}
     }
     _cpuStopSignal = 0;
     printf("cpu stopped\n");

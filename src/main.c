@@ -13,6 +13,9 @@ int main(int argc, char *argv[] ) {
         fprintf(stderr, "only one comandline argument allowed\n");
         exit(1);
     }
+    
+    atm_loadProgram(argv[1]);
+    atm_start();
 
     while(is_running) {
         char character = getchar();
@@ -21,6 +24,8 @@ int main(int argc, char *argv[] ) {
             case 'l': atm_loadProgram(argv[1]); break;
             case 's': atm_start(); break;
             case 'h': atm_stop(); break;
+            case 'c': is_running = false; break;
+            case 'm': tim_triggerSpeedTest(); break;
             default: ; break;
         }
     }
