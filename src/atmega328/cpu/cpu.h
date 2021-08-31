@@ -14,6 +14,7 @@
 #include "../memory/memory.h"
 #include "../pin.h"
 #include "instruction/jump_table_implementation.h"
+#include "instruction/instruction.h"
 ;
 
 int _cpuStopSignal;
@@ -22,16 +23,12 @@ int _cpuStopSignal;
 pthread_t *_cpuThread;
 
 
-static void _executeSingleInstruction() {
-    uint16_t instruction = mem_programMemoryFetchInstruction(mem_programCounter);
-    jti_implementationTable[instruction]();
-}
-
 
 static void _executeInstructions(int numberOfInstructions) {
-    for (int i = 0; i < 10000; i++) {
-        uint16_t instruction = mem_programMemoryFetchInstruction(mem_programCounter);
-        jti_implementationTable[instruction]();
+    for (int i = 0; i < numberOfInstructions; i++) {
+        uint16_t opCode = mem_programMemoryFetchInstruction(mem_programCounter);
+        //printf("%s\n", jtd_disassembleTable[opCode](opCode).info);
+        jti_implementationTable[opCode]();
     }
 }
 
@@ -71,17 +68,17 @@ static void *_run(void *arg) {
 
         long cycleCountStart = g_cpuCycleCount;
 
-        _executeInstructions(100000);
+        _executeInstructions(1);
 
         pin_handlePinChanges();
 
         clock_gettime(CLOCK_REALTIME, &stopTime);
         timeTaken = _calcTimeDiff(startTime, stopTime);
 
-        //requestedSleep.tv_nsec = (g_cpuCycleCount - cycleCountStart) * timePerCycleNanoSec - timeTaken.tv_nsec;
-        //if (nanosleep(&requestedSleep, &rmtp)) {
-        //    fprintf(stderr, "can't sleep\n");
-        //}
+        requestedSleep.tv_nsec = (g_cpuCycleCount - cycleCountStart) * timePerCycleNanoSec - timeTaken.tv_nsec;
+        if (nanosleep(&requestedSleep, &rmtp)) {
+            fprintf(stderr, "can't sleep\n");
+        }
     }
     _cpuStopSignal = 0;
     printf("cpu stopped\n");

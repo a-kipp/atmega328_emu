@@ -25,7 +25,7 @@ static char *_getFileContent(FILE *file_ptr) {
 
 // TODO make parser read more then 20 lines
 static void _parseHexFile(uint16_t *programMemoryStart_ptr, char *fileContent_ptr, int maxSize) {
-    for (int i = 0; i < 20; i++) {
+    for (int i = 0; i < 100; i++) {
         fileContent_ptr+=1;
         char byteCountBuffer[3] = {0};
         byteCountBuffer[0] = *fileContent_ptr; fileContent_ptr++;

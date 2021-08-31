@@ -31,7 +31,7 @@ void adc() {
     uint16_t rr_addr = dec_extractBits0000001000001111(instruction);
     uint8_t rdContent = mem_dataMemoryRead8bit(rd_addr);
     uint8_t rrContent = mem_dataMemoryRead8bit(rr_addr);
-    uint8_t result = rdContent + rrContent + (mem_sregCarryFlagC == 0 ? 0 : 1);
+    uint8_t result = rdContent + rrContent + (vir_sregCarryFlagC == 0 ? 0 : 1);
 
     bool rdBit3 = uti_getBit(rdContent, 3);
     bool rrBit3 = uti_getBit(rrContent, 3);
@@ -41,22 +41,22 @@ void adc() {
     bool resultBit7 = uti_getBit(result, 7);
 
     // H: Set if there was a carry from bit 3; cleared otherwise.
-    mem_sregHalfCarryFlagH = rdBit3 && rrBit3 || rrBit3 && !resultBit3 || !resultBit3 && rdBit3;
+    vir_sregHalfCarryFlagH = rdBit3 && rrBit3 || rrBit3 && !resultBit3 || !resultBit3 && rdBit3;
 
     // S = N ⊕ V, for signed tests.
-    mem_sregSignBitS = mem_sregNegativeFlagN ^ mem_sregTwoComplementsOverflowFlagV;
+    vir_sregSignBitS = vir_sregNegativeFlagN ^ vir_sregTwoComplementsOverflowFlagV;
 
     // V: Set if two’s complement overflow resulted from the operation; cleared otherwise.
-    mem_sregTwoComplementsOverflowFlagV = rdBit7 && rrBit7 && !resultBit7 || !rdBit7 && !rrBit7 && resultBit7;
+    vir_sregTwoComplementsOverflowFlagV = rdBit7 && rrBit7 && !resultBit7 || !rdBit7 && !rrBit7 && resultBit7;
 
     // N: Set if MSB of the result is set; cleared otherwise.
-    mem_sregNegativeFlagN = resultBit7;
+    vir_sregNegativeFlagN = resultBit7;
 
     // Z: Set if the result is $00; cleared otherwise.
-    mem_sregZeroFlagZ = (result == 0);
+    vir_sregZeroFlagZ = (result == 0);
 
     // C: Set if there was carry from the MSB of the result; cleared otherwise.
-    mem_sregCarryFlagC = rdBit7 && rrBit7 || rrBit7 && !resultBit7 || !resultBit7 && rdBit7;
+    vir_sregCarryFlagC = rdBit7 && rrBit7 || rrBit7 && !resultBit7 || !resultBit7 && rdBit7;
     
     mem_dataMemoryWrite8bitCpu(rd_addr, result);
     mem_programCounter += 1;
@@ -86,22 +86,22 @@ void add() {
 
 
     // H: Set if there was a carry from bit 3; cleared otherwise.
-    mem_sregHalfCarryFlagH = rdBit3 && rrBit3 || rrBit3 && !resultBit3 || !resultBit3 && rdBit3;
+    vir_sregHalfCarryFlagH = rdBit3 && rrBit3 || rrBit3 && !resultBit3 || !resultBit3 && rdBit3;
 
     // S = N ⊕ V, for signed tests.
-    mem_sregSignBitS = mem_sregNegativeFlagN ^ mem_sregTwoComplementsOverflowFlagV;
+    vir_sregSignBitS = vir_sregNegativeFlagN ^ vir_sregTwoComplementsOverflowFlagV;
 
     // V: Set if two’s complement overflow resulted from the operation; cleared otherwise.
-    mem_sregTwoComplementsOverflowFlagV = rdBit7 && rrBit7 && !resultBit7 || !rdBit7 && !rrBit7 && resultBit7;
+    vir_sregTwoComplementsOverflowFlagV = rdBit7 && rrBit7 && !resultBit7 || !rdBit7 && !rrBit7 && resultBit7;
 
     // N: Set if MSB of the result is set; cleared otherwise.
-    mem_sregNegativeFlagN = resultBit7;
+    vir_sregNegativeFlagN = resultBit7;
 
     // Z: Set if the result is $00; cleared otherwise.
-    mem_sregZeroFlagZ = (result == 0);
+    vir_sregZeroFlagZ = (result == 0);
 
     // C: Set if there was carry from the MSB of the result; cleared otherwise.
-    mem_sregCarryFlagC = rdBit7 && rrBit7 || rrBit7 && !resultBit7 || !resultBit7 && rdBit7;
+    vir_sregCarryFlagC = rdBit7 && rrBit7 || rrBit7 && !resultBit7 || !resultBit7 && rdBit7;
     
     mem_dataMemoryWrite8bitCpu(rd_addr, result);
     mem_programCounter += 1;
@@ -146,16 +146,16 @@ void eor() {
     bool resultBit7 = uti_getBit(result, 7);
 
     // S: N ⊕ V, for signed tests.
-    mem_sregSignBitS = mem_sregNegativeFlagN ^ mem_sregTwoComplementsOverflowFlagV;
+    vir_sregSignBitS = vir_sregNegativeFlagN ^ vir_sregTwoComplementsOverflowFlagV;
 
     // V: Cleared.
-    mem_sregTwoComplementsOverflowFlagV = false;
+    vir_sregTwoComplementsOverflowFlagV = false;
 
     // N: Set if MSB of the result is set; cleared otherwise.
-    mem_sregNegativeFlagN = resultBit7;
+    vir_sregNegativeFlagN = resultBit7;
 
     // Z is set if the result is $00; cleared otherwise.
-    mem_sregZeroFlagZ = (result == 0);
+    vir_sregZeroFlagZ = (result == 0);
 
     mem_dataMemoryWrite8bitCpu(rd_addr, result);
     mem_programCounter += 1;
@@ -235,14 +235,36 @@ void out() {
 // AVR Instruction Manual page 152
 void sbic() {
     uint16_t instruction = mem_programMemoryFetchInstruction(mem_programCounter);
+    uint16_t nextInstruction = mem_programMemoryFetchInstruction(mem_programCounter + 1);
     uint16_t ioa_addr = dec_extractBits0000000001111000(instruction) + 0x20;
     uint16_t bitNum = dec_extractBits0000000000000111(instruction);
     uint8_t ioaContent = mem_dataMemoryRead8bit(ioa_addr);
 
-    if (!ioaContent & (1<<bitNum)) {
-        mem_programCounter += (1 + ins_getInstructionLength(mem_programCounter));
-    } else {
+    #define CALL_INSTRUCTION_CODE 0b1001010000001110
+    #define CALL_INSTRUCTION_MASK 0b1111111000001110
+
+    #define JUMP_INSTRUCTION_CODE 0b1001010000001100
+    #define JUMP_INSTRUCTION_MASK 0b1111111000001110
+
+    #define LDS_INSTRUCTION_CODE 0b1001000000000000
+    #define LDS_INSTRUCTION_MASK 0b1111111000001111
+
+    #define STS_INSTRUCTION_CODE 0b1001001000000000
+    #define STS_INSTRUCTION_MASK 0b1111111000001111
+
+
+    if (ioaContent & (1<<bitNum)) {
         mem_programCounter += 1;
+    } else if ((nextInstruction & CALL_INSTRUCTION_MASK) == CALL_INSTRUCTION_CODE) {
+        mem_programCounter += 3;
+    } else if ((nextInstruction & JUMP_INSTRUCTION_MASK) == JUMP_INSTRUCTION_CODE) {
+        mem_programCounter += 3;
+    } else if ((nextInstruction & LDS_INSTRUCTION_MASK) == LDS_INSTRUCTION_CODE) {
+        mem_programCounter += 3;
+    } else if ((nextInstruction & STS_INSTRUCTION_MASK) == STS_INSTRUCTION_CODE) {
+        mem_programCounter += 3;
+    } else {
+        mem_programCounter += 2;
     }
 
     g_cpuCycleCount += 1;
@@ -267,19 +289,19 @@ void sbiw() {
     bool rdhBit7 = (bool)(rdContent & (1 << 15));
 
     // S = N ⊕ V, for signed tests.
-    mem_sregSignBitS = mem_sregNegativeFlagN ^ mem_sregTwoComplementsOverflowFlagV;
+    vir_sregSignBitS = vir_sregNegativeFlagN ^ vir_sregTwoComplementsOverflowFlagV;
 
     // V: Set if two’s complement overflow resulted from the operation; cleared otherwise.
-    mem_sregTwoComplementsOverflowFlagV = (result & (1 << 15)) && !(rdContent & (1 << 7));
+    vir_sregTwoComplementsOverflowFlagV = (result & (1 << 15)) && !(rdContent & (1 << 7));
 
     // N: Set if MSB of the result is set; cleared otherwise.
-    mem_sregNegativeFlagN = resultBit15;
+    vir_sregNegativeFlagN = resultBit15;
 
     // Z: Set if the result is $0000; cleared otherwise.
-    mem_sregZeroFlagZ = (result == 0);
+    vir_sregZeroFlagZ = (result == 0);
 
     // C: Set if the absolute value of K is larger than the absolute value of Rd; cleared otherwise.
-    mem_sregSignBitS = resultBit15 && rdhBit7;
+    vir_sregSignBitS = resultBit15 && rdhBit7;
 
     mem_dataMemoryWrite16bit(rd_addr, result);
     mem_programCounter += 1;
@@ -301,7 +323,7 @@ void brne() {
     uint16_t instruction = mem_programMemoryFetchInstruction(mem_programCounter);
     int16_t constData = (int16_t)dec_extractBits0000001111111000(instruction);
 
-    if (mem_sregZeroFlagZ) {
+    if (vir_sregZeroFlagZ) {
         mem_programCounter += constData;
         g_cpuCycleCount += 2;
     } else {
@@ -329,17 +351,17 @@ void dec() {
     bool resultBit7 = uti_getBit(result, 7);
 
     // S: N ⊕ V, for signed tests.
-    mem_sregSignBitS = mem_sregNegativeFlagN ^ mem_sregTwoComplementsOverflowFlagV;
+    vir_sregSignBitS = vir_sregNegativeFlagN ^ vir_sregTwoComplementsOverflowFlagV;
 
     // V: Set if two’s complement overflow resulted from the operation; cleared otherwise.
     // Two’s complement overflow occurs if and only if Rd was $80 before the operation.
-    mem_sregTwoComplementsOverflowFlagV = (rdContent == 0x80);
+    vir_sregTwoComplementsOverflowFlagV = (rdContent == 0x80);
 
     // N: Set if MSB of the result is set; cleared otherwise.
-    mem_sregNegativeFlagN = resultBit7;
+    vir_sregNegativeFlagN = resultBit7;
 
     // Z is set if the result is $00; cleared otherwise.
-    mem_sregZeroFlagZ = (result == 0);
+    vir_sregZeroFlagZ = (result == 0);
 
     mem_dataMemoryWrite8bitCpu(rd_addr, result);
     mem_programCounter += 1;
@@ -384,7 +406,7 @@ void sts() {
     uint8_t memContent = mem_dataMemoryRead8bit(rr_addr);
 
     mem_dataMemoryWrite8bitCpu(mem_addr, memContent);
-    mem_programCounter += 1;
+    mem_programCounter += 2;
     g_cpuCycleCount += 1;
 }
 
@@ -410,23 +432,23 @@ void cp() {
     bool resultBit7 = uti_getBit(result, 7);
 
     // H: Set if there was a borrow from bit 3; cleared otherwise.
-    mem_sregHalfCarryFlagH = !rdBit3 && rrBit3 || rrBit3 && resultBit3 || resultBit3 && rdBit3;
+    vir_sregHalfCarryFlagH = !rdBit3 && rrBit3 || rrBit3 && resultBit3 || resultBit3 && rdBit3;
 
     // S: N ⊕ V, for signed tests.
-    mem_sregSignBitS = mem_sregNegativeFlagN ^ mem_sregTwoComplementsOverflowFlagV;
+    vir_sregSignBitS = vir_sregNegativeFlagN ^ vir_sregTwoComplementsOverflowFlagV;
 
     // V: Set if two’s complement overflow resulted from the operation; cleared otherwise.
-    mem_sregTwoComplementsOverflowFlagV = rdBit7 && !rrBit7 && resultBit7 || !rdBit7 && !rrBit7 && resultBit7;
+    vir_sregTwoComplementsOverflowFlagV = rdBit7 && !rrBit7 && resultBit7 || !rdBit7 && !rrBit7 && resultBit7;
 
     // N: Set if MSB of the result is set; cleared otherwise.
-    mem_sregNegativeFlagN = resultBit7;
+    vir_sregNegativeFlagN = resultBit7;
 
     // Z: Set if the result is $00; cleared otherwise.
-    mem_sregZeroFlagZ = (result == 0);
+    vir_sregZeroFlagZ = (result == 0);
 
     // C: Set if the absolute value of the contents of Rr is larger than the absolute value of Rd; cleared
     // otherwise.
-    mem_sregCarryFlagC = rrContent > rdContent;
+    vir_sregCarryFlagC = rrContent > rdContent;
 
     mem_programCounter += 1;
     g_cpuCycleCount += 1;

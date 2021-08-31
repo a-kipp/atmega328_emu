@@ -12,7 +12,7 @@
 // Public
 // ____________________________________________________________________________________________________________________
 
-uint16_t inline uti_byteswap16bit(uint16_t num) {
+uint16_t uti_byteswap16bit(uint16_t num) {
     return num << 8 | num >> 8;
 }
 

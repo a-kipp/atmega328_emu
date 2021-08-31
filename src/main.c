@@ -7,6 +7,8 @@
 
 int main(int argc, char *argv[] ) {
 
+    setvbuf (stdout, NULL, _IONBF, 0);
+
     bool is_running = true;
 
     if(argc != 2) {

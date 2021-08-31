@@ -3,11 +3,11 @@
 #include "decode.h"
 
 
-#define INFO_STRING_LENGTH 80
+#define INFO_LENGTH 80
 
 typedef struct InstructionInfo {
     uint8_t length;
-    char infoString[INFO_STRING_LENGTH];
+    char info[INFO_LENGTH];
 } InstructionInfo;
 
 
@@ -18,7 +18,7 @@ InstructionInfo unknown_disassemble(uint16_t opCode) {
     
     InstructionInfo instruction = {0};
 
-    snprintf(instruction.infoString, INFO_STRING_LENGTH, "%s", instructionName);
+    snprintf(instruction.info, INFO_LENGTH, "%s", instructionName);
 
     instruction.length =  1;
     
@@ -33,7 +33,7 @@ InstructionInfo adc_disassemble(uint16_t opCode) {
 
     InstructionInfo instruction = {0};
 
-    snprintf(instruction.infoString, INFO_STRING_LENGTH, "%s %s %s", instructionName, deb_getName(rd_addr), deb_getName(rr_addr));
+    snprintf(instruction.info, INFO_LENGTH, "%s %s %s", instructionName, deb_getName(rd_addr), deb_getName(rr_addr));
 
     instruction.length =  1;
     
@@ -48,7 +48,7 @@ InstructionInfo add_disassemble(uint16_t opCode) {
 
     InstructionInfo instruction = {0};
     
-    snprintf(instruction.infoString, INFO_STRING_LENGTH, "%s %s %s", instructionName, deb_getName(rd_addr), deb_getName(rr_addr));
+    snprintf(instruction.info, INFO_LENGTH, "%s %s %s", instructionName, deb_getName(rd_addr), deb_getName(rr_addr));
 
     instruction.length =  1;
     
@@ -63,7 +63,7 @@ InstructionInfo cbi_disassemble(uint16_t opCode) {
 
     InstructionInfo instruction = {0};
  
-    snprintf(instruction.infoString, INFO_STRING_LENGTH, "%s %s %1X", instructionName, deb_getName(ioa_addr), bitNum);
+    snprintf(instruction.info, INFO_LENGTH, "%s %s %1X", instructionName, deb_getName(ioa_addr), bitNum);
 
     instruction.length =  1;
     
@@ -79,9 +79,9 @@ InstructionInfo eor_disassemble(uint16_t opCode) {
     InstructionInfo instruction = {0};
  
     if (rd_addr == rr_addr) {
-        snprintf(instruction.infoString, INFO_STRING_LENGTH, "%s %s", "clr", deb_getName(rd_addr));
+        snprintf(instruction.info, INFO_LENGTH, "%s %s", "clr", deb_getName(rd_addr));
     } else {
-        snprintf(instruction.infoString, INFO_STRING_LENGTH, "%s %s %s", instructionName, deb_getName(rd_addr), deb_getName(rr_addr));
+        snprintf(instruction.info, INFO_LENGTH, "%s %s %s", instructionName, deb_getName(rd_addr), deb_getName(rr_addr));
     }
 
     instruction.length =  1;
@@ -97,7 +97,7 @@ InstructionInfo in_disassemble(uint16_t opCode) {
 
     InstructionInfo instruction = {0};
  
-    snprintf(instruction.infoString, INFO_STRING_LENGTH, "%s %s %s", instructionName, deb_getName(rr_addr), deb_getName(ioa_addr));
+    snprintf(instruction.info, INFO_LENGTH, "%s %s %s", instructionName, deb_getName(rr_addr), deb_getName(ioa_addr));
 
     instruction.length =  1;
     
@@ -106,13 +106,12 @@ InstructionInfo in_disassemble(uint16_t opCode) {
 
 
 InstructionInfo ldi_disassemble(uint16_t opCode) {
-    char *instructionName = "ldi";
     uint16_t rd_addr =  dec_extractBits0000000011110000(opCode) + 16;
     uint8_t constData = dec_extractBits0000111100001111(opCode);
 
     InstructionInfo instruction = {0};
  
-    snprintf(instruction.infoString, INFO_STRING_LENGTH, "%s %s %02X", instructionName, deb_getName(rd_addr), constData);
+    snprintf(instruction.info, INFO_LENGTH, "ldi \"%s\" (%02X)", deb_getName(rd_addr), constData);
 
     instruction.length =  1;
     
@@ -125,7 +124,7 @@ InstructionInfo nop_disassemble(uint16_t opCode) {
 
     InstructionInfo instruction = {0};
  
-    snprintf(instruction.infoString, INFO_STRING_LENGTH, "%s", instructionName);
+    snprintf(instruction.info, INFO_LENGTH, "%s", instructionName);
 
     instruction.length =  1;
     
@@ -140,7 +139,7 @@ InstructionInfo out_disassemble(uint16_t opCode) {
 
     InstructionInfo instruction = {0};
  
-    snprintf(instruction.infoString, INFO_STRING_LENGTH, "%s %s %s", instructionName, deb_getName(ioa_addr), deb_getName(rr_addr));
+    snprintf(instruction.info, INFO_LENGTH, "%s %s %s", instructionName, deb_getName(ioa_addr), deb_getName(rr_addr));
 
     instruction.length =  1;
     
@@ -155,7 +154,7 @@ InstructionInfo sbiw_disassemble(uint16_t opCode) {
 
     InstructionInfo instruction = {0};
  
-    snprintf(instruction.infoString, INFO_STRING_LENGTH, "%s %s %02X", instructionName, deb_getName(rd_addr), constData);
+    snprintf(instruction.info, INFO_LENGTH, "%s %s %02X", instructionName, deb_getName(rd_addr), constData);
 
     instruction.length =  1;
     
@@ -169,7 +168,7 @@ InstructionInfo brne_disassemble(uint16_t opCode) {
 
     InstructionInfo instruction = {0};
  
-    snprintf(instruction.infoString, INFO_STRING_LENGTH, "%s %02X", instructionName, constData);
+    snprintf(instruction.info, INFO_LENGTH, "%s %02X", instructionName, constData);
     
     instruction.length =  1;
     
@@ -183,7 +182,7 @@ InstructionInfo dec_disassemble(uint16_t opCode) {
 
     InstructionInfo instruction = {0};
  
-    snprintf(instruction.infoString, INFO_STRING_LENGTH, "%s %s", instructionName, deb_getName(rd_addr));
+    snprintf(instruction.info, INFO_LENGTH, "%s %s", instructionName, deb_getName(rd_addr));
 
     instruction.length =  1;
     
@@ -192,12 +191,12 @@ InstructionInfo dec_disassemble(uint16_t opCode) {
 
 
 InstructionInfo rjmp_disassemble(uint16_t opCode) {
-    char *instructionName = "rjmp";
     int16_t constAddress = (int16_t)dec_extractBits0000111111111111(opCode);
+    uint16_t jumpDest_addr = (mem_programCounter + constAddress - 0xfff) % (DATA_MEMORY_END + 1);
 
     InstructionInfo instruction = {0};
  
-    snprintf(instruction.infoString, INFO_STRING_LENGTH, "%s %04X", instructionName, constAddress);
+    snprintf(instruction.info, INFO_LENGTH, "rjmp %04X", jumpDest_addr);
 
     instruction.length =  1;
 
@@ -206,12 +205,15 @@ InstructionInfo rjmp_disassemble(uint16_t opCode) {
 
 
 InstructionInfo sts_disassemble(uint16_t opCode) {
-    char *instructionName = "sts";
-    uint16_t rr_addr = dec_extractBits0000000111110000(opCode);
+    uint16_t instructionFirst = mem_programMemoryFetchInstruction(mem_programCounter);
+    uint16_t rr_addr = dec_extractBits0000000111110000(instructionFirst);
+    uint16_t instructionSecond = mem_programMemoryFetchInstruction(mem_programCounter + 1);
+    uint16_t mem_addr = instructionSecond;
+    uint8_t rrContent = mem_dataMemoryRead8bit(rr_addr);
 
     InstructionInfo instruction = {0};
  
-    snprintf(instruction.infoString, INFO_STRING_LENGTH, "%s memaddr %04X", instructionName, rr_addr);
+    snprintf(instruction.info, INFO_LENGTH, "sts %04X \"%s\"(%02X)", mem_addr, deb_getName(rr_addr), rrContent);
     
     instruction.length =  2;
 
