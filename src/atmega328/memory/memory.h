@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include "memory_map.h"
+#include "map.h"
 #include "loader.h"
 #include "../global_variables.h"
 #include "../utility_functions.h"
@@ -33,7 +33,7 @@ bool mem_sregHalfCarryFlagH = 0;
 bool mem_sregBitCopyStorageT = 0;
 bool mem_sregGlobalInterruptEnableI = 0;
 
-void sregRedirectWrite(uint8_t value) {
+static void _sregRedirectWrite(uint8_t value) {
     bool sregCarryFlagC = value ^ 0b00000001;
     bool sregZeroFlagZ = value ^ 0b00000010;
     bool sregNegativeFlagN = value ^ 0b00000100;
@@ -44,7 +44,7 @@ void sregRedirectWrite(uint8_t value) {
     bool sregGlobalInterruptEnableI = value ^ 0b10000000;
 }
 
-uint8_t _sregRedirectRead() {
+static uint8_t _sregRedirectRead() {
     uint8_t returnVal = mem_sregCarryFlagC;
     returnVal | mem_sregCarryFlagC;
     returnVal | mem_sregZeroFlagZ;
@@ -94,18 +94,12 @@ uint16_t mem_dataMemoryRead16bit(uint16_t address) {
 
 // this function shall only be used by the CPU to write to memory
 void mem_dataMemoryWrite8bitCpu(uint16_t address, uint8_t value) {
-    if (address > DATA_MEMORY_END) {
+    if (address == SREG) {
+        _sregRedirectWrite(value);
+    } else if (address > DATA_MEMORY_END) {
         fprintf(stderr, "invalid address in datamemory called\n");
-    }
-    switch (address) {
-        case SREG: sregRedirectWrite(value); break;
-        case UDR0: out_serialOutBin(value); break;
-        case SIGNAL_EMULATOR: out_handleSignal(value); break;
-        case CONSOLE_PRINT_BIN: out_serialOutBin(value); break;
-        case CONSOLE_PRINT_CHAR: out_serialOutChar(value); break;
-        case CONSOLE_PRINT_DEC: out_serialOutDec(value); break;
-        case CONSOLE_PRINT_HEX: out_serialOutHex(value); break;
-        default: *(uint8_t*)(_dataMemory_ptr + address) = value; break;
+    } else {
+        *(uint8_t*)(_dataMemory_ptr + address) = value;
     }
 }
 
@@ -129,7 +123,6 @@ void mem_eepromMemoryWrite8bit(uint16_t address, uint8_t value) {
 
 
 void mem_dataMemoryWrite16bit(uint16_t address, uint16_t value) {
-    address %= DATA_MEMORY_END;
     *(uint16_t*)(_dataMemory_ptr + address) = value;
 }
 

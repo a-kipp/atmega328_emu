@@ -7,7 +7,7 @@
 #include "utility_functions.h"
 #include "memory/memory.h"
 #include "global_variables.h"
-#include "memory/memory_map.h"
+#include "memory/map.h"
 
 
 // Public

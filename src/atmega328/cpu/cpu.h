@@ -11,9 +11,9 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <time.h>
-#include "jump_table.h"
 #include "../memory/memory.h"
 #include "../pin.h"
+#include "instruction/jump_table_implementation.h"
 ;
 
 int _cpuStopSignal;
@@ -24,14 +24,14 @@ pthread_t *_cpuThread;
 
 static void _executeSingleInstruction() {
     uint16_t instruction = mem_programMemoryFetchInstruction(mem_programCounter);
-    jump_table[instruction]();
+    jti_implementationTable[instruction]();
 }
 
 
 static void _executeInstructions(int numberOfInstructions) {
     for (int i = 0; i < 10000; i++) {
         uint16_t instruction = mem_programMemoryFetchInstruction(mem_programCounter);
-        jump_table[instruction]();
+        jti_implementationTable[instruction]();
     }
 }
 

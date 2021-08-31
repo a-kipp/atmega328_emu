@@ -37,3 +37,5 @@ uint32_t uti_extractBits(uint32_t num, int firstBit, int lastBit) {
     uint32_t mask = 0xFFFFFF >> (16 - (lastBit - firstBit));
     return num ^= mask;
 }
+
+
