@@ -8,7 +8,7 @@
 #include "memory/memory.h"
 #include "global_variables.h"
 #include "memory/map.h"
-
+#include <time.h>
 
 // Public
 // ____________________________________________________________________________________________________________________
@@ -108,5 +108,53 @@ char *deb_getName(int address) {
         case SPH: return "SPH";
         case SREG: return "SREG";
         default: return "UNKNOWN_ADDRESS";
+    }
+}
+
+
+
+
+
+static unsigned long long _cycleCountStart = 0;
+static bool _speedTestIsRunning = false;
+
+
+static struct timespec _startTime;
+static struct timespec _timeTaken;
+static struct timespec _stopTime;
+
+static struct timespec _stopedTime;
+
+
+// Public
+// ____________________________________________________________________________________________________________________
+
+unsigned int tim_atmegaClockSpeed = 16000000; //minimum 2 Hz
+
+
+void deb_triggerSpeedTest() {
+    if (!_speedTestIsRunning) {
+        _cycleCountStart = g_cpuCycleCount;
+        clock_gettime(CLOCK_REALTIME, &_startTime);
+
+        _speedTestIsRunning = true;
+        printf("speedtest start\n");
+    } else {
+        clock_gettime(CLOCK_REALTIME, &_stopTime);
+
+        _speedTestIsRunning = false;
+
+        _timeTaken.tv_sec = _stopTime.tv_sec - _startTime.tv_sec;
+        _timeTaken.tv_nsec = _stopTime.tv_nsec - _startTime.tv_nsec;
+
+        double elapsed = (double)_stopTime.tv_sec - (double)_startTime.tv_sec;
+        elapsed += ((double)_stopTime.tv_nsec / 1000000000);
+        elapsed -= ((double)_startTime.tv_nsec / 1000000000);
+
+        double speedHz = (double)(g_cpuCycleCount - _cycleCountStart) / elapsed;
+    
+        printf("cycles elapsed: %d\n", g_cpuCycleCount - _cycleCountStart);
+        printf("time elapsed: %f\n", elapsed);
+        printf("speed: %f Hz\n", speedHz);
     }
 }

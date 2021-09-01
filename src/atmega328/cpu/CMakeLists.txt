@@ -1,1 +1,1 @@
-add_subdirectory(instruction)
+add_subdirectory(instructions)

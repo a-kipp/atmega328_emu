@@ -7,6 +7,7 @@
 #include "cpu/cpu.h"
 #include "pin.h"
 #include "global_variables.h"
+#include "scheduler/scheduler.h"
 
 
 ;
@@ -19,7 +20,7 @@ void atm_loadProgram(char* filePath) {
 }
 
 void atm_setClockSpeed(int clockSpeed) {
-    g_atmegaClockSpeed = clockSpeed;
+    tim_atmegaClockSpeed = clockSpeed;
 }
 
 void atm_start() {

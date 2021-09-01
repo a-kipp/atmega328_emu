@@ -3,27 +3,38 @@
 #include <stdint.h>
 #include "memory/memory.h"
 
+#define NUMBER_OF_PINS 29
+
+
 // pin modes
-#define UNUSED 0
+#define UNDEFINED 0
 #define DIGITAL_IN 1
-#define ANALOG_IN 2
-#define PWM_IN 3
-#define DIGITAL_OUT 1
-#define ANALOG_OUT 2
-#define PWM_OUT 3
+#define DIGITAL_OUT 2
 
 
-typedef struct pinState {
-    int pinNumber;
-    uint16_t mode;
-    int value;
-    uint16_t freq;
-    struct timespec currentTime;
-} pinState;
+typedef struct PinState {
+    uint16_t number;
+    uint16_t value;
+    uint8_t mode;
+} PinState;
+
+
+PinState _pinsByNumber[29] = {0};
+
+PinState *_pinsByAddress[PORTD + 1][8];
+
+
+
+
+
+
+
+
+
 
 
 #define QUEUE_SIZE 10
-pinState pinChangeQueue[QUEUE_SIZE] = {0};
+PinState pinChangeQueue[QUEUE_SIZE] = {0};
 static int _queueFront = 0;
 static int _queueRear = 0;
 
@@ -34,10 +45,10 @@ static bool _currentPinStates[28] = {0};
 static bool _pinChangePending = false;
 
 
-static pinState _dequeuePinChange() {
+static PinState _dequeuePinChange() {
     _queueFront = (_queueFront + 1) % QUEUE_SIZE;
-    pinState pinChange =  pinChangeQueue[_queueFront];
-    pinChangeQueue[_queueFront] = (pinState){0, 0, 0, 0, 0};
+    PinState pinChange =  pinChangeQueue[_queueFront];
+    pinChangeQueue[_queueFront] = (PinState){0, 0, 0};
     if (_queueFront == _queueRear) {
         _pinChangePending = false;
     }
@@ -47,9 +58,9 @@ static pinState _dequeuePinChange() {
 
 static void _setBitInRegisterTo(uint16_t address, int bitNum, bool isSet) {
     if (isSet) {
-        mem_externalSourceWrite8bit(address, mem_dataMemoryRead8bit(address) | (1 << bitNum));
+        mem_dataWrite8bitFromExtern(address, mem_dataRead8bitFromCPU(address) | (1 << bitNum));
     } else {
-        mem_externalSourceWrite8bit(address, mem_dataMemoryRead8bit(address) ^ (1 << bitNum));
+        mem_dataWrite8bitFromExtern(address, mem_dataRead8bitFromCPU(address) ^ (1 << bitNum));
     }
 }
 
@@ -59,7 +70,7 @@ static void _setBitInRegisterTo(uint16_t address, int bitNum, bool isSet) {
 
 
 void pin_enqueuePinChange(uint16_t pinNumber, uint16_t pinValue) {
-    pinState pin = (pinState){pinNumber, 0, pinValue, 0, 0};
+    PinState pin = (PinState){pinNumber, 0, pinValue};
 
     _queueRear = (_queueRear + 1) % QUEUE_SIZE;
     pinChangeQueue[_queueRear] = pin;
@@ -72,8 +83,8 @@ void pin_enqueuePinChange(uint16_t pinNumber, uint16_t pinValue) {
 
 void pin_handlePinChanges() {
     if (_pinChangePending) {
-        pinState newPinState = _dequeuePinChange();
-        switch (newPinState.pinNumber) {
+        PinState newPinState = _dequeuePinChange();
+        switch (newPinState.number) {
             case 1: _setBitInRegisterTo(PORTC, PORTC6_PIN_1, (bool)newPinState.value); break;
             case 2: _setBitInRegisterTo(PORTD, PORTD0_PIN_2, (bool)newPinState.value); break;
             case 3: _setBitInRegisterTo(PORTD, PORTD1_PIN_3, (bool)newPinState.value); break;

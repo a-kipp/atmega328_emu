@@ -1,42 +1,44 @@
 #pragma once
 
-#include "virtual_space.h"
+#include "array.h"
 #include "../out.h"
 
 
 static uint8_t _unconditionalRead(uint16_t address) {
-    return vir_programMemory[address];
+    return arr_programMemory[address];
 }
 
 static void _unconditionalWrite(uint16_t address, uint8_t value) {
-    vir_programMemory[address] = value;
+    arr_programMemory[address] = value;
 }
 
 
 static uint8_t _SregRead(uint16_t address) {
-    printf("hier gewesen");
-    uint8_t returnVal = vir_sregCarryFlagC;
-    returnVal | vir_sregCarryFlagC;
-    returnVal | vir_sregZeroFlagZ;
-    returnVal | vir_sregNegativeFlagN;
-    returnVal | vir_sregTwoComplementsOverflowFlagV;
-    returnVal | vir_sregSignBitS;
-    returnVal | vir_sregHalfCarryFlagH;
-    returnVal | vir_sregBitCopyStorageT;
-    returnVal | vir_sregGlobalInterruptEnableI;
+    printf("read from sreg");
+    uint8_t returnVal = arr_sregCarryFlagC;
+    returnVal | arr_sregCarryFlagC;
+    returnVal | arr_sregZeroFlagZ;
+    returnVal | arr_sregNegativeFlagN;
+    returnVal | arr_sregTwoComplementsOverflowFlagV;
+    returnVal | arr_sregSignBitS;
+    returnVal | arr_sregHalfCarryFlagH;
+    returnVal | arr_sregBitCopyStorageT;
+    returnVal | arr_sregGlobalInterruptEnableI;
     return returnVal;
 }
 
 static void _sregWrite(uint16_t address, uint8_t value) {
-    vir_sregCarryFlagC = value ^ 0b00000001;
-    vir_sregZeroFlagZ = value ^ 0b00000010;
-    vir_sregNegativeFlagN = value ^ 0b00000100;
-    vir_sregTwoComplementsOverflowFlagV = value ^ 0b00001000;
-    vir_sregSignBitS = value ^ 0b00010000;
-    vir_sregHalfCarryFlagH = value ^ 0b00100000;
-    vir_sregBitCopyStorageT = value ^ 0b01000000;
-    vir_sregGlobalInterruptEnableI = value ^ 0b10000000;
+    arr_sregCarryFlagC = value ^ 0b00000001;
+    arr_sregZeroFlagZ = value ^ 0b00000010;
+    arr_sregNegativeFlagN = value ^ 0b00000100;
+    arr_sregTwoComplementsOverflowFlagV = value ^ 0b00001000;
+    arr_sregSignBitS = value ^ 0b00010000;
+    arr_sregHalfCarryFlagH = value ^ 0b00100000;
+    arr_sregBitCopyStorageT = value ^ 0b01000000;
+    arr_sregGlobalInterruptEnableI = value ^ 0b10000000;
 }
+
+
 
 static void _signalEmulator(uint16_t address, uint8_t value) {
     if (address == SIGNAL_EMULATOR) {
@@ -45,6 +47,8 @@ static void _signalEmulator(uint16_t address, uint8_t value) {
         fprintf(stderr, "this is not a register to print to\n");
     }
 }
+
+
 
 static void _consolePrint(uint16_t address, uint8_t value) {
     switch (address) {
@@ -55,6 +59,76 @@ static void _consolePrint(uint16_t address, uint8_t value) {
         case UDR0: out_serialOutChar(value); break;
         default: fprintf(stderr, "this is not a register to print to\n"); break;
     }
+}
+
+
+
+static void _catchBadAddress(uint16_t address, uint8_t value) {
+    if (address == BAD_ADDRESS) {
+        fprintf(stderr, "writing to the bad address\n");
+    }
+}
+
+
+static void _writeToPinPortB(uint16_t address, uint8_t value) {
+    if (address = PORTB) {
+        uint8_t oldHighPins = arr_programMemory[PORTB] & arr_programMemory[DDRB];
+        arr_programMemory[PORTB] = value;
+        uint8_t newHighPins = value & arr_programMemory[DDRB];
+        uint8_t changedPins = oldHighPins ^ newHighPins;
+        if (changedPins & (1 << 7)) out_setPin(10, newHighPins & (1 << 7));
+        if (changedPins & (1 << 6)) out_setPin(9, newHighPins & (1 << 6));
+        if (changedPins & (1 << 5)) out_setPin(19, newHighPins & (1 << 5));
+        if (changedPins & (1 << 3)) out_setPin(18, newHighPins & (1 << 3));
+        if (changedPins & (1 << 2)) out_setPin(17, newHighPins & (1 << 2));
+        if (changedPins & (1 << 4)) out_setPin(16, newHighPins & (1 << 4));
+        if (changedPins & (1 << 1)) out_setPin(15, newHighPins & (1 << 1));
+        if (changedPins & (1 << 0)) out_setPin(14, newHighPins & (1 << 0));
+    } else {
+        fprintf(stderr, "something wrong with the pins\n");
+    }
+}
+
+static void _writeToPinPortC(uint16_t address, uint8_t value) {
+    if (address = PORTC) {
+        uint8_t oldHighPins = arr_programMemory[PORTC] & arr_programMemory[DDRC];
+        arr_programMemory[PORTC] = value;
+        uint8_t newHighPins = value & arr_programMemory[DDRC];
+        uint8_t changedPins = oldHighPins ^ newHighPins;
+        // no pin here
+        if (changedPins & (1 << 6)) out_setPin(1, newHighPins & (1 << 6));
+        if (changedPins & (1 << 5)) out_setPin(28, newHighPins & (1 << 5));
+        if (changedPins & (1 << 3)) out_setPin(27, newHighPins & (1 << 3));
+        if (changedPins & (1 << 2)) out_setPin(26, newHighPins & (1 << 2));
+        if (changedPins & (1 << 4)) out_setPin(25, newHighPins & (1 << 4));
+        if (changedPins & (1 << 1)) out_setPin(24, newHighPins & (1 << 1));
+        if (changedPins & (1 << 0)) out_setPin(22, newHighPins & (1 << 0));
+    } else {
+        fprintf(stderr, "something wrong with the pins\n");
+    }
+}
+
+static void _writeToPinPortD(uint16_t address, uint8_t value) {
+    if (address = PORTD) {
+        uint8_t oldHighPins = arr_programMemory[PORTD] & arr_programMemory[DDRD];
+        arr_programMemory[PORTD] = value;
+        uint8_t newHighPins = value & arr_programMemory[DDRD];
+        uint8_t changedPins = oldHighPins ^ newHighPins;
+        if (changedPins & (1 << 7)) out_setPin(13, newHighPins & (1 << 7));
+        if (changedPins & (1 << 6)) out_setPin(12, newHighPins & (1 << 6));
+        if (changedPins & (1 << 5)) out_setPin(11, newHighPins & (1 << 5));
+        if (changedPins & (1 << 3)) out_setPin(6, newHighPins & (1 << 3));
+        if (changedPins & (1 << 2)) out_setPin(5, newHighPins & (1 << 2));
+        if (changedPins & (1 << 4)) out_setPin(4, newHighPins & (1 << 4));
+        if (changedPins & (1 << 1)) out_setPin(3, newHighPins & (1 << 1));
+        if (changedPins & (1 << 0)) out_setPin(2, newHighPins & (1 << 0));
+    } else {
+        fprintf(stderr, "something wrong with the pins\n");
+    }
+}
+
+static void _writeToPinInput(uint16_t address, uint8_t value) {
+    fprintf(stderr, "tried to write to pin input register, nothing happened\n");
 }
 
 
@@ -354,15 +428,15 @@ static void(*_registerWriteFunctions[])(uint16_t, uint8_t) = {
     _unconditionalWrite, // 0x20
     _unconditionalWrite, // 0x21
     _unconditionalWrite, // 0x22
-    _unconditionalWrite, // 0x23
+    _writeToPinInput, // 0x23
     _unconditionalWrite, // 0x24
-    _unconditionalWrite, // 0x25
-    _unconditionalWrite, // 0x26
+    _writeToPinPortB, // 0x25
+    _writeToPinInput, // 0x26
     _unconditionalWrite, // 0x27
-    _unconditionalWrite, // 0x28
-    _unconditionalWrite, // 0x29
+    _writeToPinPortC, // 0x28
+    _writeToPinInput, // 0x29
     _unconditionalWrite, // 0x2A
-    _unconditionalWrite, // 0x2B
+    _writeToPinPortC, // 0x2B
     _unconditionalWrite, // 0x2C
     _unconditionalWrite, // 0x2D
     _unconditionalWrite, // 0x2E
@@ -568,7 +642,7 @@ static void(*_registerWriteFunctions[])(uint16_t, uint8_t) = {
     _unconditionalWrite, // 0xF6
     _unconditionalWrite, // 0xF7
     _unconditionalWrite, // 0xF8
-    _unconditionalWrite, // 0xF9
+    _catchBadAddress, // 0xF9
     _consolePrint, // 0xFA
     _consolePrint, // 0xFB
     _consolePrint, // 0xFC

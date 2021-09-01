@@ -50,8 +50,9 @@
         #define R31_Z_REGISTER_HIGH_BYTE 0x001F
     #define GENERAL_PURPOSE_REGISTERS_END 0x001F
     #define IO_REGISTERS_START 0x0020
-        #define DDRB 0x0024
-        #define PORTB 0x0025 // Pin Input Register
+        #define PINB 0x0023 // The Port B Input Pins Address
+        #define DDRB 0x0024 // The Port B Data Direction Register
+        #define PORTB 0x0025 // The Port B Data Register
             #define PORTB7_PIN_10 7
             #define PORTB6_PIN_9 6
             #define PORTB5_PIN_19 5
@@ -60,7 +61,9 @@
             #define PORTB2_PIN_16 2 
             #define PORTB1_PIN_15 1
             #define PORTB0_PIN_14 0
-        #define PORTC 0x0028 // Pin Input Register
+        #define PINC 0x0026 // The Port C Input Pins Address
+        #define DDRC 0x0027 // The Port C Data Direction Register
+        #define PORTC 0x0028 // The Port C Data Register
             #define PORTC6_PIN_1 6
             #define PORTC5_PIN_28 5
             #define PORTC4_PIN_27 4
@@ -68,7 +71,9 @@
             #define PORTC2_PIN_25 2 
             #define PORTC1_PIN_24 1
             #define PORTC0_PIN_22 0
-        #define PORTD 0x002B // Pin Input Register
+        #define PIND 0x0029 // The Port D Input Pins Address
+        #define DDRD 0x002A // The Port D Data Direction Register
+        #define PORTD 0x002B // The Port D Data Register
             #define PORTD7_PIN_13 7
             #define PORTD6_PIN_12 6
             #define PORTD5_PIN_11 5
@@ -107,6 +112,7 @@
         #define UBRR0L 0x00C4 // Datasheet page 276
         #define UBRR0H 0x00C5
         #define UDR0 0x00C6 // Serial Register
+        #define BAD_ADDRESS 0x00F9
         #define CONSOLE_PRINT_HEX 0x00FA
         #define CONSOLE_PRINT_BIN 0x00FB
         #define CONSOLE_PRINT_CHAR 0x00FC
