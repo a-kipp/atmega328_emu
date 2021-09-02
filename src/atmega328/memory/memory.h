@@ -38,13 +38,13 @@ static uint8_t _SregRead(uint16_t address) {
     printf("read from sreg");
     uint8_t returnVal = 0;
     returnVal | ((mem_sregCarryFlagC & 0b00000001) << 0);
-    returnVal | ((mem_sregZeroFlagZ & 0b00000001) << 1);
-    returnVal | ((mem_sregNegativeFlagN & 0b00000001) << 2);
-    returnVal | ((mem_sregTwoComplementsOverflowFlagV & 0b00000001) << 3);
-    returnVal | ((mem_sregSignBitS & 0b00000001) << 4);
-    returnVal | ((mem_sregHalfCarryFlagH & 0b00000001) << 5);
-    returnVal | ((mem_sregBitCopyStorageT & 0b00000001) << 5);
-    returnVal | ((mem_sregGlobalInterruptEnableI & 0b00000001) << 7);
+    returnVal | ((mem_sregZeroFlagZ & 0b00000010) << 1);
+    returnVal | ((mem_sregNegativeFlagN & 0b00000100) << 2);
+    returnVal | ((mem_sregTwoComplementsOverflowFlagV & 0b00001000) << 3);
+    returnVal | ((mem_sregSignBitS & 0b00010000) << 4);
+    returnVal | ((mem_sregHalfCarryFlagH & 0b00100000) << 5);
+    returnVal | ((mem_sregBitCopyStorageT & 0b01000000) << 5);
+    returnVal | ((mem_sregGlobalInterruptEnableI & 0b10000000) << 7);
     return returnVal;
 }
 
