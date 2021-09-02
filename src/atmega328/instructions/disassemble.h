@@ -12,6 +12,60 @@ typedef struct InstructionInfo {
 
 
 
+static char *_getName(int address) {
+    switch (address) {
+        case R0: return "R0";
+        case R1: return "R1";
+        case R2: return "R2";
+        case R3: return "R3";
+        case R4: return "R4";
+        case R5: return "R5";
+        case R6: return "R6";
+        case R7: return "R7";
+        case R8: return "R8";
+        case R9: return "R9";
+        case R10: return "R10";
+        case R11: return "R11";
+        case R12: return "R12";
+        case R13: return "R13";
+        case R14: return "R14";
+        case R15: return "R15";
+        case R16: return "R16";
+        case R17: return "R17";
+        case R18: return "R18";
+        case R19: return "R19";
+        case R20: return "R20";
+        case R21: return "R21";
+        case R22: return "R22";
+        case R23: return "R23";
+        case R24: return "R24";
+        case R25: return "R25";
+        case R26_X_REGISTER_LOW_BYTE: return "R26";
+        case R27_X_REGISTER_HIGH_BYTE: return "R27";
+        case R28_Y_REGISTER_LOW_BYTE: return "R28";
+        case R29_Y_REGISTER_HIGH_BYTE: return "R29";
+        case R30_Z_REGISTER_LOW_BYTE: return "R30";
+        case R31_Z_REGISTER_HIGH_BYTE: return "R31";
+        case DDRB: return "DDRB";
+        case PORTB: return "PORTB"; 
+        case GPIOR0: return "GPIOR0";
+        case EECR: return "EECR";
+        case EEDR: return "EEDR";
+        case EEARL: return "EEARL";
+        case EEARH: return "EEARH";
+        case GPIOR1: return "GPIOR1";
+        case GPIOR2: return "GPIOR2";
+        case SPL: return "SPL";
+        case SPH: return "SPH";
+        case SREG: return "SREG";
+        default: return "UNKNOWN_ADDRESS";
+    }
+}
+
+
+
+
+
 // unknown opcode
 InstructionInfo unknown_disassemble(uint16_t opCode) {
     char *instructionName = "unknown";
@@ -37,7 +91,7 @@ InstructionInfo adc_disassemble(uint16_t opCode) {
 
     InstructionInfo instruction = {0};
 
-    snprintf(instruction.info, INFO_LENGTH, "adc %s %s", deb_getName(rd_addr), deb_getName(rr_addr));
+    snprintf(instruction.info, INFO_LENGTH, "adc %s %s", _getName(rd_addr), _getName(rr_addr));
 
     instruction.length =  1;
     
@@ -57,7 +111,7 @@ InstructionInfo add_disassemble(uint16_t opCode) {
 
     InstructionInfo instruction = {0};
 
-    snprintf(instruction.info, INFO_LENGTH, "add %s %s", deb_getName(rd_addr), deb_getName(rr_addr));
+    snprintf(instruction.info, INFO_LENGTH, "add %s %s", _getName(rd_addr), _getName(rr_addr));
 
     instruction.length =  1;
     
@@ -102,7 +156,7 @@ InstructionInfo cbi_disassemble(uint16_t opCode) {
 
     InstructionInfo instruction = {0};
  
-    snprintf(instruction.info, INFO_LENGTH, "cbi %s %1X", deb_getName(ioa_addr), bitNum);
+    snprintf(instruction.info, INFO_LENGTH, "cbi %s %1X", _getName(ioa_addr), bitNum);
 
     instruction.length =  1;
     
@@ -120,13 +174,13 @@ InstructionInfo cp_disassemble() {
     uint16_t instructionFirst = mem_programFetchInstruction(mem_programCounter);
     uint16_t rd_addr = dec_extractBits0000000111110000(instructionFirst);
     uint16_t rr_addr = dec_extractBits0000001000001111(instructionFirst);
-    uint8_t rdContent = mem_dataRead8bitFromCPU(rd_addr);
-    uint8_t rrContent = mem_dataRead8bitFromCPU(rr_addr);
+    uint8_t rdContent = mem_dataRead8bit(rd_addr);
+    uint8_t rrContent = mem_dataRead8bit(rr_addr);
     uint8_t result = rdContent - rrContent;
 
     InstructionInfo instruction = {0};
  
-    snprintf(instruction.info, INFO_LENGTH, "cp \"%s\"(%02X) \"%s\"(%02X)", deb_getName(rd_addr), rdContent, deb_getName(rr_addr), rrContent);
+    snprintf(instruction.info, INFO_LENGTH, "cp \"%s\"(%02X) \"%s\"(%02X)", _getName(rd_addr), rdContent, _getName(rr_addr), rrContent);
 
     instruction.length =  1;
     
@@ -150,7 +204,7 @@ InstructionInfo dec_disassemble(uint16_t opCode) {
 
     InstructionInfo instruction = {0};
  
-    snprintf(instruction.info, INFO_LENGTH, "dec %s", instructionName, deb_getName(rd_addr));
+    snprintf(instruction.info, INFO_LENGTH, "dec %s", instructionName, _getName(rd_addr));
 
     instruction.length =  1;
     
@@ -175,9 +229,9 @@ InstructionInfo eor_disassemble(uint16_t opCode) {
     InstructionInfo instruction = {0};
  
     if (rd_addr == rr_addr) {
-        snprintf(instruction.info, INFO_LENGTH, "eor %s %s", deb_getName(rd_addr), deb_getName(rr_addr));
+        snprintf(instruction.info, INFO_LENGTH, "eor %s %s", _getName(rd_addr), _getName(rr_addr));
     } else {
-        snprintf(instruction.info, INFO_LENGTH, "clr %s", deb_getName(rd_addr));
+        snprintf(instruction.info, INFO_LENGTH, "clr %s", _getName(rd_addr));
     }
 
     instruction.length =  1;
@@ -193,7 +247,7 @@ InstructionInfo in_disassemble(uint16_t opCode) {
 
     InstructionInfo instruction = {0};
  
-    snprintf(instruction.info, INFO_LENGTH, "%s %s %s", instructionName, deb_getName(rr_addr), deb_getName(ioa_addr));
+    snprintf(instruction.info, INFO_LENGTH, "%s %s %s", instructionName, _getName(rr_addr), _getName(ioa_addr));
 
     instruction.length =  1;
     
@@ -207,7 +261,7 @@ InstructionInfo ldi_disassemble(uint16_t opCode) {
 
     InstructionInfo instruction = {0};
  
-    snprintf(instruction.info, INFO_LENGTH, "ldi \"%s\" (%02X)", deb_getName(rd_addr), constData);
+    snprintf(instruction.info, INFO_LENGTH, "ldi \"%s\" (%02X)", _getName(rd_addr), constData);
 
     instruction.length =  1;
     
@@ -235,7 +289,7 @@ InstructionInfo out_disassemble(uint16_t opCode) {
 
     InstructionInfo instruction = {0};
  
-    snprintf(instruction.info, INFO_LENGTH, "%s %s %s", instructionName, deb_getName(ioa_addr), deb_getName(rr_addr));
+    snprintf(instruction.info, INFO_LENGTH, "%s %s %s", instructionName, _getName(ioa_addr), _getName(rr_addr));
 
     instruction.length =  1;
     
@@ -251,11 +305,11 @@ InstructionInfo out_disassemble(uint16_t opCode) {
 InstructionInfo sbic_disassemble(uint16_t opCode) {
     uint16_t ioa_addr = dec_extractBits0000000001111000(opCode) + 0x20;
     uint16_t bitNum = dec_extractBits0000000000000111(opCode);
-    uint8_t ioaContent = mem_dataRead8bitFromCPU(ioa_addr);
+    uint8_t ioaContent = mem_dataRead8bit(ioa_addr);
 
     InstructionInfo instruction = {0};
  
-    snprintf(instruction.info, INFO_LENGTH, "sbic %s", deb_getName(ioa_addr));
+    snprintf(instruction.info, INFO_LENGTH, "sbic %s", _getName(ioa_addr));
 
     instruction.length =  1;
     
@@ -271,11 +325,11 @@ InstructionInfo sbic_disassemble(uint16_t opCode) {
 InstructionInfo sbis_disassemble(uint16_t opCode) {
     uint16_t ioa_addr = dec_extractBits0000000001111000(opCode) + 0x20;
     uint16_t bitNum = dec_extractBits0000000000000111(opCode);
-    uint8_t ioaContent = mem_dataRead8bitFromCPU(ioa_addr);
+    uint8_t ioaContent = mem_dataRead8bit(ioa_addr);
 
     InstructionInfo instruction = {0};
  
-    snprintf(instruction.info, INFO_LENGTH, "sbis %s", deb_getName(ioa_addr));
+    snprintf(instruction.info, INFO_LENGTH, "sbis %s", _getName(ioa_addr));
 
     instruction.length =  1;
     
@@ -298,7 +352,7 @@ InstructionInfo sbiw_disassemble(uint16_t opCode) {
 
     InstructionInfo instruction = {0};
  
-    snprintf(instruction.info, INFO_LENGTH, "sbiw \"%s\"(%04X) %04X", deb_getName(rd_addr), rdContent, constData);
+    snprintf(instruction.info, INFO_LENGTH, "sbiw \"%s\"(%04X) %04X", _getName(rd_addr), rdContent, constData);
 
     instruction.length =  1;
     
@@ -324,11 +378,11 @@ InstructionInfo sts_disassemble(uint16_t opCode) {
     uint16_t rr_addr = dec_extractBits0000000111110000(instructionFirst);
     uint16_t instructionSecond = mem_programFetchInstruction(mem_programCounter + 1);
     uint16_t mem_addr = instructionSecond;
-    uint8_t rrContent = mem_dataRead8bitFromCPU(rr_addr);
+    uint8_t rrContent = mem_dataRead8bit(rr_addr);
 
     InstructionInfo instruction = {0};
  
-    snprintf(instruction.info, INFO_LENGTH, "sts %04X \"%s\"(%02X)", mem_addr, deb_getName(rr_addr), rrContent);
+    snprintf(instruction.info, INFO_LENGTH, "sts %04X \"%s\"(%02X)", mem_addr, _getName(rr_addr), rrContent);
     
     instruction.length =  2;
 

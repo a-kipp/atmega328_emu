@@ -58,9 +58,9 @@ static PinState _dequeuePinChange() {
 
 static void _setBitInRegisterTo(uint16_t address, int bitNum, bool isSet) {
     if (isSet) {
-        mem_dataWrite8bitFromExtern(address, mem_dataRead8bitFromCPU(address) | (1 << bitNum));
+        mem_dataWrite8bitFromExtern(address, mem_dataRead8bit(address) | (1 << bitNum));
     } else {
-        mem_dataWrite8bitFromExtern(address, mem_dataRead8bitFromCPU(address) ^ (1 << bitNum));
+        mem_dataWrite8bitFromExtern(address, mem_dataRead8bit(address) ^ (1 << bitNum));
     }
 }
 

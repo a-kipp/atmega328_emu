@@ -3,7 +3,6 @@
 #pragma once
 
 #include <stdio.h>
-#include "debug.h"
 
 
 // Public
@@ -26,7 +25,7 @@ void out_setPin(uint8_t pinNum, bool isHigh) {
 
 void out_serialOutBin(uint8_t val) {
     setvbuf (stdout, NULL, _IONBF, 0);
-    deb_print_binary_8bit(val);
+    //deb_print_binary_8bit(val);
 // TODO set stdout buffer to correct value
     setvbuf (stdout, NULL, _IONBF, 1);
 }
@@ -58,8 +57,6 @@ void out_serialOutHex(uint8_t val) {
 void out_handleSignal(uint8_t val) {
     switch (val) {
         case EMULATION_STOP: exit(0); break;
-        case TRIGGER_SPEEDTEST: deb_triggerSpeedTest(); break;
-        case PRINT_SREG: deb_print_binary_8bit(arr_dataMemory[SREG]); break;
         default: break;
     }
 }

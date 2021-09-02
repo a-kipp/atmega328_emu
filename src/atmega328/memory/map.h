@@ -82,6 +82,10 @@
             #define PORTD2_PIN_4 2 
             #define PORTD1_PIN_3 1
             #define PORTD0_PIN_2 0
+        #define TIFR0 0x0035
+            #define TOV0 0 // Timer 0 Overflow Flag
+        #define TIFR1 0x0036
+        #define TIFR2 0x0037
         #define GPIOR0 0x003E
         #define EECR 0x003F // EEPROM Control Register, only bit 0 to 5 is used, others must be aleays zero
             #define EERE_FLAG 0
@@ -93,6 +97,9 @@
         #define EEDR 0x040 // EEPROM Data Register, here goes the data to be written to EEPROM or data read from EEPROM
         #define EEARL 0x0041 // EEPROM Address Register Low Byte, only bit 0 and 1 is used, others must be aleays zero
         #define EEARH 0x0042 // EEPROM Address Register Low Byte
+        #define TCNT0 0x0046 // Timer/Counter0 (8-bit)
+        #define OCR0A 0x0047 // Timer/Counter0 output compare register A
+        #define OCR0B 0x0048 // Timer/Counter0 output compare register B
         #define GPIOR1 0x004A
         #define GPIOR2 0x004B
         #define STACKPOINTER 0x005D

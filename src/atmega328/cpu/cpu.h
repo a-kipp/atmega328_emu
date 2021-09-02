@@ -5,15 +5,15 @@
 #pragma once
 
 #include <unistd.h>
-#include <time.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <pthread.h>
 #include <unistd.h>
-#include <time.h>
 #include "../memory/memory.h"
-#include "instructions/jump_table_implementation.h"
-#include "instructions/instruction.h"
+#include "../instructions/jump_table_implementation.h"
+#include "../instructions/instructions.h"
+#include "../config.h"
+#include "../timing.h"
 ;
 
 int _cpuStopSignal;
@@ -22,68 +22,54 @@ int _cpuStopSignal;
 pthread_t *_cpuThread;
 
 
-
-static void _executeInstructions(int numberOfInstructions) {
-    for (int i = 0; i < numberOfInstructions; i++) {
-        uint16_t opCode = mem_programFetchInstruction(mem_programCounter);
-        //deb_print_binary_8bit(arr_dataMemory[SREG]);
-        //printf("\n");
-        //printf("%04X ", mem_programCounter);
-        //printf("%s\n", jtd_disassembleTable[opCode](opCode).info);
-        jti_implementationTable[opCode]();
-    }
-}
-
-struct timespec _calcTimeDiff(struct timespec timeStamp1, struct timespec timeStamp2) {
-    struct timespec diff;
-    diff.tv_sec = 0;
-    diff.tv_nsec = (timeStamp2.tv_nsec - timeStamp1.tv_nsec) + (timeStamp2.tv_sec - timeStamp1.tv_sec) * 1000000000;
-    return diff;
-}
-
-
 static void *_run(void *arg) {
 
-    if (tim_atmegaClockSpeed < 2) {
-        fprintf(stderr, "clock speed to slow\n");
-        exit(1);
-    }
-
-    g_cpuCycleCount = 0;
+    mem_cpuCycleCount = 0;
     _cpuStopSignal = 0;
 
-    unsigned int instructionsToExecude = tim_atmegaClockSpeed / 160000 + 1;
-    long timePerCycleNanoSec = 1000000000 / tim_atmegaClockSpeed;
-
-    struct timespec requestedSleep;
-    struct timespec rmtp;
-    struct timespec currentTime;
-
-
-    struct timespec startTime = currentTime;
-    struct timespec timeTaken = currentTime;
-    struct timespec stopTime = currentTime;
+    struct timespec timeStamp = {0};
 
 
     while(!_cpuStopSignal) {
-        clock_gettime(CLOCK_REALTIME, &startTime);
 
-        long cycleCountStart = g_cpuCycleCount;
+        
+        uint64_t cycleTime = getTimeDelta(tim_getRealTime(), timeStamp);
 
-        _executeInstructions(1);
+        timeStamp = tim_getRealTime();
 
+        for (int i = 0; i < 1000; i++) {
+            uint16_t opCode = mem_programFetchInstruction(mem_programCounter);
+            jti_implementationTable[opCode]();
+        }
 
-        clock_gettime(CLOCK_REALTIME, &stopTime);
-        timeTaken = _calcTimeDiff(startTime, stopTime);
+        uint64_t offset = (NANOSEC_PER_SEC /  g_clockSpeed) * 1000 - cycleTime;
 
-        //requestedSleep.tv_nsec = (g_cpuCycleCount - cycleCountStart) * timePerCycleNanoSec - timeTaken.tv_nsec;
-        //if (nanosleep(&requestedSleep, &rmtp)) {
-        //    fprintf(stderr, "can't sleep\n");
-        //}
+        uint64_t delta = getTimeDelta(tim_getRealTime(), timeStamp);
+
+        //printf("delta: %d max: %d \n", delta, (NANOSEC_PER_SEC /  g_clockSpeed) * 20);
+
+        tim_sleepNanoSec((NANOSEC_PER_SEC /  g_clockSpeed) * 600 - delta + offset);
     }
     _cpuStopSignal = 0;
     printf("cpu stopped\n");
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

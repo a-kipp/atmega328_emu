@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdint.h>
 #include "atmega328/atmega328.h"
+#include "atmega328/debug.h"
 
 
 int main(int argc, char *argv[] ) {
