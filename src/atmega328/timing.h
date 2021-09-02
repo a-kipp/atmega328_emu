@@ -68,6 +68,6 @@ void tim_sleepNanoSec(long long sleepTime) {
 }
 
 uint64_t getTimeDelta(struct timespec timestamp1, struct timespec timestamp2) {
-    uint64_t delta =  (timestamp1.tv_sec - timestamp2.tv_sec) * NANOSEC_PER_SEC + (timestamp1.tv_nsec - timestamp2.tv_nsec);
+    uint64_t delta = (timestamp1.tv_sec - timestamp2.tv_sec) * NANOSEC_PER_SEC + (timestamp1.tv_nsec - timestamp2.tv_nsec);
     return delta;
 }

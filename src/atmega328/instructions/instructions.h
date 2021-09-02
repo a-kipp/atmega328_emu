@@ -9,3 +9,8 @@
 // Public
 // ____________________________________________________________________________________________________________________
 
+
+InstructionInfo ins_info(uint16_t opCode) {
+    return jtd_disassembleTable[opCode](opCode);
+}
+

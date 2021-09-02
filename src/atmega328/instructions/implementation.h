@@ -460,14 +460,16 @@ void sbiw() {
     uint16_t rdContent = mem_dataMemoryRead16bit(rd_addr);
     uint16_t result = rdContent - constData;
 
-    bool resultBit15 = (bool)(result & (1 << 15));
-    bool rdhBit7 = (bool)(rdContent & (1 << 15));
+    bool resultBit15 = (bool)((result & (1 << 15))>>15);
+    bool rdhBit7 = (bool)((rdContent & (1 << 7))>>7);
+    deb_print_binary_8bit(resultBit15);
+    deb_print_binary_8bit(rdhBit7);
 
     // S = N ⊕ V, for signed tests.
     mem_sregSignBitS = mem_sregNegativeFlagN ^ mem_sregTwoComplementsOverflowFlagV;
 
     // V: Set if two’s complement overflow resulted from the operation; cleared otherwise.
-    mem_sregTwoComplementsOverflowFlagV = (result & (1 << 15)) && !(rdContent & (1 << 7));
+    mem_sregTwoComplementsOverflowFlagV = resultBit15 && !rdhBit7;
 
     // N: Set if MSB of the result is set; cleared otherwise.
     mem_sregNegativeFlagN = resultBit15;

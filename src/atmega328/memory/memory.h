@@ -35,30 +35,29 @@ long long mem_cpuCycleCount = 0;
 
 
 static uint8_t _SregRead(uint16_t address) {
-    printf("read from sreg");
     uint8_t returnVal = 0;
-    returnVal | ((mem_sregCarryFlagC & 0b00000001) << 0);
-    returnVal | ((mem_sregZeroFlagZ & 0b00000010) << 1);
-    returnVal | ((mem_sregNegativeFlagN & 0b00000100) << 2);
-    returnVal | ((mem_sregTwoComplementsOverflowFlagV & 0b00001000) << 3);
-    returnVal | ((mem_sregSignBitS & 0b00010000) << 4);
-    returnVal | ((mem_sregHalfCarryFlagH & 0b00100000) << 5);
-    returnVal | ((mem_sregBitCopyStorageT & 0b01000000) << 5);
-    returnVal | ((mem_sregGlobalInterruptEnableI & 0b10000000) << 7);
+    returnVal |= (mem_sregCarryFlagC << 0);
+    returnVal |= (mem_sregZeroFlagZ << 1);
+    returnVal |= (mem_sregNegativeFlagN << 2);
+    returnVal |= (mem_sregTwoComplementsOverflowFlagV << 3);
+    returnVal |= (mem_sregSignBitS << 4);
+    returnVal |= (mem_sregHalfCarryFlagH << 5);
+    returnVal |= (mem_sregBitCopyStorageT << 5);
+    returnVal |= (mem_sregGlobalInterruptEnableI << 7);
     return returnVal;
 }
 
 
 static void _sregWrite(uint16_t address, uint8_t value) {
-    printf("write to sreg");
-    mem_sregCarryFlagC = value ^ 0b00000001;
-    mem_sregZeroFlagZ = value ^ 0b00000010;
-    mem_sregNegativeFlagN = value ^ 0b00000100;
-    mem_sregTwoComplementsOverflowFlagV = value ^ 0b00001000;
-    mem_sregSignBitS = value ^ 0b00010000;
-    mem_sregHalfCarryFlagH = value ^ 0b00100000;
-    mem_sregBitCopyStorageT = value ^ 0b01000000;
-    mem_sregGlobalInterruptEnableI = value ^ 0b10000000;
+    printf("write to sreg\n");
+    mem_sregCarryFlagC = value | 0b00000001;
+    mem_sregZeroFlagZ = value | 0b00000010;
+    mem_sregNegativeFlagN = value | 0b00000100;
+    mem_sregTwoComplementsOverflowFlagV = value | 0b00001000;
+    mem_sregSignBitS = value | 0b00010000;
+    mem_sregHalfCarryFlagH = value | 0b00100000;
+    mem_sregBitCopyStorageT = value | 0b01000000;
+    mem_sregGlobalInterruptEnableI = value | 0b10000000;
 }
 
 
@@ -772,13 +771,15 @@ uint8_t mem_dataRead8bit(uint16_t address) {
 
 
 uint16_t mem_dataMemoryRead16bit(uint16_t address) {
-    //uint16_t value = *(uint16_t*)(vir_dataMemory_ptr + address);
-    return 1 ;
+    uint16_t returnValue = mem_dataRead8bit(address);
+    returnValue |= ((uint16_t)mem_dataRead8bit(address + 1)) << 8;
+    return returnValue;
 }
 
 
 void mem_dataMemoryWrite16bit(uint16_t address, uint16_t value) {
-    //*(uint16_t*)(vir_dataMemory_ptr + address) = value;
+    mem_dataWrite8bitFromCPU(address, (uint8_t)value);
+    mem_dataWrite8bitFromCPU(address + 1, (uint8_t)(value >> 8));
 }
 
 

@@ -201,10 +201,11 @@ InstructionInfo cp_disassemble() {
 InstructionInfo dec_disassemble(uint16_t opCode) {
     char *instructionName = "dec";
     uint16_t rd_addr = dec_extractBits0000000111110000(opCode);
+    uint8_t rdContent = mem_dataRead8bit(rd_addr);
 
     InstructionInfo instruction = {0};
  
-    snprintf(instruction.info, INFO_LENGTH, "dec %s", instructionName, _getName(rd_addr));
+    snprintf(instruction.info, INFO_LENGTH, "dec %s(%02X)", _getName(rd_addr), rdContent);
 
     instruction.length =  1;
     
@@ -225,13 +226,15 @@ InstructionInfo eor_disassemble(uint16_t opCode) {
     char *instructionName = "eor";
     uint16_t rd_addr = dec_extractBits0000000111110000(opCode);
     uint16_t rr_addr = dec_extractBits0000001000001111(opCode);
+    uint8_t rdContent = mem_dataRead8bit(rd_addr);
+    uint8_t rrContent = mem_dataRead8bit(rr_addr);
 
     InstructionInfo instruction = {0};
  
     if (rd_addr == rr_addr) {
-        snprintf(instruction.info, INFO_LENGTH, "eor %s %s", _getName(rd_addr), _getName(rr_addr));
+        snprintf(instruction.info, INFO_LENGTH, "clr %s(%02X)", _getName(rd_addr), rdContent);
     } else {
-        snprintf(instruction.info, INFO_LENGTH, "clr %s", _getName(rd_addr));
+        snprintf(instruction.info, INFO_LENGTH, "eor %s(%02X), %s(%02X)", _getName(rd_addr), rdContent, _getName(rr_addr), rdContent);
     }
 
     instruction.length =  1;
@@ -241,13 +244,12 @@ InstructionInfo eor_disassemble(uint16_t opCode) {
 
 
 InstructionInfo in_disassemble(uint16_t opCode) {
-    char *instructionName = "in";
     uint16_t ioa_addr = dec_extractBits0000011000001111(opCode) + 0x20;
     uint16_t rr_addr =  dec_extractBits0000000111110000(opCode);
 
     InstructionInfo instruction = {0};
  
-    snprintf(instruction.info, INFO_LENGTH, "%s %s %s", instructionName, _getName(rr_addr), _getName(ioa_addr));
+    snprintf(instruction.info, INFO_LENGTH, "in %s, %s", _getName(rr_addr), _getName(ioa_addr));
 
     instruction.length =  1;
     
@@ -261,7 +263,7 @@ InstructionInfo ldi_disassemble(uint16_t opCode) {
 
     InstructionInfo instruction = {0};
  
-    snprintf(instruction.info, INFO_LENGTH, "ldi \"%s\" (%02X)", _getName(rd_addr), constData);
+    snprintf(instruction.info, INFO_LENGTH, "ldi %s, (%02X)", _getName(rd_addr), constData);
 
     instruction.length =  1;
     
@@ -270,11 +272,9 @@ InstructionInfo ldi_disassemble(uint16_t opCode) {
 
 
 InstructionInfo nop_disassemble(uint16_t opCode) {
-    char *instructionName = "nop";
-
     InstructionInfo instruction = {0};
  
-    snprintf(instruction.info, INFO_LENGTH, "%s", instructionName);
+    snprintf(instruction.info, INFO_LENGTH, "nop");
 
     instruction.length =  1;
     
@@ -283,13 +283,13 @@ InstructionInfo nop_disassemble(uint16_t opCode) {
 
 
 InstructionInfo out_disassemble(uint16_t opCode) {
-    char *instructionName = "out";
     uint16_t ioa_addr = dec_extractBits0000011000001111(opCode) + 0x20;
     uint16_t rr_addr =  dec_extractBits0000000111110000(opCode);
+    uint8_t rrContent = mem_dataRead8bit(rr_addr);
 
     InstructionInfo instruction = {0};
  
-    snprintf(instruction.info, INFO_LENGTH, "%s %s %s", instructionName, _getName(ioa_addr), _getName(rr_addr));
+    snprintf(instruction.info, INFO_LENGTH, "out %s, %s(%02X)",  _getName(ioa_addr), _getName(rr_addr), rrContent);
 
     instruction.length =  1;
     
@@ -352,7 +352,7 @@ InstructionInfo sbiw_disassemble(uint16_t opCode) {
 
     InstructionInfo instruction = {0};
  
-    snprintf(instruction.info, INFO_LENGTH, "sbiw \"%s\"(%04X) %04X", _getName(rd_addr), rdContent, constData);
+    snprintf(instruction.info, INFO_LENGTH, "sbiw %s%s(%04X), %04X", _getName(rd_addr), _getName(rd_addr + 1), rdContent, constData);
 
     instruction.length =  1;
     
@@ -404,3 +404,7 @@ InstructionInfo rjmp_disassemble(uint16_t opCode) {
 
     return instruction;
 }
+
+
+
+

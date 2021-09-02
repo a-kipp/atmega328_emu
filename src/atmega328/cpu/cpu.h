@@ -14,6 +14,7 @@
 #include "../instructions/instructions.h"
 #include "../config.h"
 #include "../timing.h"
+#include "../debug.h"
 ;
 
 int _cpuStopSignal;
@@ -22,7 +23,7 @@ int _cpuStopSignal;
 pthread_t *_cpuThread;
 
 
-static void *_run(void *arg) {
+static void *x_run(void *arg) {
 
     mem_cpuCycleCount = 0;
     _cpuStopSignal = 0;
@@ -46,14 +47,47 @@ static void *_run(void *arg) {
 
         uint64_t delta = getTimeDelta(tim_getRealTime(), timeStamp);
 
-        //printf("delta: %d max: %d \n", delta, (NANOSEC_PER_SEC /  g_clockSpeed) * 20);
-
         tim_sleepNanoSec((NANOSEC_PER_SEC /  g_clockSpeed) * 600 - delta + offset);
     }
     _cpuStopSignal = 0;
     printf("cpu stopped\n");
 }
 
+
+static void *_run(void *arg) {
+
+    mem_cpuCycleCount = 0;
+    _cpuStopSignal = 0;
+
+    struct timespec timeStamp = {0};
+
+
+    while(!_cpuStopSignal) {
+
+        printf("%04X ",  mem_programCounter);
+        deb_print_binary_8bit(mem_dataRead8bit(SREG));
+        printf(" %s\n",  ins_info(mem_programFetchInstruction(mem_programCounter)).info);
+
+        
+        uint64_t cycleTime = getTimeDelta(tim_getRealTime(), timeStamp);
+
+        timeStamp = tim_getRealTime();
+
+        for (int i = 0; i < 1; i++) {
+            uint16_t opCode = mem_programFetchInstruction(mem_programCounter);
+            jti_implementationTable[opCode]();
+        }
+
+        uint64_t offset = (NANOSEC_PER_SEC /  g_clockSpeed) - cycleTime;
+
+        uint64_t delta = getTimeDelta(tim_getRealTime(), timeStamp);
+
+
+        tim_sleepNanoSec((NANOSEC_PER_SEC /  g_clockSpeed)  - delta);
+    }
+    _cpuStopSignal = 0;
+    printf("cpu stopped\n");
+}
 
 
 
