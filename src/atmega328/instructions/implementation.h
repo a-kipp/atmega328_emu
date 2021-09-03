@@ -12,7 +12,7 @@
 
 // unknown opcode
 void unknown() {
-    uint16_t instruction = mem_programFetchInstruction(mem_programCounter);
+    uint16_t instruction = mem_fetchInstruction(mem_programCounter);
 
     mem_programCounter += 1;
     mem_incrementCycleCounter();
@@ -26,7 +26,7 @@ void unknown() {
 // Adds two registers and the contents of the C Flag and places the result in the destination register Rd.
 // AVR Instruction Manual page 30
 void adc() {
-    uint16_t instruction = mem_programFetchInstruction(mem_programCounter);
+    uint16_t instruction = mem_fetchInstruction(mem_programCounter);
     uint16_t rd_addr = dec_extractBits0000000111110000(instruction);
     uint16_t rr_addr = dec_extractBits0000001000001111(instruction);
     uint8_t rdContent = mem_dataRead8bit(rd_addr);
@@ -58,7 +58,7 @@ void adc() {
     // C: Set if there was carry from the MSB of the result; cleared otherwise.
     mem_sregCarryFlagC = rdBit7 && rrBit7 || rrBit7 && !resultBit7 || !resultBit7 && rdBit7;
     
-    mem_dataWrite8bitFromCPU(rd_addr, result);
+    mem_dataWrite8bit(rd_addr, result);
     mem_programCounter += 1;
     mem_incrementCycleCounter();
 }
@@ -70,7 +70,7 @@ void adc() {
 // Adds two registers without the C Flag and places the result in the destination register Rd.
 // AVR Instruction Manual page 32
 void add() {
-    uint16_t instruction = mem_programFetchInstruction(mem_programCounter);
+    uint16_t instruction = mem_fetchInstruction(mem_programCounter);
     uint16_t rd_addr = dec_extractBits0000000111110000(instruction);
     uint16_t rr_addr = dec_extractBits0000001000001111(instruction);
     uint8_t rdContent = mem_dataRead8bit(rd_addr);
@@ -103,7 +103,7 @@ void add() {
     // C: Set if there was carry from the MSB of the result; cleared otherwise.
     mem_sregCarryFlagC = rdBit7 && rrBit7 || rrBit7 && !resultBit7 || !resultBit7 && rdBit7;
     
-    mem_dataWrite8bitFromCPU(rd_addr, result);
+    mem_dataWrite8bit(rd_addr, result);
     mem_programCounter += 1;
     mem_incrementCycleCounter();
 }
@@ -120,11 +120,11 @@ void add() {
 // complement form. (Equivalent to instruction BRBC 1,k.)
 // AVR Instruction Manual page 54
 void brne() {
-    uint16_t instruction = mem_programFetchInstruction(mem_programCounter);
+    uint16_t instruction = mem_fetchInstruction(mem_programCounter);
     int16_t constData = (int16_t)dec_extractBits0000001111111000(instruction);
 
     if (!mem_sregZeroFlagZ) {
-        mem_programCounter += (constData - 128);
+        mem_programCounter += (constData - 127);
         mem_incrementCycleCounter();
         mem_incrementCycleCounter();
     } else {
@@ -141,12 +141,13 @@ void brne() {
 // addresses 0-31.
 // AVR Instruction Manual page 65
 void cbi() {
-    uint16_t instruction = mem_programFetchInstruction(mem_programCounter);
+    uint16_t instruction = mem_fetchInstruction(mem_programCounter);
     uint16_t ioa_addr = dec_extractBits0000000001111000(instruction) + 0x20;
     uint16_t bitNum = dec_extractBits0000000000000111(instruction);
     uint8_t ioaContent = mem_dataRead8bit(ioa_addr);
+    uint8_t result = uti_setBitInByte(ioaContent, bitNum, false);
 
-    mem_dataWrite8bitFromCPU(ioa_addr, ioaContent ^ (1 << bitNum));
+    mem_dataWrite8bit(ioa_addr, result);
     mem_programCounter += 1;
     mem_incrementCycleCounter();
 }
@@ -159,9 +160,9 @@ void cbi() {
 // All conditional branches can be used after this instruction.
 // AVR Instruction Manual page 77
 void cp() {
-    uint16_t instructionFirst = mem_programFetchInstruction(mem_programCounter);
-    uint16_t rd_addr = dec_extractBits0000000111110000(instructionFirst);
-    uint16_t rr_addr = dec_extractBits0000001000001111(instructionFirst);
+    uint16_t opCode = mem_fetchInstruction(mem_programCounter);
+    uint16_t rd_addr = dec_extractBits0000000111110000(opCode);
+    uint16_t rr_addr = dec_extractBits0000001000001111(opCode);
     uint8_t rdContent = mem_dataRead8bit(rd_addr);
     uint8_t rrContent = mem_dataRead8bit(rr_addr);
     uint8_t result = rdContent - rrContent;
@@ -207,8 +208,8 @@ void cp() {
 // consistently. When operating on two’s complement values, all signed branches are available.
 // AVR Instruction Manual page 84
 void dec() {
-    uint16_t instruction = mem_programFetchInstruction(mem_programCounter);
-    uint16_t rd_addr = dec_extractBits0000000111110000(instruction);
+    uint16_t opCode = mem_fetchInstruction(mem_programCounter);
+    uint16_t rd_addr = dec_extractBits0000000111110000(opCode);
     uint8_t rdContent = mem_dataRead8bit(rd_addr);
     uint8_t result = rdContent - 1;
 
@@ -227,7 +228,7 @@ void dec() {
     // Z is set if the result is $00; cleared otherwise.
     mem_sregZeroFlagZ = (result == 0);
 
-    mem_dataWrite8bitFromCPU(rd_addr, result);
+    mem_dataWrite8bit(rd_addr, result);
     mem_programCounter += 1;
     mem_incrementCycleCounter();
 }
@@ -241,29 +242,44 @@ void dec() {
 // destination register Rd.
 // If the both registers are the same this instruction becomes the clr instruction.
 // AVR Instruction Manual page 91 and 71
-void eor() {
-    uint16_t instruction = mem_programFetchInstruction(mem_programCounter);
-    uint16_t rd_addr = dec_extractBits0000000111110000(instruction);
-    uint16_t rr_addr = dec_extractBits0000001000001111(instruction);
+void eorclr() {
+    uint16_t opCode = mem_fetchInstruction(mem_programCounter);
+    uint16_t rd_addr = dec_extractBits0000000111110000(opCode);
+    uint16_t rr_addr = dec_extractBits0000001000001111(opCode);
     uint8_t rdContent = mem_dataRead8bit(rd_addr);
     uint8_t rrContent = mem_dataRead8bit(rr_addr);
     uint8_t result = rdContent ^ rrContent;
 
     bool resultBit7 = uti_getBit(result, 7);
 
-    // S: N ⊕ V, for signed tests.
-    mem_sregSignBitS = mem_sregNegativeFlagN ^ mem_sregTwoComplementsOverflowFlagV;
+    if (rdContent == rrContent) { // it's an clr instruction
+        // S: Cleared.
+        mem_sregSignBitS =  false;
 
-    // V: Cleared.
-    mem_sregTwoComplementsOverflowFlagV = false;
+        // V: Cleared.
+        mem_sregTwoComplementsOverflowFlagV = false;
 
-    // N: Set if MSB of the result is set; cleared otherwise.
-    mem_sregNegativeFlagN = resultBit7;
+        // N: Cleared.
+        mem_sregNegativeFlagN = false;
 
-    // Z is set if the result is $00; cleared otherwise.
-    mem_sregZeroFlagZ = (result == 0);
+        // Z: Set.
+        mem_sregZeroFlagZ = true;
 
-    mem_dataWrite8bitFromCPU(rd_addr, result);
+    } else { // it's an eor instruction
+        // S: N ⊕ V, for signed tests.
+        mem_sregSignBitS = mem_sregNegativeFlagN ^ mem_sregTwoComplementsOverflowFlagV;
+
+        // V: Cleared.
+        mem_sregTwoComplementsOverflowFlagV = false;
+
+        // N: Set if MSB of the result is set; cleared otherwise.
+        mem_sregNegativeFlagN = resultBit7;
+
+        // Z is set if the result is $00; cleared otherwise.
+        mem_sregZeroFlagZ = (result == 0);
+    }
+
+    mem_dataWrite8bit(rd_addr, result);
     mem_programCounter += 1;
     mem_incrementCycleCounter();
 }
@@ -275,12 +291,12 @@ void eor() {
 // Register File.
 // AVR Instruction Manual page 100
 void in() {
-    uint16_t instruction = mem_programFetchInstruction(mem_programCounter);
-    uint16_t ioa_addr = dec_extractBits0000011000001111(instruction) + 0x20;
-    uint16_t rd_addr =  dec_extractBits0000000111110000(instruction);
+    uint16_t opCode = mem_fetchInstruction(mem_programCounter);
+    uint16_t ioa_addr = dec_extractBits0000011000001111(opCode) + 0x20;
+    uint16_t rd_addr =  dec_extractBits0000000111110000(opCode);
     uint8_t ioaContent = mem_dataRead8bit(ioa_addr);
 
-    mem_dataWrite8bitFromCPU(rd_addr, ioaContent);
+    mem_dataWrite8bit(rd_addr, ioaContent);
     mem_programCounter += 1;
     mem_incrementCycleCounter();
 }
@@ -293,11 +309,11 @@ void in() {
 // Loads an 8-bit constant directly to register 16 to 31.
 // AVR Instruction Manual page 115
 void ldi() {
-    uint16_t instruction = mem_programFetchInstruction(mem_programCounter);
-    uint16_t rd_addr =  dec_extractBits0000000011110000(instruction) + 16;
-    uint8_t constData = dec_extractBits0000111100001111(instruction);
+    uint16_t opCode = mem_fetchInstruction(mem_programCounter);
+    uint16_t rd_addr =  dec_extractBits0000000011110000(opCode) + 16;
+    uint8_t constData = dec_extractBits0000111100001111(opCode);
 
-    mem_dataWrite8bitFromCPU(rd_addr, constData);
+    mem_dataWrite8bit(rd_addr, constData);
     mem_programCounter += 1;
     mem_incrementCycleCounter();
 }
@@ -310,7 +326,7 @@ void ldi() {
 // This instruction performs a single cycle No Operation.
 // AVR Instruction Manual page 131
 void nop() {
-    uint16_t instruction = mem_programFetchInstruction(mem_programCounter);
+    uint16_t opCode = mem_fetchInstruction(mem_programCounter);
 
     mem_programCounter += 1;
     mem_incrementCycleCounter();
@@ -327,13 +343,80 @@ void nop() {
 // Atmega328 datasheet page 624
 // AVR Instruction Manual page 134
 void out() {
-    uint16_t instruction = mem_programFetchInstruction(mem_programCounter);
-    uint16_t ioa_addr = dec_extractBits0000011000001111(instruction) + 0x20;
-    uint16_t rr_addr =  dec_extractBits0000000111110000(instruction);
+    uint16_t opCode = mem_fetchInstruction(mem_programCounter);
+    uint16_t ioa_addr = dec_extractBits0000011000001111(opCode) + 0x20;
+    uint16_t rr_addr =  dec_extractBits0000000111110000(opCode);
     uint8_t rrContent = mem_dataRead8bit(rr_addr);
 
-    mem_dataWrite8bitFromCPU(ioa_addr, rrContent);
+    mem_dataWrite8bit(ioa_addr, rrContent);
     mem_programCounter += 1;
+    mem_incrementCycleCounter();
+}
+
+
+
+
+// POP - Pop Register from Stack
+// 16-bit Opcode: 1001 000d dddd 1111
+// This instruction loads register Rd with a byte from the STACK. The Stack Pointer is pre-incremented by 1
+// before the POP.
+// This instruction is not available in all devices. Refer to the device specific instruction set summary.
+// AVR Instruction Manual page 135
+void pop() {
+    uint16_t opCode = mem_fetchInstruction(mem_programCounter);
+    uint16_t rd_addr = dec_extractBits0000000111110000(opCode);
+    uint16_t stackPointer = mem_dataRead16bit(STACKPOINTER);
+    uint8_t stackContent = mem_dataRead16bit(stackPointer + 1);
+
+    mem_dataWrite8bit(rd_addr, stackContent);
+    mem_dataWrite16bit(STACKPOINTER, stackPointer + 1);
+    mem_programCounter += 1;
+    mem_incrementCycleCounter();
+    mem_incrementCycleCounter();
+}
+
+
+
+
+// PUSH – Push Register on Stack
+// 16-bit Opcode: 1001 001d dddd 1111
+// This instruction stores the contents of register Rr on the STACK. The Stack Pointer is post-decremented
+// by 1 after the PUSH.
+// This instruction is not available in all devices. Refer to the device specific instruction set summary.
+// AVR Instruction Manual page 136
+void push() {
+    uint16_t opCode = mem_fetchInstruction(mem_programCounter);
+    uint16_t rr_addr = dec_extractBits0000000111110000(opCode);
+    uint16_t stackPointer = mem_dataRead16bit(STACKPOINTER);
+    uint8_t rrContent = mem_dataRead8bit(rr_addr);
+
+    mem_dataWrite8bit(stackPointer, rrContent);
+    mem_dataWrite16bit(STACKPOINTER, stackPointer - 1);
+    mem_programCounter += 1;
+    mem_incrementCycleCounter();
+    mem_incrementCycleCounter();
+}
+
+
+
+
+// RCALL – Relative Call to Subroutine
+// 16-bit Opcode: 1101 kkkk kkkk kkkk
+// Relative call to an address within PC - 2K + 1 and PC + 2K (words). The return address (the instruction
+// after the RCALL) is stored onto the Stack. See also CALL. For AVR microcontrollers with Program
+// memory not exceeding 4K words (8KB) this instruction can address the entire memory from every
+// address location. The Stack Pointer uses a post-decrement scheme during RCALL.
+// AVR Instruction Manual page 137
+void rcall() {
+    uint16_t opCode = mem_fetchInstruction(mem_programCounter);
+    int16_t constAddress = (int16_t)dec_extractBits0000111111111111(opCode);
+    uint16_t jumpDest_addr = (mem_programCounter + constAddress - 0xfff) % (DATA_MEMORY_END + 1);    
+    uint16_t stackPointer = mem_dataRead16bit(STACKPOINTER);
+
+    mem_dataWrite16bit(stackPointer - 1, mem_programCounter + 1);
+    mem_dataWrite16bit(STACKPOINTER , stackPointer - 2);
+    mem_programCounter = jumpDest_addr;
+    mem_incrementCycleCounter();
     mem_incrementCycleCounter();
 }
 
@@ -347,27 +430,48 @@ void out() {
 // every address location. See also JMP.
 // AVR Instruction Manual page 142
 void rjmp() {
-    uint16_t instruction = mem_programFetchInstruction(mem_programCounter);
-    int16_t constAddress = (int16_t)dec_extractBits0000111111111111(instruction);
+    uint16_t opCode = mem_fetchInstruction(mem_programCounter);
+    int16_t constAddress = (int16_t)dec_extractBits0000111111111111(opCode);
     uint16_t jumpDest_addr = (mem_programCounter + constAddress - 0xfff) % (DATA_MEMORY_END + 1);
 
     mem_programCounter = jumpDest_addr;
-    
     mem_incrementCycleCounter();
     mem_incrementCycleCounter();
 }
 
 
 
+
+// SBI – Set Bit in I/O Register
+// 16-bit Opcode: 1001 1010 AAAA Abbb
+// Sets a specified bit in an I/O Register. This instruction operates on the lower 32 I/O Registers –
+// addresses 0-31.
+// AVR Instruction Manual page 151
+void sbi() {
+    uint16_t opCode = mem_fetchInstruction(mem_programCounter);
+    uint16_t ioa_addr = dec_extractBits0000000001111000(opCode) + 0x20;
+    uint16_t bitNum = dec_extractBits0000000000000111(opCode);
+    uint8_t ioaContent = mem_dataRead8bit(ioa_addr);
+    uint8_t result = uti_setBitInByte(ioaContent, bitNum, true);
+
+    mem_dataWrite8bit(ioa_addr, result);
+    mem_programCounter += 1;
+    mem_incrementCycleCounter();
+}
+
+
+
+
 // SBIC – Skip if Bit in I/O Register is Cleared
+// 16-bit Opcode: 1001 1001 AAAA Abbb
 // This instruction tests a single bit in an I/O Register and skips the next instruction if the bit is cleared. This
 // instruction operates on the lower 32 I/O Registers – addresses 0-31.
 // AVR Instruction Manual page 152
 void sbic() {
-    uint16_t instruction = mem_programFetchInstruction(mem_programCounter);
-    uint16_t nextInstruction = mem_programFetchInstruction(mem_programCounter + 1);
-    uint16_t ioa_addr = dec_extractBits0000000001111000(instruction) + 0x20;
-    uint16_t bitNum = dec_extractBits0000000000000111(instruction);
+    uint16_t opCode = mem_fetchInstruction(mem_programCounter);
+    uint16_t nextOpCode = mem_fetchInstruction(mem_programCounter + 1);
+    uint16_t ioa_addr = dec_extractBits0000000001111000(opCode) + 0x20;
+    uint16_t bitNum = dec_extractBits0000000000000111(opCode);
     uint8_t ioaContent = mem_dataRead8bit(ioa_addr);
 
     #define CALL_INSTRUCTION_CODE 0b1001010000001110
@@ -383,35 +487,49 @@ void sbic() {
     #define STS_INSTRUCTION_MASK 0b1111111000001111
 
 
-    if (ioaContent & (1<<bitNum)) {
+    if (uti_getBit(ioaContent, bitNum)) {
         mem_programCounter += 1;
-    } else if ((nextInstruction & CALL_INSTRUCTION_MASK) == CALL_INSTRUCTION_CODE) {
+        mem_incrementCycleCounter();
+    } else if ((nextOpCode & CALL_INSTRUCTION_MASK) == CALL_INSTRUCTION_CODE) {
         mem_programCounter += 3;
-    } else if ((nextInstruction & JUMP_INSTRUCTION_MASK) == JUMP_INSTRUCTION_CODE) {
+        mem_incrementCycleCounter();
+        mem_incrementCycleCounter();
+        mem_incrementCycleCounter();
+    } else if ((nextOpCode & JUMP_INSTRUCTION_MASK) == JUMP_INSTRUCTION_CODE) {
         mem_programCounter += 3;
-    } else if ((nextInstruction & LDS_INSTRUCTION_MASK) == LDS_INSTRUCTION_CODE) {
+        mem_incrementCycleCounter();
+        mem_incrementCycleCounter();
+        mem_incrementCycleCounter();
+    } else if ((nextOpCode & LDS_INSTRUCTION_MASK) == LDS_INSTRUCTION_CODE) {
         mem_programCounter += 3;
-    } else if ((nextInstruction & STS_INSTRUCTION_MASK) == STS_INSTRUCTION_CODE) {
+        mem_incrementCycleCounter();
+        mem_incrementCycleCounter();
+        mem_incrementCycleCounter();
+    } else if ((nextOpCode & STS_INSTRUCTION_MASK) == STS_INSTRUCTION_CODE) {
         mem_programCounter += 3;
+        mem_incrementCycleCounter();
+        mem_incrementCycleCounter();
+        mem_incrementCycleCounter();
     } else {
         mem_programCounter += 2;
+        mem_incrementCycleCounter();
+        mem_incrementCycleCounter();
     }
-
-    mem_incrementCycleCounter();
 }
 
 
 
 
 // SBIS – Skip if Bit in I/O Register is Set
+// 16-bit Opcode: 1001 1011 AAAA Abbb
 // This instruction tests a single bit in an I/O Register and skips the next instruction if the bit is set. This
 // instruction operates on the lower 32 I/O Registers – addresses 0-31.
 // AVR Instruction Manual page 153
 void sbis() {
-    uint16_t instruction = mem_programFetchInstruction(mem_programCounter);
-    uint16_t nextInstruction = mem_programFetchInstruction(mem_programCounter + 1);
-    uint16_t ioa_addr = dec_extractBits0000000001111000(instruction) + 0x20;
-    uint16_t bitNum = dec_extractBits0000000000000111(instruction);
+    uint16_t opCode = mem_fetchInstruction(mem_programCounter);
+    uint16_t nextOpCode = mem_fetchInstruction(mem_programCounter + 1);
+    uint16_t ioa_addr = dec_extractBits0000000001111000(opCode) + 0x20;
+    uint16_t bitNum = dec_extractBits0000000000000111(opCode);
     uint8_t ioaContent = mem_dataRead8bit(ioa_addr);
 
     #define CALL_INSTRUCTION_CODE 0b1001010000001110
@@ -427,21 +545,34 @@ void sbis() {
     #define STS_INSTRUCTION_MASK 0b1111111000001111
 
 
-    if (!(ioaContent & (1<<bitNum))) {
+    if (!uti_getBit(ioaContent, bitNum)) {
         mem_programCounter += 1;
-    } else if ((nextInstruction & CALL_INSTRUCTION_MASK) == CALL_INSTRUCTION_CODE) {
+        mem_incrementCycleCounter();
+    } else if ((nextOpCode & CALL_INSTRUCTION_MASK) == CALL_INSTRUCTION_CODE) {
         mem_programCounter += 3;
-    } else if ((nextInstruction & JUMP_INSTRUCTION_MASK) == JUMP_INSTRUCTION_CODE) {
+        mem_incrementCycleCounter();
+        mem_incrementCycleCounter();
+        mem_incrementCycleCounter();
+    } else if ((nextOpCode & JUMP_INSTRUCTION_MASK) == JUMP_INSTRUCTION_CODE) {
         mem_programCounter += 3;
-    } else if ((nextInstruction & LDS_INSTRUCTION_MASK) == LDS_INSTRUCTION_CODE) {
+        mem_incrementCycleCounter();
+        mem_incrementCycleCounter();
+        mem_incrementCycleCounter();
+    } else if ((nextOpCode & LDS_INSTRUCTION_MASK) == LDS_INSTRUCTION_CODE) {
         mem_programCounter += 3;
-    } else if ((nextInstruction & STS_INSTRUCTION_MASK) == STS_INSTRUCTION_CODE) {
+        mem_incrementCycleCounter();
+        mem_incrementCycleCounter();
+        mem_incrementCycleCounter();
+    } else if ((nextOpCode & STS_INSTRUCTION_MASK) == STS_INSTRUCTION_CODE) {
         mem_programCounter += 3;
+        mem_incrementCycleCounter();
+        mem_incrementCycleCounter();
+        mem_incrementCycleCounter();
     } else {
         mem_programCounter += 2;
+        mem_incrementCycleCounter();
+        mem_incrementCycleCounter();
     }
-
-    mem_incrementCycleCounter();
 }
 
 
@@ -454,16 +585,14 @@ void sbis() {
 // Pointer Registers.
 // AVR Instruction Manual page 154
 void sbiw() {
-    uint16_t instruction = mem_programFetchInstruction(mem_programCounter);
+    uint16_t instruction = mem_fetchInstruction(mem_programCounter);
     uint16_t rd_addr =   dec_extractBits0000000000110000(instruction) * 2 + R24;
     uint16_t constData = dec_extractBits0000000011001111(instruction);
-    uint16_t rdContent = mem_dataMemoryRead16bit(rd_addr);
+    uint16_t rdContent = mem_dataRead16bit(rd_addr);
     uint16_t result = rdContent - constData;
 
-    bool resultBit15 = (bool)((result & (1 << 15))>>15);
-    bool rdhBit7 = (bool)((rdContent & (1 << 7))>>7);
-    deb_print_binary_8bit(resultBit15);
-    deb_print_binary_8bit(rdhBit7);
+    bool resultBit15 = uti_getBit(result, 15);
+    bool rdhBit7 = uti_getBit(rdContent, 7);
 
     // S = N ⊕ V, for signed tests.
     mem_sregSignBitS = mem_sregNegativeFlagN ^ mem_sregTwoComplementsOverflowFlagV;
@@ -480,7 +609,7 @@ void sbiw() {
     // C: Set if the absolute value of K is larger than the absolute value of Rd; cleared otherwise.
     mem_sregSignBitS = resultBit15 && rdhBit7;
 
-    mem_dataMemoryWrite16bit(rd_addr, result);
+    mem_dataWrite16bit(rd_addr, result);
     mem_programCounter += 1;
     mem_incrementCycleCounter();
     mem_incrementCycleCounter();
@@ -502,13 +631,13 @@ void sbiw() {
 // This instruction is not available in all devices. Refer to the device specific instruction set summary.
 // AVR Instruction Manual page 179
 void sts() {
-    uint16_t instructionFirst = mem_programFetchInstruction(mem_programCounter);
+    uint16_t instructionFirst = mem_fetchInstruction(mem_programCounter);
     uint16_t rr_addr = dec_extractBits0000000111110000(instructionFirst);
-    uint16_t instructionSecond = mem_programFetchInstruction(mem_programCounter + 1);
+    uint16_t instructionSecond = mem_fetchInstruction(mem_programCounter + 1);
     uint16_t mem_addr = instructionSecond;
     uint8_t memContent = mem_dataRead8bit(rr_addr);
 
-    mem_dataWrite8bitFromCPU(mem_addr, memContent);
+    mem_dataWrite8bit(mem_addr, memContent);
     mem_programCounter += 2;
     mem_incrementCycleCounter();
 }

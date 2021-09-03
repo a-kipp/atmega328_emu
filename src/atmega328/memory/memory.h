@@ -728,7 +728,7 @@ void mem_incrementCycleCounter() {
 
 
 // this function shall only be used by the CPU to write to memory
-void mem_dataWrite8bitFromCPU(uint16_t address, uint8_t value) {
+void mem_dataWrite8bit(uint16_t address, uint8_t value) {
     if (address <= 0x00FF) {
         _write8BitToRegister(address, value);
     } else if (address > DATA_MEMORY_END) {
@@ -770,16 +770,16 @@ uint8_t mem_dataRead8bit(uint16_t address) {
 }
 
 
-uint16_t mem_dataMemoryRead16bit(uint16_t address) {
+uint16_t mem_dataRead16bit(uint16_t address) {
     uint16_t returnValue = mem_dataRead8bit(address);
     returnValue |= ((uint16_t)mem_dataRead8bit(address + 1)) << 8;
     return returnValue;
 }
 
 
-void mem_dataMemoryWrite16bit(uint16_t address, uint16_t value) {
-    mem_dataWrite8bitFromCPU(address, (uint8_t)value);
-    mem_dataWrite8bitFromCPU(address + 1, (uint8_t)(value >> 8));
+void mem_dataWrite16bit(uint16_t address, uint16_t value) {
+    mem_dataWrite8bit(address, (uint8_t)value);
+    mem_dataWrite8bit(address + 1, (uint8_t)(value >> 8));
 }
 
 
@@ -798,7 +798,7 @@ void mem_loadProgram(char* filePath) {
 }
 
 
-uint16_t mem_programFetchInstruction(uint16_t address) {
+uint16_t mem_fetchInstruction(uint16_t address) {
     //if (address > PROGRAM_MEMORY_END) {
     //    fprintf(stderr, "end of Program Memory reached\n");
     //}

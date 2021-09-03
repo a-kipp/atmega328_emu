@@ -11,9 +11,9 @@
 // everytime an output pin changes it's state this function is called
 void out_setPin(uint8_t pinNum, bool isHigh) {
     if (isHigh) {
-        printf("Pin %d set high\n", pinNum);
+        //printf("Pin %d set high\n", pinNum);
     } else {
-        printf("Pin %d set low\n", pinNum);
+        //printf("Pin %d set low\n", pinNum);
     }
 }
 
@@ -25,7 +25,7 @@ void out_setPin(uint8_t pinNum, bool isHigh) {
 
 void out_serialOutBin(uint8_t val) {
     setvbuf (stdout, NULL, _IONBF, 0);
-    //deb_print_binary_8bit(val);
+    //uti_print_binary_8bit(val);
 // TODO set stdout buffer to correct value
     setvbuf (stdout, NULL, _IONBF, 1);
 }

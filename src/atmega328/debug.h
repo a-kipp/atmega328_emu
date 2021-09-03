@@ -45,19 +45,6 @@
 //}
 
 
-void deb_printBinary16bit(uint16_t integer_number) {
-    for(int i=0; i<16; i++) {
-        printf("%d", (integer_number>>15));
-        integer_number<<=1;
-    }
-}
-
-void deb_print_binary_8bit(uint8_t integer_number) {
-    for(int i=0; i<8; i++) {
-        printf("%d", (integer_number>>7));
-        integer_number<<=1;
-    }
-}
 
 
 

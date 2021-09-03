@@ -23,7 +23,7 @@ int _cpuStopSignal;
 pthread_t *_cpuThread;
 
 
-static void *x_run(void *arg) {
+static void *z_run(void *arg) {
 
     mem_cpuCycleCount = 0;
     _cpuStopSignal = 0;
@@ -39,7 +39,7 @@ static void *x_run(void *arg) {
         timeStamp = tim_getRealTime();
 
         for (int i = 0; i < 1000; i++) {
-            uint16_t opCode = mem_programFetchInstruction(mem_programCounter);
+            uint16_t opCode = mem_fetchInstruction(mem_programCounter);
             jti_implementationTable[opCode]();
         }
 
@@ -48,6 +48,24 @@ static void *x_run(void *arg) {
         uint64_t delta = getTimeDelta(tim_getRealTime(), timeStamp);
 
         tim_sleepNanoSec((NANOSEC_PER_SEC /  g_clockSpeed) * 600 - delta + offset);
+    }
+    _cpuStopSignal = 0;
+    printf("cpu stopped\n");
+}
+
+
+static void *x_run(void *arg) {
+
+    mem_cpuCycleCount = 0;
+    _cpuStopSignal = 0;
+
+    struct timespec timeStamp = {0};
+
+
+    while(!_cpuStopSignal) {
+
+        uint16_t opCode = mem_fetchInstruction(mem_programCounter);
+        jti_implementationTable[opCode]();
     }
     _cpuStopSignal = 0;
     printf("cpu stopped\n");
@@ -65,8 +83,8 @@ static void *_run(void *arg) {
     while(!_cpuStopSignal) {
 
         printf("%04X ",  mem_programCounter);
-        deb_print_binary_8bit(mem_dataRead8bit(SREG));
-        printf(" %s\n",  ins_info(mem_programFetchInstruction(mem_programCounter)).info);
+        uti_print_binary_8bit(mem_dataRead8bit(SREG));
+        printf(" %s\n",  ins_info(mem_fetchInstruction(mem_programCounter)).info);
 
         
         uint64_t cycleTime = getTimeDelta(tim_getRealTime(), timeStamp);
@@ -74,7 +92,7 @@ static void *_run(void *arg) {
         timeStamp = tim_getRealTime();
 
         for (int i = 0; i < 1; i++) {
-            uint16_t opCode = mem_programFetchInstruction(mem_programCounter);
+            uint16_t opCode = mem_fetchInstruction(mem_programCounter);
             jti_implementationTable[opCode]();
         }
 
