@@ -110,6 +110,7 @@ void add() {
 
 
 
+
 // BRNE – Branch if Not Equal
 // 16-bit Opcode: 1111 01kk kkkk k001
 // Conditional relative branch. Tests the Zero Flag (Z) and branches relatively to PC if Z is cleared. If the
@@ -285,6 +286,8 @@ void eorclr() {
 }
 
 
+
+
 // IN - Load an I/O Location to Register
 // 16-bit Opcode: 1011 0AAd dddd AAAA
 // Loads data from the I/O Space (Ports, Timers, Configuration Registers, etc.) into register Rd in the
@@ -321,6 +324,70 @@ void ldi() {
 
 
 
+// LDS – Load Direct from Data Space
+// 32-bit Opcode: 1001 000d dddd 0000
+//                kkkk kkkk kkkk kkkk
+// Loads one byte from the data space to a register.
+// AVR Instruction Manual page 116
+void lds32() {
+    uint16_t opCode = mem_fetchInstruction(mem_programCounter);
+    uint16_t rd_addr =  dec_extractBits0000000111110000(opCode);
+    uint8_t constAddress = mem_fetchInstruction(mem_programCounter + 1); 
+    uint8_t memContent = mem_dataRead8bit(constAddress);
+
+    mem_dataWrite8bit(rd_addr, memContent);
+    mem_programCounter += 2;
+    mem_incrementCycleCounter();
+    mem_incrementCycleCounter();
+}
+
+
+
+
+// LDS (16-bit) – Load Direct from Data Space
+// 16-bit Opcode: 1010 0kkk dddd kkkk
+// Loads one byte from the data space to a register. 
+// A 7-bit address must be supplied. The address given in the instruction is coded to a data space address
+// as follows:
+// ADDR[7:0] = (!INST[8], INST[8], INST[10], INST[9], INST[3], INST[2], INST[1], INST[0])
+// Memory access is limited to the address range 0x40...0xbf.
+// Note: Registers r0...r15 are remapped to r16...r31.
+// AVR Instruction Manual page 117
+void lds16() {
+    uint16_t opCode = mem_fetchInstruction(mem_programCounter);
+    uint16_t rd_addr =  dec_extractBits0000000011110000(opCode);
+
+    uint8_t opCodeBit0 = uti_getBit(opCode, 0);
+    uint8_t opCodeBit1 = uti_getBit(opCode, 1);
+    uint8_t opCodeBit2 = uti_getBit(opCode, 2);
+    uint8_t opCodeBit3 = uti_getBit(opCode, 3);
+    uint8_t opCodeBit8 = uti_getBit(opCode, 8);
+    uint8_t opCodeBit9 = uti_getBit(opCode, 9);
+    uint8_t opCodeBit10 = uti_getBit(opCode, 10);
+
+    uint16_t constAddress = 0;
+
+    constAddress = uti_setBitInWord(constAddress, opCodeBit0, 0);
+    constAddress = uti_setBitInWord(constAddress, opCodeBit1, 1);
+    constAddress = uti_setBitInWord(constAddress, opCodeBit2, 2);
+    constAddress = uti_setBitInWord(constAddress, opCodeBit3, 3);
+    constAddress = uti_setBitInWord(constAddress, opCodeBit9, 4);
+    constAddress = uti_setBitInWord(constAddress, opCodeBit10, 5);
+    constAddress = uti_setBitInWord(constAddress, opCodeBit8, 6);
+    constAddress = uti_setBitInWord(constAddress, !opCodeBit8, 7);
+//TODO check th address offset 
+    if (rd_addr < 32) rd_addr %= 32; // Registers r0...r15 are remapped to r16...r31.
+
+    uint8_t memContent = mem_eepromRead8bit(constAddress);
+
+    mem_dataWrite8bit(rd_addr, memContent);
+    mem_programCounter += 1;
+    mem_incrementCycleCounter();
+}
+
+
+
+
 // NOP - No Operation
 // 16-bit Opcode: 0000 0000 0000 0000
 // This instruction performs a single cycle No Operation.
@@ -331,6 +398,39 @@ void nop() {
     mem_programCounter += 1;
     mem_incrementCycleCounter();
 }
+
+
+
+
+// ORI – Logical OR with Immediate
+// 16-bit Opcode: 0110 KKKK dddd KKKK
+// Performs the logical OR between the contents of register Rd and a constant, and places the result in the
+// destination register Rd.
+// AVR Instruction Manual page 133
+void ori() {
+    uint16_t opCode = mem_fetchInstruction(mem_programCounter);
+    uint16_t rd_addr =  dec_extractBits0000000011110000(opCode);
+    uint8_t constData = dec_extractBits0000111100001111(opCode);
+    uint8_t rdContent = mem_dataRead8bit(rd_addr);
+    uint8_t result = rdContent | constData;
+    uint8_t resultBit7 = uti_getBit(result, 7);
+
+    // S: N ⊕ V, for signed tests.
+    mem_sregSignBitS = mem_sregNegativeFlagN ^ mem_sregTwoComplementsOverflowFlagV;
+
+    // V: Cleared.
+    mem_sregTwoComplementsOverflowFlagV = false;
+
+    // N: Set if MSB of the result is set; cleared otherwise.
+    mem_sregNegativeFlagN = resultBit7;
+
+    // Z: Set if the result is $00; cleared otherwise.
+    mem_sregZeroFlagZ = (result == 0);
+
+    mem_dataWrite8bit(rd_addr, result);
+    mem_programCounter += 1;
+    mem_incrementCycleCounter();
+}    
 
 
 
@@ -416,6 +516,28 @@ void rcall() {
     mem_dataWrite16bit(stackPointer - 1, mem_programCounter + 1);
     mem_dataWrite16bit(STACKPOINTER , stackPointer - 2);
     mem_programCounter = jumpDest_addr;
+    mem_incrementCycleCounter();
+    mem_incrementCycleCounter();
+    mem_incrementCycleCounter();
+}
+
+
+
+
+// RET – Return from Subroutine
+// 16-bit Opcode: 1001 0101 0000 1000
+// Returns from subroutine. The return address is loaded from the STACK. The Stack Pointer uses a pre-
+// increment scheme during RET.
+// AVR Instruction Manual page 139
+void ret() {
+    uint16_t opCode = mem_fetchInstruction(mem_programCounter);
+    uint16_t stackPointer = mem_dataRead16bit(STACKPOINTER);
+    uint16_t jumpDest_addr =  mem_dataRead16bit(stackPointer + 2);
+
+    mem_dataWrite16bit(STACKPOINTER, stackPointer + 2);
+    mem_programCounter = jumpDest_addr;
+    mem_incrementCycleCounter();
+    mem_incrementCycleCounter();
     mem_incrementCycleCounter();
     mem_incrementCycleCounter();
 }

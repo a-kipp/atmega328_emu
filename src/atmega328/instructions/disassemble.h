@@ -271,6 +271,83 @@ InstructionInfo ldi_disassemble(uint16_t opCode) {
 }
 
 
+
+
+// LDS – Load Direct from Data Space
+// 32-bit Opcode: 1001 000d dddd 0000
+//                kkkk kkkk kkkk kkkk
+// Loads one byte from the data space to a register.
+// AVR Instruction Manual page 116
+InstructionInfo lds32_disassemble(uint16_t opCode) {
+    uint16_t rd_addr =  dec_extractBits0000000111110000(opCode);
+    uint8_t rdContent = mem_dataRead8bit(rd_addr);
+    uint8_t constAddress = mem_fetchInstruction(mem_programCounter + 1); 
+    uint8_t memContent = mem_dataRead8bit(constAddress);
+
+    mem_dataWrite8bit(rd_addr, memContent);
+    mem_programCounter += 2;
+    mem_incrementCycleCounter();
+    mem_incrementCycleCounter();
+
+    InstructionInfo instruction = {0};
+
+    snprintf(instruction.info, INFO_LENGTH, "lds32 %s(%02X), %s(%02X)",  _getName(rd_addr), rdContent, _getName(constAddress), memContent);   
+
+    return instruction;
+}
+
+
+
+
+// LDS (16-bit) – Load Direct from Data Space
+// 16-bit Opcode: 1010 0kkk dddd kkkk
+// Loads one byte from the data space to a register. 
+// A 7-bit address must be supplied. The address given in the instruction is coded to a data space address
+// as follows:
+// ADDR[7:0] = (!INST[8], INST[8], INST[10], INST[9], INST[3], INST[2], INST[1], INST[0])
+// Memory access is limited to the address range 0x40...0xbf.
+// Note: Registers r0...r15 are remapped to r16...r31.
+// AVR Instruction Manual page 117
+InstructionInfo lds16_disassemble(uint16_t opCode) {
+    uint16_t rd_addr =  dec_extractBits0000000011110000(opCode);
+    uint8_t rdContent = mem_dataRead8bit(rd_addr);
+
+    uint8_t opCodeBit0 = uti_getBit(opCode, 0);
+    uint8_t opCodeBit1 = uti_getBit(opCode, 1);
+    uint8_t opCodeBit2 = uti_getBit(opCode, 2);
+    uint8_t opCodeBit3 = uti_getBit(opCode, 3);
+    uint8_t opCodeBit8 = uti_getBit(opCode, 8);
+    uint8_t opCodeBit9 = uti_getBit(opCode, 9);
+    uint8_t opCodeBit10 = uti_getBit(opCode, 10);
+
+    uint16_t constAddress = 0;
+
+    constAddress = uti_setBitInWord(constAddress, opCodeBit0, 0);
+    constAddress = uti_setBitInWord(constAddress, opCodeBit1, 1);
+    constAddress = uti_setBitInWord(constAddress, opCodeBit2, 2);
+    constAddress = uti_setBitInWord(constAddress, opCodeBit3, 3);
+    constAddress = uti_setBitInWord(constAddress, opCodeBit9, 4);
+    constAddress = uti_setBitInWord(constAddress, opCodeBit10, 5);
+    constAddress = uti_setBitInWord(constAddress, opCodeBit8, 6);
+    constAddress = uti_setBitInWord(constAddress, !opCodeBit8, 7);
+//TODO check th address offset 
+    if (rd_addr < 32) rd_addr %= 32; // Registers r0...r15 are remapped to r16...r31.
+
+    uint8_t memContent = mem_eepromRead8bit(constAddress);
+
+    InstructionInfo instruction = {0};
+
+    snprintf(instruction.info, INFO_LENGTH, "lds16 %s(%02X), %s(%02X)",  _getName(rd_addr), rdContent, _getName(constAddress), memContent);   
+
+    return instruction;
+}
+
+
+
+
+
+
+
 InstructionInfo nop_disassemble(uint16_t opCode) {
     InstructionInfo instruction = {0};
  
@@ -281,6 +358,27 @@ InstructionInfo nop_disassemble(uint16_t opCode) {
     return instruction;
 }
 
+
+
+
+// ORI – Logical OR with Immediate
+// 16-bit Opcode: 0110 KKKK dddd KKKK
+// Performs the logical OR between the contents of register Rd and a constant, and places the result in the
+// destination register Rd.
+// AVR Instruction Manual page 133
+InstructionInfo ori_disassemble(uint16_t opCode) {
+    uint16_t rd_addr =  dec_extractBits0000000011110000(opCode);
+    uint8_t constData = dec_extractBits0000111100001111(opCode);
+    uint8_t rdContent = mem_dataRead8bit(rd_addr);
+
+    InstructionInfo instruction = {0};
+ 
+    snprintf(instruction.info, INFO_LENGTH, "ori %s(%02X), %02X",  _getName(rd_addr), rdContent, constData);
+
+    instruction.length =  1;
+    
+    return instruction;
+}
 
 
 
@@ -369,6 +467,24 @@ InstructionInfo rcall_disassemble(uint16_t opCode) {
  
     snprintf(instruction.info, INFO_LENGTH, "rcall %04X", jumpDest_addr);
 }
+
+
+
+
+// RET – Return from Subroutine
+// 16-bit Opcode: 1001 0101 0000 1000
+// Returns from subroutine. The return address is loaded from the STACK. The Stack Pointer uses a pre-
+// increment scheme during RET.
+// AVR Instruction Manual page 139
+InstructionInfo ret_disassemble(uint16_t opCode) {
+    InstructionInfo instruction = {0};
+ 
+    snprintf(instruction.info, INFO_LENGTH, "ret");
+}
+
+
+
+
 
 
 
