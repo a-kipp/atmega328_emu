@@ -73,7 +73,6 @@ InstructionInfo unknown_disassemble(uint16_t opCode) {
     InstructionInfo instruction = {0};
 
     snprintf(instruction.info, INFO_LENGTH, "unknown %04X", opCode);
-
     instruction.length =  1;
     
     return instruction;
@@ -92,7 +91,6 @@ InstructionInfo adc_disassemble(uint16_t opCode) {
     InstructionInfo instruction = {0};
 
     snprintf(instruction.info, INFO_LENGTH, "adc %s %s", _getName(rd_addr), _getName(rr_addr));
-
     instruction.length =  1;
     
     return instruction;
@@ -112,7 +110,6 @@ InstructionInfo add_disassemble(uint16_t opCode) {
     InstructionInfo instruction = {0};
 
     snprintf(instruction.info, INFO_LENGTH, "add %s %s", _getName(rd_addr), _getName(rr_addr));
-
     instruction.length =  1;
     
     return instruction;
@@ -137,11 +134,30 @@ InstructionInfo brne_disassemble(uint16_t opCode) {
     InstructionInfo instruction = {0};
  
     snprintf(instruction.info, INFO_LENGTH, "brne %04X", mem_programCounter + constData - 128);
-    
     instruction.length =  1;
     
     return instruction;
 }
+
+
+
+
+// CALL – Long Call to a Subroutine
+// 32-bit Opcode: 1001 010k kkkk 111k : kkkk kkkk kkkk kkkk 
+// Calls to a subroutine within the entire Program memory. The return address (to the instruction after the
+// CALL) will be stored onto the Stack. (See also RCALL). The Stack Pointer uses a post-decrement
+// scheme during CALL.
+// AVR Instruction Manual page 63
+InstructionInfo call_disassemble(uint16_t opCode) {
+    uint16_t jumpDest_addr = mem_fetchInstruction(mem_programCounter + 1);
+    InstructionInfo instruction = {0};
+ 
+    snprintf(instruction.info, INFO_LENGTH, "call %04X", jumpDest_addr);
+    instruction.length = 2;
+    
+    return instruction;
+}
+
 
 
 
@@ -158,11 +174,29 @@ InstructionInfo cbi_disassemble(uint16_t opCode) {
     InstructionInfo instruction = {0};
  
     snprintf(instruction.info, INFO_LENGTH, "sbi %s(%02X), %1X", _getName(ioa_addr), ioaContent, bitNum);
-
     instruction.length =  1;
     
     return instruction;
-}    
+}
+
+
+
+
+// CLI – Clear Global Interrupt Flag
+// 16-bit Opcode: 1001 0100 1111 1000 
+// Clears the Global Interrupt Flag (I) in SREG (Status Register). The interrupts will be immediately
+// disabled. No interrupt will be executed after the CLI instruction, even if it occurs simultaneously with the
+// CLI instruction.
+// AVR Instruction Manual page 69
+InstructionInfo cli_disassemble(uint16_t opCode) {
+    InstructionInfo instruction = {0};
+
+    snprintf(instruction.info, INFO_LENGTH, "cli");
+    instruction.length =  1;
+    
+    return instruction;
+}
+
 
 
 
@@ -181,7 +215,6 @@ InstructionInfo cp_disassemble(uint16_t opCode) {
     InstructionInfo instruction = {0};
  
     snprintf(instruction.info, INFO_LENGTH, "cp \"%s\"(%02X) \"%s\"(%02X)", _getName(rd_addr), rdContent, _getName(rr_addr), rrContent);
-
     instruction.length =  1;
     
     return instruction;
@@ -206,7 +239,6 @@ InstructionInfo dec_disassemble(uint16_t opCode) {
     InstructionInfo instruction = {0};
  
     snprintf(instruction.info, INFO_LENGTH, "dec %s(%02X)", _getName(rd_addr), rdContent);
-
     instruction.length =  1;
     
     return instruction;
@@ -236,7 +268,6 @@ InstructionInfo eorclr_disassemble(uint16_t opCode) {
     } else {
         snprintf(instruction.info, INFO_LENGTH, "eor %s(%02X), %s(%02X)", _getName(rd_addr), rdContent, _getName(rr_addr), rdContent);
     }
-
     instruction.length =  1;
     
     return instruction;
@@ -250,11 +281,31 @@ InstructionInfo in_disassemble(uint16_t opCode) {
     InstructionInfo instruction = {0};
  
     snprintf(instruction.info, INFO_LENGTH, "in %s, %s", _getName(rr_addr), _getName(ioa_addr));
-
     instruction.length =  1;
     
     return instruction;
-}    
+}
+
+
+
+
+// JMP – Jump
+// 32-bit Opcode: 1001 010k kkkk 110k
+//                kkkk kkkk kkkk kkkk
+// Jump to an address within the entire 4M (words) Program memory.
+// AVR Instruction Manual page 103
+InstructionInfo jmp_disassemble(uint16_t opCode) {
+    uint16_t jumpDest_addr = mem_fetchInstruction(mem_programCounter + 1);
+
+    InstructionInfo instruction = {0};
+ 
+    snprintf(instruction.info, INFO_LENGTH, "jmp %04X", jumpDest_addr);
+    instruction.length =  2;
+    
+    return instruction;
+}
+
+
 
 
 InstructionInfo ldi_disassemble(uint16_t opCode) {
@@ -264,7 +315,6 @@ InstructionInfo ldi_disassemble(uint16_t opCode) {
     InstructionInfo instruction = {0};
  
     snprintf(instruction.info, INFO_LENGTH, "ldi %s, (%02X)", _getName(rd_addr), constData);
-
     instruction.length =  1;
     
     return instruction;
@@ -274,8 +324,7 @@ InstructionInfo ldi_disassemble(uint16_t opCode) {
 
 
 // LDS – Load Direct from Data Space
-// 32-bit Opcode: 1001 000d dddd 0000
-//                kkkk kkkk kkkk kkkk
+// 32-bit Opcode: 1001 000d dddd 0000 : kkkk kkkk kkkk kkkk
 // Loads one byte from the data space to a register.
 // AVR Instruction Manual page 116
 InstructionInfo lds32_disassemble(uint16_t opCode) {
@@ -284,14 +333,10 @@ InstructionInfo lds32_disassemble(uint16_t opCode) {
     uint8_t constAddress = mem_fetchInstruction(mem_programCounter + 1); 
     uint8_t memContent = mem_dataRead8bit(constAddress);
 
-    mem_dataWrite8bit(rd_addr, memContent);
-    mem_programCounter += 2;
-    mem_incrementCycleCounter();
-    mem_incrementCycleCounter();
-
     InstructionInfo instruction = {0};
 
     snprintf(instruction.info, INFO_LENGTH, "lds32 %s(%02X), %s(%02X)",  _getName(rd_addr), rdContent, _getName(constAddress), memContent);   
+    instruction.length = 2;
 
     return instruction;
 }
@@ -495,6 +540,7 @@ InstructionInfo ret_disassemble(uint16_t opCode) {
 // addresses 0-31.
 // AVR Instruction Manual page 151
 InstructionInfo sbi_disassemble(uint16_t opCode) {
+
     uint16_t ioa_addr = dec_extractBits0000000001111000(opCode) + 0x20;
     uint16_t bitNum = dec_extractBits0000000000000111(opCode);
     uint8_t ioaContent = mem_dataRead8bit(ioa_addr);
@@ -566,7 +612,6 @@ InstructionInfo sbiw_disassemble(uint16_t opCode) {
     InstructionInfo instruction = {0};
  
     snprintf(instruction.info, INFO_LENGTH, "sbiw %s%s(%04X), %04X", _getName(rd_addr), _getName(rd_addr + 1), rdContent, constData);
-
     instruction.length =  1;
     
     return instruction;
@@ -596,7 +641,6 @@ InstructionInfo sts_disassemble(uint16_t opCode) {
     InstructionInfo instruction = {0};
  
     snprintf(instruction.info, INFO_LENGTH, "sts %04X \"%s\"(%02X)", mem_addr, _getName(rr_addr), rrContent);
-    
     instruction.length =  2;
 
     return instruction;
@@ -605,19 +649,57 @@ InstructionInfo sts_disassemble(uint16_t opCode) {
 
 
 
+// RJMP – Relative Jump
+// 16-bit Opcode: 1100 kkkk kkkk kkkk
+// Relative jump to an address within PC - 2K +1 and PC + 2K (words). For AVR microcontrollers with
+// Program memory not exceeding 4K words (8KB) this instruction can address the entire memory from
+// every address location. See also JMP.
+// AVR Instruction Manual page 142
 InstructionInfo rjmp_disassemble(uint16_t opCode) {
-    int16_t constAddress = (int16_t)dec_extractBits0000111111111111(opCode);
-    uint16_t jumpDest_addr = (mem_programCounter + constAddress - 0xfff) % (DATA_MEMORY_END + 1);
+    int16_t addressOffset = (int16_t)dec_extractBits0000011111111111(opCode);
+    bool adddressOffsetSignBit = uti_getBit(opCode, 11);
+
+    int16_t jumpDest_addr;
+    if (adddressOffsetSignBit) {
+        if (mem_programCounter - addressOffset < 0) {
+            jumpDest_addr = mem_programCounter - addressOffset + PROGRAM_MEMORY_END;
+        } else {
+            jumpDest_addr = mem_programCounter - addressOffset;
+        }
+    } else {
+        if (mem_programCounter + addressOffset > PROGRAM_MEMORY_END) {
+            jumpDest_addr = mem_programCounter + addressOffset - PROGRAM_MEMORY_END;
+        } else {
+            jumpDest_addr = mem_programCounter + addressOffset;
+        }
+    }
 
     InstructionInfo instruction = {0};
  
     snprintf(instruction.info, INFO_LENGTH, "rjmp %04X", jumpDest_addr);
-
     instruction.length =  1;
 
     return instruction;
 }
 
 
+
+// SUBI – Subtract Immediate
+// 16-bit Opcode: 0101 KKKK dddd KKKK
+// Subtracts a register and a constant, and places the result in the destination register Rd. This instruction is
+// working on Register R16 to R31 and is very well suited for operations on the X, Y, and Z-pointers.
+// AVR Instruction Manual page 183
+InstructionInfo subi_disassemble(uint16_t opCode) {
+    uint8_t rd_addr = dec_extractBits0000000111110000(opCode);
+    uint8_t rdContent = mem_dataRead8bit(rd_addr);
+    uint8_t constData = dec_extractBits0000111100001111(opCode);
+
+    InstructionInfo instruction = {0};
+ 
+    snprintf(instruction.info, INFO_LENGTH, "subi %s(%02X), %02X", _getName(rd_addr), rdContent, constData);
+    instruction.length =  1;
+
+    return instruction;
+}
 
 

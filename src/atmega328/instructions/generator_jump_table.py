@@ -6,11 +6,14 @@ opcode_function_pairs = [
     ['0001 11rd dddd rrrr', 'adc',    'adc_disassemble'   ],
     ['0000 11rd dddd rrrr', 'add',    'add_disassemble'   ],
     ['1111 01kk kkkk k001', 'brne',   'brne_disassemble'  ],
+    ['1001 010k kkkk 111k', 'call',   'call_disassemble'  ],
     ['1001 1000 AAAA Abbb', 'cbi',    'cbi_disassemble'   ],
+    ['1001 0100 1111 1000', 'cli',    'cli_disassemble'   ],
     ['0001 01rd dddd rrrr', 'cp',     'cp_disassemble'    ],
     ['1001 010d dddd 1010', 'dec',    'dec_disassemble'   ],
     ['0010 01rd dddd rrrr', 'eorclr', 'eorclr_disassemble'],
     ['1011 0AAd dddd AAAA', 'in',     'in_disassemble'    ],
+    ['1001 010k kkkk 110k', 'jmp',    'jmp_disassemble'   ],
     ['1110 KKKK dddd KKKK', 'ldi',    'ldi_disassemble'   ],
     ['1001 000d dddd 0000', 'lds32',  'lds32_disassemble' ],
     ['1010 0kkk dddd kkkk', 'lds16',  'lds16_disassemble' ],
@@ -22,10 +25,12 @@ opcode_function_pairs = [
     ['1101 kkkk kkkk kkkk', 'rcall',  'rcall_disassemble' ],
     ['1001 0101 0000 1000', 'ret',    'ret_disassemble'   ],
     ['1100 kkkk kkkk kkkk', 'rjmp',   'rjmp_disassemble'  ],
+    ['1001 1010 AAAA Abbb', 'sbi',    'sbi_disassemble'   ],
     ['1001 1001 AAAA Abbb', 'sbic',   'sbic_disassemble'  ],
     ['1001 1011 AAAA Abbb', 'sbis',   'sbis_disassemble'  ],
     ['1001 0111 KKdd KKKK', 'sbiw',   'sbiw_disassemble'  ],
     ['1001 001d dddd 0000', 'sts',    'sts_disassemble'   ],
+    ['0101 KKKK dddd KKKK', 'subi',   'subi_disassemble'  ],
 ]
 
 

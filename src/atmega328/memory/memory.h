@@ -13,14 +13,14 @@
 
 
 // for easier access flags are stored separatly, readings and writes from SREG register will be intercepted.
-bool mem_sregCarryFlagC = 0;
-bool mem_sregZeroFlagZ = 0;
-bool mem_sregNegativeFlagN = 0;
-bool mem_sregTwoComplementsOverflowFlagV = 0;
-bool mem_sregSignBitS = 0;
-bool mem_sregHalfCarryFlagH = 0;
-bool mem_sregBitCopyStorageT = 0;
-bool mem_sregGlobalInterruptEnableI = 0;
+bool mem_sregCarryFlagC = false;
+bool mem_sregZeroFlagZ = false;
+bool mem_sregNegativeFlagN = false;
+bool mem_sregTwoComplementsOverflowFlagV = false;
+bool mem_sregSignBitS = false;
+bool mem_sregHalfCarryFlagH = false;
+bool mem_sregBitCopyStorageT = false;
+bool mem_sregGlobalInterruptEnableI = false;
 
 
 static uint16_t _programMemory[PROGRAM_MEMORY_END] = {0};
@@ -29,7 +29,7 @@ static uint8_t _eepromMemory[EEPROM_END] = {0};
 
 
 
-uint16_t mem_programCounter = 0;
+int32_t mem_programCounter = 0;
 long long mem_cpuCycleCount = 0;
 
 
@@ -701,14 +701,7 @@ uint8_t _write8BitToRegister(uint16_t address, uint8_t value) {
 }
 
 
-
-
-
-// Public
-// ____________________________________________________________________________________________________________________
-
-
-void mem_incrementCycleCounter() {
+void _incrementCycleCounterOnce() {
     mem_cpuCycleCount ++;
     uint8_t timerCounter = _programMemory[TCNT0];
     timerCounter ++;
@@ -718,6 +711,25 @@ void mem_incrementCycleCounter() {
     _programMemory[TCNT0] = timerCounter;
 }
 
+
+
+
+
+
+// Public
+// ____________________________________________________________________________________________________________________
+
+
+void mem_incrementCycleCounter(uint8_t increments) {
+    for(uint8_t i = 0; i <= increments; i++) {
+        _incrementCycleCounterOnce();
+    }
+}
+
+
+void mem_decrementIncrementStackPointer(int8_t increments) {
+    _dataMemory[STACKPOINTER] + increments;
+}
 
 
 

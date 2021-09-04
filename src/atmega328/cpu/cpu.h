@@ -84,6 +84,7 @@ static void *_run(void *arg) {
 
         printf("%04X ",  mem_programCounter);
         uti_print_binary_8bit(mem_dataRead8bit(SREG));
+
         printf(" %s\n",  ins_info(mem_fetchInstruction(mem_programCounter)).info);
 
         
