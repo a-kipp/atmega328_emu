@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
-#include "utility_functions.h"
+#include "utils.h"
 #include "memory/map.h"
 #include "memory/memory.h"
 #include <time.h>

@@ -11,7 +11,7 @@
 #define PROAGRAM_MEMORY_START 0x000
     #define BOOT_SECTION_START
     #define BOOT_SECTION_END 0x7ff
-#define PROGRAM_MEMORY_END 0x7ff
+#define PROGRAM_MEMORY_END 0x3fff
 
 // Data Memory Map, also contains CPU registers
 #define DATA_MEMORY_START 0x0000

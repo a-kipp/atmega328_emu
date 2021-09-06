@@ -49,3 +49,7 @@ uint16_t dec_extractBits0000000000000111(uint16_t instruction) {
 uint16_t dec_extractBits0000011111111111(uint16_t instruction) {
     return (instruction & 0b0000011111111111);
 }
+
+uint16_t dec_extractBits0000000011111000(uint16_t instruction) {
+    return (instruction & 0b0000000011111000) >> 3;
+}

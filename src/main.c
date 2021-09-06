@@ -18,6 +18,7 @@ int main(int argc, char *argv[] ) {
     }
     
     atm_loadProgram(argv[1]);
+    //atm_disassemble();
     atm_start();
 
     while(is_running) {

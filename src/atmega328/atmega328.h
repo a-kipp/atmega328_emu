@@ -33,4 +33,5 @@ void atm_stop() {
 //}
 
 void atm_disassemble() {
+    ins_disassembleProgram();
 }

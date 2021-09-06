@@ -1,4 +1,4 @@
 #pragma once
 ;
 
-int g_clockSpeed = 10;
+int g_clockSpeed = 16000000;

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "decode.h"
+#include "decoder.h"
 
 
 #define INFO_LENGTH 80
@@ -8,6 +8,7 @@
 typedef struct InstructionInfo {
     uint8_t length;
     char info[INFO_LENGTH];
+    char comment[INFO_LENGTH];
 } InstructionInfo;
 
 
@@ -66,8 +67,8 @@ static char *_getName(int address) {
 
 
 
-// unknown opcode
-InstructionInfo unknown_disassemble(uint16_t opCode) {
+// UNKNOWN OPCODE
+InstructionInfo unknown_disassemble(uint16_t opCode, uint16_t programCounter) {
     char *instructionName = "unknown";
     
     InstructionInfo instruction = {0};
@@ -80,11 +81,12 @@ InstructionInfo unknown_disassemble(uint16_t opCode) {
 
 
 
+
 // ADC - Add with Carry
 // 16-bit Opcode: 0001 11rd dddd rrrr
 // Adds two registers and the contents of the C Flag and places the result in the destination register Rd.
 // AVR Instruction Manual page 30
-InstructionInfo adc_disassemble(uint16_t opCode) {
+InstructionInfo adc_disassemble(uint16_t opCode, uint16_t programCounter) {
     uint16_t rd_addr = dec_extractBits0000000111110000(opCode);
     uint16_t rr_addr = dec_extractBits0000001000001111(opCode);
 
@@ -102,7 +104,7 @@ InstructionInfo adc_disassemble(uint16_t opCode) {
 // 16-bit Opcode: 0000 11rd dddd rrrr
 // Adds two registers without the C Flag and places the result in the destination register Rd.
 // AVR Instruction Manual page 32
-InstructionInfo add_disassemble(uint16_t opCode) {
+InstructionInfo add_disassemble(uint16_t opCode, uint16_t programCounter) {
     char *instructionName = "add";
     uint16_t rd_addr = dec_extractBits0000000111110000(opCode);
     uint16_t rr_addr = dec_extractBits0000001000001111(opCode);
@@ -127,13 +129,14 @@ InstructionInfo add_disassemble(uint16_t opCode) {
 // direction (PC - 63 ≤ destination ≤ PC + 64). Parameter k is the offset from PC and is represented in two’s
 // complement form. (Equivalent to instruction BRBC 1,k.)
 // AVR Instruction Manual page 54
-InstructionInfo brne_disassemble(uint16_t opCode) {
+InstructionInfo brne_disassemble(uint16_t opCode, uint16_t programCounter) {
     char *instructionName = "brne";
     int16_t constData = (int16_t)dec_extractBits0000001111111000(opCode);
 
     InstructionInfo instruction = {0};
  
-    snprintf(instruction.info, INFO_LENGTH, "brne %04X", mem_programCounter + constData - 128);
+    snprintf(instruction.info, INFO_LENGTH, "brne %04X", programCounter + constData - 127);
+    snprintf(instruction.comment, INFO_LENGTH, "; branches if Z (SREG bit 1) is cleared");
     instruction.length =  1;
     
     return instruction;
@@ -148,8 +151,8 @@ InstructionInfo brne_disassemble(uint16_t opCode) {
 // CALL) will be stored onto the Stack. (See also RCALL). The Stack Pointer uses a post-decrement
 // scheme during CALL.
 // AVR Instruction Manual page 63
-InstructionInfo call_disassemble(uint16_t opCode) {
-    uint16_t jumpDest_addr = mem_fetchInstruction(mem_programCounter + 1);
+InstructionInfo call_disassemble(uint16_t opCode, uint16_t programCounter) {
+    uint16_t jumpDest_addr = mem_fetchInstruction(programCounter + 1);
     InstructionInfo instruction = {0};
  
     snprintf(instruction.info, INFO_LENGTH, "call %04X", jumpDest_addr);
@@ -166,14 +169,14 @@ InstructionInfo call_disassemble(uint16_t opCode) {
 // Clears a specified bit in an I/O register. This instruction operates on the lower 32 I/O registers –
 // addresses 0-31.
 // AVR Instruction Manual page 65
-InstructionInfo cbi_disassemble(uint16_t opCode) {
-    uint16_t ioa_addr = dec_extractBits0000000001111000(opCode) + 0x20;
+InstructionInfo cbi_disassemble(uint16_t opCode, uint16_t programCounter) {
+    uint16_t ioa_addr = dec_extractBits0000000011111000(opCode) + 0x20;
     uint16_t bitNum = dec_extractBits0000000000000111(opCode);
     uint8_t ioaContent = mem_dataRead8bit(ioa_addr);
 
     InstructionInfo instruction = {0};
  
-    snprintf(instruction.info, INFO_LENGTH, "sbi %s(%02X), %1X", _getName(ioa_addr), ioaContent, bitNum);
+    snprintf(instruction.info, INFO_LENGTH, "cbi %s(%02X), %1X", _getName(ioa_addr), ioaContent, bitNum);
     instruction.length =  1;
     
     return instruction;
@@ -188,7 +191,7 @@ InstructionInfo cbi_disassemble(uint16_t opCode) {
 // disabled. No interrupt will be executed after the CLI instruction, even if it occurs simultaneously with the
 // CLI instruction.
 // AVR Instruction Manual page 69
-InstructionInfo cli_disassemble(uint16_t opCode) {
+InstructionInfo cli_disassemble(uint16_t opCode, uint16_t programCounter) {
     InstructionInfo instruction = {0};
 
     snprintf(instruction.info, INFO_LENGTH, "cli");
@@ -205,7 +208,7 @@ InstructionInfo cli_disassemble(uint16_t opCode) {
 // This instruction performs a compare between two registers Rd and Rr. None of the registers are changed.
 // All conditional branches can be used after this instruction.
 // AVR Instruction Manual page 77
-InstructionInfo cp_disassemble(uint16_t opCode) {
+InstructionInfo cp_disassemble(uint16_t opCode, uint16_t programCounter) {
     uint16_t rd_addr = dec_extractBits0000000111110000(opCode);
     uint16_t rr_addr = dec_extractBits0000001000001111(opCode);
     uint8_t rdContent = mem_dataRead8bit(rd_addr);
@@ -231,7 +234,7 @@ InstructionInfo cp_disassemble(uint16_t opCode) {
 // When operating on unsigned values, only BREQ and BRNE branches can be expected to perform
 // consistently. When operating on two’s complement values, all signed branches are available.
 // AVR Instruction Manual page 84
-InstructionInfo dec_disassemble(uint16_t opCode) {
+InstructionInfo dec_disassemble(uint16_t opCode, uint16_t programCounter) {
     char *instructionName = "dec";
     uint16_t rd_addr = dec_extractBits0000000111110000(opCode);
     uint8_t rdContent = mem_dataRead8bit(rd_addr);
@@ -254,7 +257,7 @@ InstructionInfo dec_disassemble(uint16_t opCode) {
 // destination register Rd.
 // If the both registers are the same this instruction becomes the clr instruction.
 // AVR Instruction Manual page 91 and 71
-InstructionInfo eorclr_disassemble(uint16_t opCode) {
+InstructionInfo eorclr_disassemble(uint16_t opCode, uint16_t programCounter) {
     char *instructionName = "eor";
     uint16_t rd_addr = dec_extractBits0000000111110000(opCode);
     uint16_t rr_addr = dec_extractBits0000001000001111(opCode);
@@ -274,7 +277,13 @@ InstructionInfo eorclr_disassemble(uint16_t opCode) {
 }
 
 
-InstructionInfo in_disassemble(uint16_t opCode) {
+
+// IN - Load an I/O Location to Register
+// 16-bit Opcode: 1011 0AAd dddd AAAA
+// Loads data from the I/O Space (Ports, Timers, Configuration Registers, etc.) into register Rd in the
+// Register File.
+// AVR Instruction Manual page 100
+InstructionInfo in_disassemble(uint16_t opCode, uint16_t programCounter) {
     uint16_t ioa_addr = dec_extractBits0000011000001111(opCode) + 0x20;
     uint16_t rr_addr =  dec_extractBits0000000111110000(opCode);
 
@@ -290,12 +299,11 @@ InstructionInfo in_disassemble(uint16_t opCode) {
 
 
 // JMP – Jump
-// 32-bit Opcode: 1001 010k kkkk 110k
-//                kkkk kkkk kkkk kkkk
+// 32-bit Opcode: 1001 010k kkkk 110k kkkk kkkk kkkk kkkk
 // Jump to an address within the entire 4M (words) Program memory.
 // AVR Instruction Manual page 103
-InstructionInfo jmp_disassemble(uint16_t opCode) {
-    uint16_t jumpDest_addr = mem_fetchInstruction(mem_programCounter + 1);
+InstructionInfo jmp_disassemble(uint16_t opCode, uint16_t programCounter) {
+    uint16_t jumpDest_addr = mem_fetchInstruction(programCounter + 1);
 
     InstructionInfo instruction = {0};
  
@@ -308,13 +316,13 @@ InstructionInfo jmp_disassemble(uint16_t opCode) {
 
 
 
-InstructionInfo ldi_disassemble(uint16_t opCode) {
+InstructionInfo ldi_disassemble(uint16_t opCode, uint16_t programCounter) {
     uint16_t rd_addr =  dec_extractBits0000000011110000(opCode) + 16;
     uint8_t constData = dec_extractBits0000111100001111(opCode);
 
     InstructionInfo instruction = {0};
  
-    snprintf(instruction.info, INFO_LENGTH, "ldi %s, (%02X)", _getName(rd_addr), constData);
+    snprintf(instruction.info, INFO_LENGTH, "ldi %s, %02X", _getName(rd_addr), constData);
     instruction.length =  1;
     
     return instruction;
@@ -327,10 +335,10 @@ InstructionInfo ldi_disassemble(uint16_t opCode) {
 // 32-bit Opcode: 1001 000d dddd 0000 : kkkk kkkk kkkk kkkk
 // Loads one byte from the data space to a register.
 // AVR Instruction Manual page 116
-InstructionInfo lds32_disassemble(uint16_t opCode) {
+InstructionInfo lds32_disassemble(uint16_t opCode, uint16_t programCounter) {
     uint16_t rd_addr =  dec_extractBits0000000111110000(opCode);
     uint8_t rdContent = mem_dataRead8bit(rd_addr);
-    uint8_t constAddress = mem_fetchInstruction(mem_programCounter + 1); 
+    uint8_t constAddress = mem_fetchInstruction(programCounter + 1); 
     uint8_t memContent = mem_dataRead8bit(constAddress);
 
     InstructionInfo instruction = {0};
@@ -353,7 +361,7 @@ InstructionInfo lds32_disassemble(uint16_t opCode) {
 // Memory access is limited to the address range 0x40...0xbf.
 // Note: Registers r0...r15 are remapped to r16...r31.
 // AVR Instruction Manual page 117
-InstructionInfo lds16_disassemble(uint16_t opCode) {
+InstructionInfo lds16_disassemble(uint16_t opCode, uint16_t programCounter) {
     uint16_t rd_addr =  dec_extractBits0000000011110000(opCode);
     uint8_t rdContent = mem_dataRead8bit(rd_addr);
 
@@ -378,7 +386,7 @@ InstructionInfo lds16_disassemble(uint16_t opCode) {
 //TODO check th address offset 
     if (rd_addr < 32) rd_addr %= 32; // Registers r0...r15 are remapped to r16...r31.
 
-    uint8_t memContent = mem_eepromRead8bit(constAddress);
+    uint8_t memContent = mem_dataRead8bit(constAddress);
 
     InstructionInfo instruction = {0};
 
@@ -393,7 +401,7 @@ InstructionInfo lds16_disassemble(uint16_t opCode) {
 
 
 
-InstructionInfo nop_disassemble(uint16_t opCode) {
+InstructionInfo nop_disassemble(uint16_t opCode, uint16_t programCounter) {
     InstructionInfo instruction = {0};
  
     snprintf(instruction.info, INFO_LENGTH, "nop");
@@ -411,8 +419,8 @@ InstructionInfo nop_disassemble(uint16_t opCode) {
 // Performs the logical OR between the contents of register Rd and a constant, and places the result in the
 // destination register Rd.
 // AVR Instruction Manual page 133
-InstructionInfo ori_disassemble(uint16_t opCode) {
-    uint16_t rd_addr =  dec_extractBits0000000011110000(opCode);
+InstructionInfo ori_disassemble(uint16_t opCode, uint16_t programCounter) {
+    uint16_t rd_addr =  dec_extractBits0000000011110000(opCode) + 16;
     uint8_t constData = dec_extractBits0000111100001111(opCode);
     uint8_t rdContent = mem_dataRead8bit(rd_addr);
 
@@ -434,7 +442,7 @@ InstructionInfo ori_disassemble(uint16_t opCode) {
 // That means 0x20 must bei added to the provided adresses.
 // Atmega328 datasheet page 624
 // AVR Instruction Manual page 134
-InstructionInfo out_disassemble(uint16_t opCode) {
+InstructionInfo out_disassemble(uint16_t opCode, uint16_t programCounter) {
     uint16_t ioa_addr = dec_extractBits0000011000001111(opCode) + 0x20;
     uint16_t rr_addr =  dec_extractBits0000000111110000(opCode);
     uint8_t rrContent = mem_dataRead8bit(rr_addr);
@@ -457,7 +465,7 @@ InstructionInfo out_disassemble(uint16_t opCode) {
 // before the POP.
 // This instruction is not available in all devices. Refer to the device specific instruction set summary.
 // AVR Instruction Manual page 135
-InstructionInfo pop_disassemble(uint16_t opCode) {
+InstructionInfo pop_disassemble(uint16_t opCode, uint16_t programCounter) {
     uint16_t rd_addr = dec_extractBits0000000111110000(opCode);
     uint16_t stackPointer = mem_dataRead16bit(STACKPOINTER);
     uint8_t stackContent = mem_dataRead16bit(stackPointer + 1);
@@ -480,7 +488,7 @@ InstructionInfo pop_disassemble(uint16_t opCode) {
 // by 1 after the PUSH.
 // This instruction is not available in all devices. Refer to the device specific instruction set summary.
 // AVR Instruction Manual page 136
-InstructionInfo push_disassemble(uint16_t opCode) {
+InstructionInfo push_disassemble(uint16_t opCode, uint16_t programCounter) {
     uint16_t rr_addr = dec_extractBits0000000111110000(opCode);
     uint16_t stackPointer = mem_dataRead8bit(STACKPOINTER);
     uint8_t rrContent = mem_dataRead8bit(rr_addr);
@@ -504,9 +512,9 @@ InstructionInfo push_disassemble(uint16_t opCode) {
 // memory not exceeding 4K words (8KB) this instruction can address the entire memory from every
 // address location. The Stack Pointer uses a post-decrement scheme during RCALL.
 // AVR Instruction Manual page 137
-InstructionInfo rcall_disassemble(uint16_t opCode) {
+InstructionInfo rcall_disassemble(uint16_t opCode, uint16_t programCounter) {
     int16_t constAddress = (int16_t)dec_extractBits0000111111111111(opCode);
-    uint16_t jumpDest_addr = (mem_programCounter + constAddress - 0xfff) % (DATA_MEMORY_END + 1);    
+    uint16_t jumpDest_addr = (programCounter + constAddress - 0xfff) % (DATA_MEMORY_END + 1);    
 
     InstructionInfo instruction = {0};
  
@@ -521,7 +529,7 @@ InstructionInfo rcall_disassemble(uint16_t opCode) {
 // Returns from subroutine. The return address is loaded from the STACK. The Stack Pointer uses a pre-
 // increment scheme during RET.
 // AVR Instruction Manual page 139
-InstructionInfo ret_disassemble(uint16_t opCode) {
+InstructionInfo ret_disassemble(uint16_t opCode, uint16_t programCounter) {
     InstructionInfo instruction = {0};
  
     snprintf(instruction.info, INFO_LENGTH, "ret");
@@ -539,9 +547,9 @@ InstructionInfo ret_disassemble(uint16_t opCode) {
 // Sets a specified bit in an I/O Register. This instruction operates on the lower 32 I/O Registers –
 // addresses 0-31.
 // AVR Instruction Manual page 151
-InstructionInfo sbi_disassemble(uint16_t opCode) {
+InstructionInfo sbi_disassemble(uint16_t opCode, uint16_t programCounter) {
 
-    uint16_t ioa_addr = dec_extractBits0000000001111000(opCode) + 0x20;
+    uint16_t ioa_addr = dec_extractBits0000000011111000(opCode) + 0x20;
     uint16_t bitNum = dec_extractBits0000000000000111(opCode);
     uint8_t ioaContent = mem_dataRead8bit(ioa_addr);
 
@@ -561,7 +569,7 @@ InstructionInfo sbi_disassemble(uint16_t opCode) {
 // This instruction tests a single bit in an I/O Register and skips the next instruction if the bit is cleared. This
 // instruction operates on the lower 32 I/O Registers – addresses 0-31.
 // AVR Instruction Manual page 152
-InstructionInfo sbic_disassemble(uint16_t opCode) {
+InstructionInfo sbic_disassemble(uint16_t opCode, uint16_t programCounter) {
     uint16_t ioa_addr = dec_extractBits0000000001111000(opCode) + 0x20;
     uint16_t bitNum = dec_extractBits0000000000000111(opCode);
     uint8_t ioaContent = mem_dataRead8bit(ioa_addr);
@@ -581,7 +589,7 @@ InstructionInfo sbic_disassemble(uint16_t opCode) {
 // This instruction tests a single bit in an I/O Register and skips the next instruction if the bit is set. This
 // instruction operates on the lower 32 I/O Registers – addresses 0-31.
 // AVR Instruction Manual page 153
-InstructionInfo sbis_disassemble(uint16_t opCode) {
+InstructionInfo sbis_disassemble(uint16_t opCode, uint16_t programCounter) {
     uint16_t ioa_addr = dec_extractBits0000000001111000(opCode) + 0x20;
     uint16_t bitNum = dec_extractBits0000000000000111(opCode);
     uint8_t ioaContent = mem_dataRead8bit(ioa_addr);
@@ -604,7 +612,7 @@ InstructionInfo sbis_disassemble(uint16_t opCode) {
 // This instruction operates on the upper four register pairs, and is well suited for operations on the
 // Pointer Registers.
 // AVR Instruction Manual page 154
-InstructionInfo sbiw_disassemble(uint16_t opCode) {
+InstructionInfo sbiw_disassemble(uint16_t opCode, uint16_t programCounter) {
     uint16_t rd_addr =   dec_extractBits0000000000110000(opCode) * 2 + R24;
     uint16_t constData = dec_extractBits0000000011001111(opCode);
     uint16_t rdContent = mem_dataRead16bit(rd_addr);
@@ -631,10 +639,9 @@ InstructionInfo sbiw_disassemble(uint16_t opCode) {
 // changed.
 // This instruction is not available in all devices. Refer to the device specific instruction set summary.
 // AVR Instruction Manual page 179
-InstructionInfo sts_disassemble(uint16_t opCode) {
-    uint16_t instructionFirst = mem_fetchInstruction(mem_programCounter);
-    uint16_t rr_addr = dec_extractBits0000000111110000(instructionFirst);
-    uint16_t instructionSecond = mem_fetchInstruction(mem_programCounter + 1);
+InstructionInfo sts_disassemble(uint16_t opCode, uint16_t programCounter) {
+    uint16_t rr_addr = dec_extractBits0000000111110000(opCode);
+    uint16_t instructionSecond = mem_fetchInstruction(programCounter + 1);
     uint16_t mem_addr = instructionSecond;
     uint8_t rrContent = mem_dataRead8bit(rr_addr);
 
@@ -655,32 +662,44 @@ InstructionInfo sts_disassemble(uint16_t opCode) {
 // Program memory not exceeding 4K words (8KB) this instruction can address the entire memory from
 // every address location. See also JMP.
 // AVR Instruction Manual page 142
-InstructionInfo rjmp_disassemble(uint16_t opCode) {
-    int16_t addressOffset = (int16_t)dec_extractBits0000011111111111(opCode);
-    bool adddressOffsetSignBit = uti_getBit(opCode, 11);
-
-    int16_t jumpDest_addr;
-    if (adddressOffsetSignBit) {
-        if (mem_programCounter - addressOffset < 0) {
-            jumpDest_addr = mem_programCounter - addressOffset + PROGRAM_MEMORY_END;
-        } else {
-            jumpDest_addr = mem_programCounter - addressOffset;
-        }
+InstructionInfo rjmp_disassemble(uint16_t opCode, uint16_t programCounter) {
+    uint16_t addressOffset = (int16_t)dec_extractBits0000011111111111(opCode);
+    bool signBit = uti_getBit(opCode, 11);
+    uint16_t jumpDest_addr;
+    if (signBit) {
+        jumpDest_addr = (PROGRAM_MEMORY_END + 2 + programCounter + addressOffset - 0x800) % (PROGRAM_MEMORY_END + 1);
     } else {
-        if (mem_programCounter + addressOffset > PROGRAM_MEMORY_END) {
-            jumpDest_addr = mem_programCounter + addressOffset - PROGRAM_MEMORY_END;
-        } else {
-            jumpDest_addr = mem_programCounter + addressOffset;
-        }
-    }
+        jumpDest_addr = (PROGRAM_MEMORY_END + 2 + programCounter + addressOffset) % (PROGRAM_MEMORY_END + 1);
+    }    
 
     InstructionInfo instruction = {0};
  
-    snprintf(instruction.info, INFO_LENGTH, "rjmp %04X", jumpDest_addr);
+    snprintf(instruction.info, INFO_LENGTH, "rjmp %04X", (jumpDest_addr));
     instruction.length =  1;
 
     return instruction;
 }
+
+
+
+// SBCI – Subtract Immediate with Carry SBI – Set Bit in I/O Register
+// 16-bit Opcode: 0100 KKKK dddd KKKK
+// Subtracts a constant from a register and subtracts with the C Flag, and places the result in the destination
+// register Rd.
+// AVR Instruction Manual page 149
+InstructionInfo sbci_disassemble(uint16_t opCode, uint16_t programCounter) {
+    uint8_t rd_addr = dec_extractBits0000000111110000(opCode) + 16;
+    uint8_t rdContent = mem_dataRead8bit(rd_addr);
+    uint8_t constData = dec_extractBits0000111100001111(opCode);
+
+    InstructionInfo instruction = {0};
+ 
+    snprintf(instruction.info, INFO_LENGTH, "sbci %s(%02X), %02X", _getName(rd_addr), rdContent, constData);
+    instruction.length =  1;
+
+    return instruction;
+}
+
 
 
 
@@ -689,8 +708,8 @@ InstructionInfo rjmp_disassemble(uint16_t opCode) {
 // Subtracts a register and a constant, and places the result in the destination register Rd. This instruction is
 // working on Register R16 to R31 and is very well suited for operations on the X, Y, and Z-pointers.
 // AVR Instruction Manual page 183
-InstructionInfo subi_disassemble(uint16_t opCode) {
-    uint8_t rd_addr = dec_extractBits0000000111110000(opCode);
+InstructionInfo subi_disassemble(uint16_t opCode, uint16_t programCounter) {
+    uint8_t rd_addr = dec_extractBits0000000111110000(opCode) + 16;
     uint8_t rdContent = mem_dataRead8bit(rd_addr);
     uint8_t constData = dec_extractBits0000111100001111(opCode);
 

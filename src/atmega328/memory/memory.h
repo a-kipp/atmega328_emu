@@ -5,20 +5,19 @@
 #include <stdbool.h>
 #include "map.h"
 #include "loader.h"
-#include "../global_variables.h"
-#include "../utility_functions.h"
-#include "../out.h"
+#include "../utils.h"
+#include "../peripherals.h"
 
 
 
 
 // for easier access flags are stored separatly, readings and writes from SREG register will be intercepted.
-bool mem_sregCarryFlagC = false;
-bool mem_sregZeroFlagZ = false;
-bool mem_sregNegativeFlagN = false;
-bool mem_sregTwoComplementsOverflowFlagV = false;
-bool mem_sregSignBitS = false;
-bool mem_sregHalfCarryFlagH = false;
+bool mem_sregCarry = false;
+bool mem_sregZero = false;
+bool mem_sregNegative = false;
+bool mem_sregTwoComplOverflow = false;
+bool mem_sregSignBit = false;
+bool mem_sregHalfCarry = false;
 bool mem_sregBitCopyStorageT = false;
 bool mem_sregGlobalInterruptEnableI = false;
 
@@ -29,19 +28,19 @@ static uint8_t _eepromMemory[EEPROM_END] = {0};
 
 
 
-int32_t mem_programCounter = 0;
+uint16_t mem_programCounter = 0;
 long long mem_cpuCycleCount = 0;
 
 
 
 static uint8_t _SregRead(uint16_t address) {
     uint8_t returnVal = 0;
-    returnVal |= (mem_sregCarryFlagC << 0);
-    returnVal |= (mem_sregZeroFlagZ << 1);
-    returnVal |= (mem_sregNegativeFlagN << 2);
-    returnVal |= (mem_sregTwoComplementsOverflowFlagV << 3);
-    returnVal |= (mem_sregSignBitS << 4);
-    returnVal |= (mem_sregHalfCarryFlagH << 5);
+    returnVal |= (mem_sregCarry << 0);
+    returnVal |= (mem_sregZero << 1);
+    returnVal |= (mem_sregNegative << 2);
+    returnVal |= (mem_sregTwoComplOverflow << 3);
+    returnVal |= (mem_sregSignBit << 4);
+    returnVal |= (mem_sregHalfCarry << 5);
     returnVal |= (mem_sregBitCopyStorageT << 5);
     returnVal |= (mem_sregGlobalInterruptEnableI << 7);
     return returnVal;
@@ -49,15 +48,14 @@ static uint8_t _SregRead(uint16_t address) {
 
 
 static void _sregWrite(uint16_t address, uint8_t value) {
-    printf("write to sreg\n");
-    mem_sregCarryFlagC = value | 0b00000001;
-    mem_sregZeroFlagZ = value | 0b00000010;
-    mem_sregNegativeFlagN = value | 0b00000100;
-    mem_sregTwoComplementsOverflowFlagV = value | 0b00001000;
-    mem_sregSignBitS = value | 0b00010000;
-    mem_sregHalfCarryFlagH = value | 0b00100000;
-    mem_sregBitCopyStorageT = value | 0b01000000;
-    mem_sregGlobalInterruptEnableI = value | 0b10000000;
+    mem_sregCarry = value & 0b00000001;
+    mem_sregZero = value & 0b00000010;
+    mem_sregNegative = value & 0b00000100;
+    mem_sregTwoComplOverflow = value & 0b00001000;
+    mem_sregSignBit = value & 0b00010000;
+    mem_sregHalfCarry = value & 0b00100000;
+    mem_sregBitCopyStorageT = value & 0b01000000;
+    mem_sregGlobalInterruptEnableI = value & 0b10000000;
 }
 
 
@@ -98,14 +96,14 @@ static void _writeToPinPortB(uint16_t address, uint8_t value) {
         _programMemory[PORTB] = value;
         uint8_t newHighPins = value & _programMemory[DDRB];
         uint8_t changedPins = oldHighPins ^ newHighPins;
-        if (changedPins & (1 << 7)) out_setPin(10, newHighPins & (1 << 7));
-        if (changedPins & (1 << 6)) out_setPin(9, newHighPins & (1 << 6));
-        if (changedPins & (1 << 5)) out_setPin(19, newHighPins & (1 << 5));
-        if (changedPins & (1 << 3)) out_setPin(18, newHighPins & (1 << 3));
-        if (changedPins & (1 << 2)) out_setPin(17, newHighPins & (1 << 2));
-        if (changedPins & (1 << 4)) out_setPin(16, newHighPins & (1 << 4));
-        if (changedPins & (1 << 1)) out_setPin(15, newHighPins & (1 << 1));
-        if (changedPins & (1 << 0)) out_setPin(14, newHighPins & (1 << 0));
+        if (changedPins & (1 << 7)) per_digitalPinOut(10, newHighPins & (1 << 7));
+        if (changedPins & (1 << 6)) per_digitalPinOut(9, newHighPins & (1 << 6));
+        if (changedPins & (1 << 5)) per_digitalPinOut(19, newHighPins & (1 << 5));
+        if (changedPins & (1 << 3)) per_digitalPinOut(18, newHighPins & (1 << 3));
+        if (changedPins & (1 << 2)) per_digitalPinOut(17, newHighPins & (1 << 2));
+        if (changedPins & (1 << 4)) per_digitalPinOut(16, newHighPins & (1 << 4));
+        if (changedPins & (1 << 1)) per_digitalPinOut(15, newHighPins & (1 << 1));
+        if (changedPins & (1 << 0)) per_digitalPinOut(14, newHighPins & (1 << 0));
     } else {
         fprintf(stderr, "something wrong with the pins\n");
     }
@@ -118,13 +116,13 @@ static void _writeToPinPortC(uint16_t address, uint8_t value) {
         uint8_t newHighPins = value & _programMemory[DDRC];
         uint8_t changedPins = oldHighPins ^ newHighPins;
         // no pin here
-        if (changedPins & (1 << 6)) out_setPin(1, newHighPins & (1 << 6));
-        if (changedPins & (1 << 5)) out_setPin(28, newHighPins & (1 << 5));
-        if (changedPins & (1 << 3)) out_setPin(27, newHighPins & (1 << 3));
-        if (changedPins & (1 << 2)) out_setPin(26, newHighPins & (1 << 2));
-        if (changedPins & (1 << 4)) out_setPin(25, newHighPins & (1 << 4));
-        if (changedPins & (1 << 1)) out_setPin(24, newHighPins & (1 << 1));
-        if (changedPins & (1 << 0)) out_setPin(22, newHighPins & (1 << 0));
+        if (changedPins & (1 << 6)) per_digitalPinOut(1, newHighPins & (1 << 6));
+        if (changedPins & (1 << 5)) per_digitalPinOut(28, newHighPins & (1 << 5));
+        if (changedPins & (1 << 3)) per_digitalPinOut(27, newHighPins & (1 << 3));
+        if (changedPins & (1 << 2)) per_digitalPinOut(26, newHighPins & (1 << 2));
+        if (changedPins & (1 << 4)) per_digitalPinOut(25, newHighPins & (1 << 4));
+        if (changedPins & (1 << 1)) per_digitalPinOut(24, newHighPins & (1 << 1));
+        if (changedPins & (1 << 0)) per_digitalPinOut(22, newHighPins & (1 << 0));
     } else {
         fprintf(stderr, "something wrong with the pins\n");
     }
@@ -136,14 +134,14 @@ static void _writeToPinPortD(uint16_t address, uint8_t value) {
         _programMemory[PORTD] = value;
         uint8_t newHighPins = value & _programMemory[DDRD];
         uint8_t changedPins = oldHighPins ^ newHighPins;
-        if (changedPins & (1 << 7)) out_setPin(13, newHighPins & (1 << 7));
-        if (changedPins & (1 << 6)) out_setPin(12, newHighPins & (1 << 6));
-        if (changedPins & (1 << 5)) out_setPin(11, newHighPins & (1 << 5));
-        if (changedPins & (1 << 3)) out_setPin(6, newHighPins & (1 << 3));
-        if (changedPins & (1 << 2)) out_setPin(5, newHighPins & (1 << 2));
-        if (changedPins & (1 << 4)) out_setPin(4, newHighPins & (1 << 4));
-        if (changedPins & (1 << 1)) out_setPin(3, newHighPins & (1 << 1));
-        if (changedPins & (1 << 0)) out_setPin(2, newHighPins & (1 << 0));
+        if (changedPins & (1 << 7)) per_digitalPinOut(13, newHighPins & (1 << 7));
+        if (changedPins & (1 << 6)) per_digitalPinOut(12, newHighPins & (1 << 6));
+        if (changedPins & (1 << 5)) per_digitalPinOut(11, newHighPins & (1 << 5));
+        if (changedPins & (1 << 3)) per_digitalPinOut(6, newHighPins & (1 << 3));
+        if (changedPins & (1 << 2)) per_digitalPinOut(5, newHighPins & (1 << 2));
+        if (changedPins & (1 << 4)) per_digitalPinOut(4, newHighPins & (1 << 4));
+        if (changedPins & (1 << 1)) per_digitalPinOut(3, newHighPins & (1 << 1));
+        if (changedPins & (1 << 0)) per_digitalPinOut(2, newHighPins & (1 << 0));
     } else {
         fprintf(stderr, "something wrong with the pins\n");
     }
@@ -703,12 +701,12 @@ uint8_t _write8BitToRegister(uint16_t address, uint8_t value) {
 
 void _incrementCycleCounterOnce() {
     mem_cpuCycleCount ++;
-    uint8_t timerCounter = _programMemory[TCNT0];
+    uint8_t timerCounter = _dataMemory[TCNT0];
     timerCounter ++;
     if (timerCounter == 0) {
-        _programMemory[TIFR0] = (1 << TOV0);
+        _dataMemory[TIFR0] = (1 << TOV0);
     }
-    _programMemory[TCNT0] = timerCounter;
+    _dataMemory[TCNT0] = timerCounter;
 }
 
 
@@ -764,13 +762,13 @@ void mem_dataWrite8bitFromExtern(uint16_t address, uint8_t value) {
 
 
 // unrestricted write acces to memory
-void mem_dataWrite8bitUnconditional(uint16_t address, uint8_t value) {
+//void mem_dataWrite8bitUnconditional(uint16_t address, uint8_t value) {
     //if (address == SREG) {
     //    fprintf(stderr, "direct write to sreg", address);
     //    exit(-1);
     //}
-    _dataMemory[address] = value;
-}
+//    _dataMemory[address] = value;
+//}
 
 
 uint8_t mem_dataRead8bit(uint16_t address) {
@@ -811,9 +809,9 @@ void mem_loadProgram(char* filePath) {
 
 
 uint16_t mem_fetchInstruction(uint16_t address) {
-    //if (address > PROGRAM_MEMORY_END) {
-    //    fprintf(stderr, "end of Program Memory reached\n");
-    //}
+    if (mem_programCounter > PROGRAM_MEMORY_END) {
+        fprintf(stderr, "end of Program Memory reached\n");
+    }
     uint16_t opCode = _programMemory[address];
     return uti_byteswap16bit(opCode);
 }

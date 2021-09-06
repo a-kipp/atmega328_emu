@@ -9,13 +9,14 @@
 // ____________________________________________________________________________________________________________________
 
 // everytime an output pin changes it's state this function is called
-void out_setPin(uint8_t pinNum, bool isHigh) {
+void per_digitalPinOut(uint8_t pinNum, bool isHigh) {
     if (isHigh) {
-        //printf("Pin %d set high\n", pinNum);
+        printf("Pin %d set high\n", pinNum);
     } else {
-        //printf("Pin %d set low\n", pinNum);
+        printf("Pin %d set low\n", pinNum);
     }
 }
+
 
 
 
