@@ -663,14 +663,14 @@ InstructionInfo sts_disassemble(uint16_t opCode, uint16_t programCounter) {
 // every address location. See also JMP.
 // AVR Instruction Manual page 142
 InstructionInfo rjmp_disassemble(uint16_t opCode, uint16_t programCounter) {
-    uint16_t addressOffset = (int16_t)dec_extractBits0000011111111111(opCode);
-    bool signBit = uti_getBit(opCode, 11);
+    uint16_t addressOffset = (uint16_t)dec_extractBits0000011111111111(opCode);
+    bool signBit = (bool)dec_extractBits0000100000000000(opCode);
     uint16_t jumpDest_addr;
-    if (signBit) {
-        jumpDest_addr = (PROGRAM_MEMORY_END + 2 + programCounter + addressOffset - 0x800) % (PROGRAM_MEMORY_END + 1);
+    if(signBit) {
+        jumpDest_addr = (PROGRAM_MEMORY_END + 2 + programCounter + addressOffset - 0x800)  % (PROGRAM_MEMORY_END + 1);
     } else {
-        jumpDest_addr = (PROGRAM_MEMORY_END + 2 + programCounter + addressOffset) % (PROGRAM_MEMORY_END + 1);
-    }    
+        jumpDest_addr = (PROGRAM_MEMORY_END + 2 + programCounter + addressOffset)  % (PROGRAM_MEMORY_END + 1);
+    }
 
     InstructionInfo instruction = {0};
  

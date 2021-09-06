@@ -85,22 +85,21 @@ static void *_run(void *arg) {
         //uti_print_binary_8bit(mem_dataRead8bit(SREG));
         //printf(" %s",  ins_disassembleInstruction(mem_programCounter).info);
         //printf("     %s\n",  ins_disassembleInstruction(mem_programCounter).comment);
-        
-        uint64_t cycleTime = getTimeDelta(tim_getRealTime(), timeStamp);
 
-        timeStamp = tim_getRealTime();
+        //uint64_t cycleTime = getTimeDelta(tim_getRealTime(), timeStamp);
+        //timeStamp = tim_getRealTime();
 
-        for (int i = 0; i < 20; i++) {
+        for (int i = 0; i < 1000; i++) {
             uint16_t opCode = mem_fetchInstruction(mem_programCounter);
             jti_implementationTable[opCode]();
         }
-
-        uint64_t offset = (NANOSEC_PER_SEC  /  g_clockSpeed * 20) - cycleTime;
-
-        uint64_t delta = getTimeDelta(tim_getRealTime(), timeStamp);
-
-
-        tim_sleepNanoSec((NANOSEC_PER_SEC /  g_clockSpeed * 20)  - delta);
+//
+        //uint64_t offset = (NANOSEC_PER_SEC  /  g_clockSpeed) - cycleTime;
+//
+        //uint64_t delta = getTimeDelta(tim_getRealTime(), timeStamp);
+//
+//
+        //tim_sleepNanoSec((NANOSEC_PER_SEC /  g_clockSpeed )  - delta);
     }
     _cpuStopSignal = 0;
     printf("cpu stopped\n");

@@ -588,20 +588,24 @@ void ret() {
 // Program memory not exceeding 4K words (8KB) this instruction can address the entire memory from
 // every address location. See also JMP.
 // AVR Instruction Manual page 142
+#pragma GCC push_options
+#pragma GCC optimize ("O1") 
 void rjmp() {
     uint16_t opCode = mem_fetchInstruction(mem_programCounter);
-    uint16_t addressOffset = (int16_t)dec_extractBits0000011111111111(opCode);
+
+    int16_t addressOffset = (int16_t)dec_extractBits0000011111111111(opCode);
     bool signBit = uti_getBit(opCode, 11);
-    uint16_t jumpDest_addr;
+    int16_t jumpDest_addr;
     if (signBit) {
         jumpDest_addr = (PROGRAM_MEMORY_END + 2 + mem_programCounter + addressOffset - 0x800) % (PROGRAM_MEMORY_END + 1);
     } else {
         jumpDest_addr = (PROGRAM_MEMORY_END + 2 + mem_programCounter + addressOffset) % (PROGRAM_MEMORY_END + 1);
-    }    
-
+    }
+    
     mem_programCounter = jumpDest_addr;
     mem_incrementCycleCounter(1);
 }
+#pragma GCC pop_options  
 
 
 
