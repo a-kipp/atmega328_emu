@@ -4,7 +4,7 @@
 
 #include <stdbool.h>
 #include "memory/memory.h"
-#include "cpu/cpu.h"
+#include "cpu.h"
 
 
 ;

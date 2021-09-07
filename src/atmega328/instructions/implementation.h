@@ -58,9 +58,13 @@ void adc() {
     // C: Set if there was carry from the MSB of the result; cleared otherwise.
     mem_sregCarry = rdBit7 && rrBit7 || rrBit7 && !resultBit7 || !resultBit7 && rdBit7;
     
-    mem_dataWrite8bit(rd_addr, result);
     mem_programCounter += 1;
     mem_incrementCycleCounter(1);
+    // !
+    // writing to memory may causes an interrupt, to get the the correct return address, the program counter
+    // must be incremented before an possible interrupt can occure.
+    // !
+    mem_dataWrite8bit(rd_addr, result);
 }
 
 
@@ -103,9 +107,13 @@ void add() {
     // C: Set if there was carry from the MSB of the result; cleared otherwise.
     mem_sregCarry = rdBit7 && rrBit7 || rrBit7 && !resultBit7 || !resultBit7 && rdBit7;
     
-    mem_dataWrite8bit(rd_addr, result);
     mem_programCounter += 1;
     mem_incrementCycleCounter(1);
+    // !
+    // writing to memory may causes an interrupt, to get the the correct return address, the program counter
+    // must be incremented before an possible interrupt can occure.
+    // !
+    mem_dataWrite8bit(rd_addr, result);
 }
 
 
@@ -168,9 +176,13 @@ void cbi() {
     uint8_t ioaContent = mem_dataRead8bit(ioa_addr);
     uint8_t result = uti_setBitInByte(ioaContent, bitNum, false);
 
-    mem_dataWrite8bit(ioa_addr, result);
     mem_programCounter += 1;
     mem_incrementCycleCounter(1);
+    // !
+    // writing to memory may causes an interrupt, to get the the correct return address, the program counter
+    // must be incremented before an possible interrupt can occure.
+    // !
+    mem_dataWrite8bit(ioa_addr, result);
 }
 
 
@@ -263,9 +275,13 @@ void dec() {
     // Z is set if the result is $00; cleared otherwise.
     mem_sregZero = (result == 0);
 
-    mem_dataWrite8bit(rd_addr, result);
     mem_programCounter += 1;
     mem_incrementCycleCounter(1);
+    // !
+    // writing to memory may causes an interrupt, to get the the correct return address, the program counter
+    // must be incremented before an possible interrupt can occure.
+    // !
+    mem_dataWrite8bit(rd_addr, result);
 }
 
 
@@ -314,9 +330,13 @@ void eorclr() {
         mem_sregZero = (result == 0);
     }
 
-    mem_dataWrite8bit(rd_addr, result);
     mem_programCounter += 1;
     mem_incrementCycleCounter(1);
+    // !
+    // writing to memory may causes an interrupt, to get the the correct return address, the program counter
+    // must be incremented before an possible interrupt can occure.
+    // !
+    mem_dataWrite8bit(rd_addr, result);
 }
 
 
@@ -333,9 +353,13 @@ void in() {
     uint16_t rd_addr =  dec_extractBits0000000111110000(opCode);
     uint8_t ioaContent = mem_dataRead8bit(ioa_addr);
 
-    mem_dataWrite8bit(rd_addr, ioaContent);
     mem_programCounter += 1;
     mem_incrementCycleCounter(1);
+    // !
+    // writing to memory may causes an interrupt, to get the the correct return address, the program counter
+    // must be incremented before an possible interrupt can occure.
+    // !
+    mem_dataWrite8bit(rd_addr, ioaContent);
 }
 
 
@@ -363,9 +387,13 @@ void ldi() {
     uint16_t rd_addr =  dec_extractBits0000000011110000(opCode) + 16;
     uint8_t constData = dec_extractBits0000111100001111(opCode);
 
-    mem_dataWrite8bit(rd_addr, constData);
     mem_programCounter += 1;
     mem_incrementCycleCounter(1);
+    // !
+    // writing to memory may causes an interrupt, to get the the correct return address, the program counter
+    // must be incremented before an possible interrupt can occure.
+    // !
+    mem_dataWrite8bit(rd_addr, constData);
 }
 
 
@@ -381,9 +409,13 @@ void lds32() {
     uint8_t constAddress = mem_fetchInstruction(mem_programCounter + 1); 
     uint8_t memContent = mem_dataRead8bit(constAddress);
 
-    mem_dataWrite8bit(rd_addr, memContent);
     mem_programCounter += 2;
     mem_incrementCycleCounter(2);
+    // !
+    // writing to memory may causes an interrupt, to get the the correct return address, the program counter
+    // must be incremented before an possible interrupt can occure.
+    // !
+    mem_dataWrite8bit(rd_addr, memContent);
 }
 
 
@@ -425,9 +457,13 @@ void lds16() {
 
     uint8_t memContent = mem_eepromRead8bit(constAddress);
 
-    mem_dataWrite8bit(rd_addr, memContent);
     mem_programCounter += 1;
     mem_incrementCycleCounter(1);
+    // !
+    // writing to memory may causes an interrupt, to get the the correct return address, the program counter
+    // must be incremented before an possible interrupt can occure.
+    // !
+    mem_dataWrite8bit(rd_addr, memContent);
 }
 
 
@@ -472,9 +508,13 @@ void ori() {
     // Z: Set if the result is $00; cleared otherwise.
     mem_sregZero = (result == 0);
 
-    mem_dataWrite8bit(rd_addr, result);
     mem_programCounter += 1;
     mem_incrementCycleCounter(1);
+    // !
+    // writing to memory may causes an interrupt, to get the the correct return address, the program counter
+    // must be incremented before an possible interrupt can occure.
+    // !
+    mem_dataWrite8bit(rd_addr, result);
 }    
 
 
@@ -493,8 +533,12 @@ void out() {
     uint16_t rr_addr =  dec_extractBits0000000111110000(opCode);
     uint8_t rrContent = mem_dataRead8bit(rr_addr);
 
-    mem_dataWrite8bit(ioa_addr, rrContent);
     mem_programCounter += 1;
+    // !
+    // writing to memory may causes an interrupt, to get the the correct return address, the program counter
+    // must be incremented before an possible interrupt can occure.
+    // !
+    mem_dataWrite8bit(ioa_addr, rrContent);
     mem_incrementCycleCounter(1);
 }
 
@@ -564,9 +608,9 @@ void rcall() {
         jumpDest_addr = (PROGRAM_MEMORY_END + 2 + mem_programCounter + addressOffset)  % (PROGRAM_MEMORY_END + 1);
     }
 
+    mem_programCounter = jumpDest_addr;
     mem_dataWrite16bit(stackTop_addr - 1, mem_programCounter + 1);
     mem_decrementIncrementStackPointer(-2);
-    mem_programCounter = jumpDest_addr;
     mem_incrementCycleCounter(3);
 }
 #pragma GCC pop_options
@@ -654,9 +698,13 @@ void sbci() {
     // cleared otherwise.
     mem_sregCarry = (constData + (uint8_t)mem_sregCarry > rdContent);
 
-    mem_dataWrite8bit(rd_addr, result);
     mem_programCounter += 1;
     mem_incrementCycleCounter(1);
+    // !
+    // writing to memory may causes an interrupt, to get the the correct return address, the program counter
+    // must be incremented before an possible interrupt can occure.
+    // !
+    mem_dataWrite8bit(rd_addr, result);
 }
 
 
@@ -675,9 +723,13 @@ void sbi() {
     uint8_t ioaContent = mem_dataRead8bit(ioa_addr);
     uint8_t result = uti_setBitInByte(ioaContent, bitNum, true);
 
-    mem_dataWrite8bit(ioa_addr, result);
     mem_programCounter += 1;
     mem_incrementCycleCounter(1);
+    // !
+    // writing to memory may causes an interrupt, to get the the correct return address, the program counter
+    // must be incremented before an possible interrupt can occure.
+    // !
+    mem_dataWrite8bit(ioa_addr, result);
 }
 
 
@@ -812,9 +864,13 @@ void sbiw() {
     // C: Set if the absolute value of K is larger than the absolute value of Rd; cleared otherwise.
     mem_sregSignBit = resultBit15 && rdhBit7;
 
-    mem_dataWrite16bit(rd_addr, result);
     mem_programCounter += 1;
     mem_incrementCycleCounter(2);
+    // !
+    // writing to memory may causes an interrupt, to get the the correct return address, the program counter
+    // must be incremented before an possible interrupt can occure.
+    // !
+    mem_dataWrite16bit(rd_addr, result);
 }
 
 
@@ -838,9 +894,13 @@ void sts() {
     uint16_t mem_addr = instructionSecond;
     uint8_t memContent = mem_dataRead8bit(rr_addr);
 
-    mem_dataWrite8bit(mem_addr, memContent);
     mem_programCounter += 2;
     mem_incrementCycleCounter(1);
+    // !
+    // writing to memory may causes an interrupt, to get the the correct return address, the program counter
+    // must be incremented before an possible interrupt can occure.
+    // !
+    mem_dataWrite8bit(mem_addr, memContent);
 }
 
 
@@ -883,9 +943,13 @@ void subi() {
     // C: Set if the absolute value of K is larger than the absolute value of Rd; cleared otherwise.
     mem_sregCarry = (constData > rdContent);
 
-    mem_dataWrite8bit(rd_addr, result);
     mem_programCounter += 1;
     mem_incrementCycleCounter(1);
+    // !
+    // writing to memory may causes an interrupt, to get the the correct return address, the program counter
+    // must be incremented before an possible interrupt can occure.
+    // !
+    mem_dataWrite8bit(rd_addr, result);
 }
 
 

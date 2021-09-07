@@ -9,12 +9,13 @@
 #include <stdint.h>
 #include <pthread.h>
 #include <unistd.h>
-#include "../memory/memory.h"
-#include "../instructions/jump_table_implementation.h"
-#include "../instructions/instructions.h"
-#include "../globalconfig.h"
-#include "../timing.h"
-#include "../debug.h"
+#include "memory/memory.h"
+#include "instructions/jump_table_implementation.h"
+#include "instructions/instructions.h"
+#include "globalconfig.h"
+#include "timing.h"
+#include "debug.h"
+#include "eventhandler.h"
 ;
 
 bool _cpuStopSignal;
@@ -34,7 +35,7 @@ static void *_run(void *arg) {
     _cpuStopSignal = false;
 
     while(!_cpuStopSignal) {
-        tim_timeStart();
+        TimeObj timeStamp = tim_getCurrentTime();
 
         //printf("%04X ",  mem_programCounter);
         //uti_print_binary_8bit(mem_dataRead8bit(SREG));
@@ -49,10 +50,13 @@ static void *_run(void *arg) {
         }
 
         calcExecutionTime = (mem_cpuCycleCount - cycleCountStart) * (NANOSEC_PER_SEC / g_clockSpeed);
-        actualExecutionTime = tim_getTimeElapsed();
+
+        actualExecutionTime = tim_getTimeElapsed(timeStamp);
 
         tim_sleep(calcExecutionTime - actualExecutionTime - delta);
-        totalTimeTaken = tim_getTimeElapsed() + delta;
+
+        totalTimeTaken = tim_getTimeElapsed(timeStamp) + delta;
+
         delta = totalTimeTaken - calcExecutionTime;
     }
 

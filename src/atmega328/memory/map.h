@@ -86,6 +86,9 @@
             #define TOV0 0 // Timer 0 Overflow Flag
         #define TIFR1 0x0036
         #define TIFR2 0x0037
+        #define EIMSK 0x003D // External Interrupt Mask Register -> page 55
+            #define INT0 0
+            #define INT1 1
         #define GPIOR0 0x003E
         #define EECR 0x003F // EEPROM Control Register, only bit 0 to 5 is used, others must be aleays zero
             #define EERE_FLAG 0
@@ -116,6 +119,11 @@
             #define GLOBAL_INTERRUPT_ENABLE 7 // I
     #define IO_REGISTERS_END 0x005F
     #define EXTERN_IO_REGISTERS_START 0x0060
+        #define EICRA // External Interrupt Control Register A -> Datasheet page 54
+            #define ISC00
+            #define ISC01
+            #define ISC10
+            #define ISC11
         #define UBRR0L 0x00C4 // Datasheet page 276
         #define UBRR0H 0x00C5
         #define UDR0 0x00C6 // Serial Register
