@@ -513,9 +513,15 @@ InstructionInfo push_disassemble(uint16_t opCode, uint16_t programCounter) {
 // address location. The Stack Pointer uses a post-decrement scheme during RCALL.
 // AVR Instruction Manual page 137
 InstructionInfo rcall_disassemble(uint16_t opCode, uint16_t programCounter) {
-    int16_t constAddress = (int16_t)dec_extractBits0000111111111111(opCode);
-    uint16_t jumpDest_addr = (programCounter + constAddress - 0xfff) % (DATA_MEMORY_END + 1);    
-
+    uint16_t addressOffset = (uint16_t)dec_extractBits0000011111111111(opCode);
+    bool signBit = (bool)dec_extractBits0000100000000000(opCode);
+    uint16_t jumpDest_addr;
+    if(signBit) {
+        jumpDest_addr = (PROGRAM_MEMORY_END + 2 + programCounter + addressOffset - 0x800)  % (PROGRAM_MEMORY_END + 1);
+    } else {
+        jumpDest_addr = (PROGRAM_MEMORY_END + 2 + programCounter + addressOffset)  % (PROGRAM_MEMORY_END + 1);
+    }
+    
     InstructionInfo instruction = {0};
  
     snprintf(instruction.info, INFO_LENGTH, "rcall %04X", jumpDest_addr);

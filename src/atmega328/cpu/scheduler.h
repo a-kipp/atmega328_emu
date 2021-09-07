@@ -18,7 +18,7 @@ void sch_runFastMode() {
             _executeInstructions(cycleDelta);
             eve_handleEvent(nextEvent);
         } else {
-            tim_sleepNanoSec(timeDelta);
+            tim_sleep(timeDelta);
         }
     }
 }

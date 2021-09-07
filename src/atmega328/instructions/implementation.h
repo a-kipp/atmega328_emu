@@ -155,6 +155,7 @@ void call() {
 
 
 
+
 // CBI – Clear Bit in I/O Register
 // 16-bit Opcode: 1001 1000 AAAA Abbb
 // Clears a specified bit in an I/O register. This instruction operates on the lower 32 I/O registers –
@@ -371,8 +372,7 @@ void ldi() {
 
 
 // LDS – Load Direct from Data Space
-// 32-bit Opcode: 1001 000d dddd 0000
-//                kkkk kkkk kkkk kkkk
+// 32-bit Opcode: 1001 000d dddd 0000 kkkk kkkk kkkk kkkk
 // Loads one byte from the data space to a register.
 // AVR Instruction Manual page 116
 void lds32() {
@@ -550,18 +550,26 @@ void push() {
 // memory not exceeding 4K words (8KB) this instruction can address the entire memory from every
 // address location. The Stack Pointer uses a post-decrement scheme during RCALL.
 // AVR Instruction Manual page 137
+#pragma GCC push_options
+#pragma GCC optimize ("O1") 
 void rcall() {
     uint16_t opCode = mem_fetchInstruction(mem_programCounter);
-    int16_t constAddress = (int16_t)dec_extractBits0000111111111111(opCode);
-    uint16_t jumpDest_addr = (mem_programCounter + constAddress - 0xfff) % (DATA_MEMORY_END + 1);    
     uint16_t stackTop_addr = mem_dataRead16bit(STACKPOINTER);
+    uint16_t addressOffset = (uint16_t)dec_extractBits0000011111111111(opCode);
+    bool signBit = uti_getBit(opCode, 11);
+    uint16_t jumpDest_addr;
+    if(signBit) {
+        jumpDest_addr = (PROGRAM_MEMORY_END + 2 + mem_programCounter + addressOffset - 0x800)  % (PROGRAM_MEMORY_END + 1);
+    } else {
+        jumpDest_addr = (PROGRAM_MEMORY_END + 2 + mem_programCounter + addressOffset)  % (PROGRAM_MEMORY_END + 1);
+    }
 
     mem_dataWrite16bit(stackTop_addr - 1, mem_programCounter + 1);
     mem_decrementIncrementStackPointer(-2);
     mem_programCounter = jumpDest_addr;
     mem_incrementCycleCounter(3);
 }
-
+#pragma GCC pop_options
 
 
 
@@ -592,10 +600,9 @@ void ret() {
 #pragma GCC optimize ("O1") 
 void rjmp() {
     uint16_t opCode = mem_fetchInstruction(mem_programCounter);
-
-    int16_t addressOffset = (int16_t)dec_extractBits0000011111111111(opCode);
+    uint16_t addressOffset = dec_extractBits0000011111111111(opCode);
     bool signBit = uti_getBit(opCode, 11);
-    int16_t jumpDest_addr;
+    uint16_t jumpDest_addr;
     if (signBit) {
         jumpDest_addr = (PROGRAM_MEMORY_END + 2 + mem_programCounter + addressOffset - 0x800) % (PROGRAM_MEMORY_END + 1);
     } else {

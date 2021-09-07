@@ -12,99 +12,53 @@
 #include "../memory/memory.h"
 #include "../instructions/jump_table_implementation.h"
 #include "../instructions/instructions.h"
-#include "../config.h"
+#include "../globalconfig.h"
 #include "../timing.h"
 #include "../debug.h"
 ;
 
-int _cpuStopSignal;
+bool _cpuStopSignal;
 
 
 pthread_t *_cpuThread;
 
 
-static void *z_run(void *arg) {
-
-    mem_cpuCycleCount = 0;
-    _cpuStopSignal = 0;
-
-    struct timespec timeStamp = {0};
-
-
-    while(!_cpuStopSignal) {
-
-        
-        uint64_t cycleTime = getTimeDelta(tim_getRealTime(), timeStamp);
-
-        timeStamp = tim_getRealTime();
-
-        for (int i = 0; i < 1000; i++) {
-            uint16_t opCode = mem_fetchInstruction(mem_programCounter);
-            jti_implementationTable[opCode]();
-        }
-
-        uint64_t offset = (NANOSEC_PER_SEC /  g_clockSpeed) * 1000 - cycleTime;
-
-        uint64_t delta = getTimeDelta(tim_getRealTime(), timeStamp);
-
-        tim_sleepNanoSec((NANOSEC_PER_SEC /  g_clockSpeed) * 600 - delta + offset);
-    }
-    _cpuStopSignal = 0;
-    printf("cpu stopped\n");
-}
-
-
-static void *x_run(void *arg) {
-
-    mem_cpuCycleCount = 0;
-    _cpuStopSignal = 0;
-
-    struct timespec timeStamp = {0};
-
-
-    while(!_cpuStopSignal) {
-
-        uint16_t opCode = mem_fetchInstruction(mem_programCounter);
-        jti_implementationTable[opCode]();
-    }
-    _cpuStopSignal = 0;
-    printf("cpu stopped\n");
-}
-
-
 static void *_run(void *arg) {
 
-    mem_cpuCycleCount = 0;
-    _cpuStopSignal = 0;
+    uint64_t calcExecutionTime = 0;
+    uint64_t actualExecutionTime = 0;
+    uint64_t totalTimeTaken = 0;
+    uint64_t delta = 0;
+    uint16_t instructionsToExecude = (g_clockSpeed / 1000000) + 1;
 
-    struct timespec timeStamp = {0};
-
+    _cpuStopSignal = false;
 
     while(!_cpuStopSignal) {
+        tim_timeStart();
+
         //printf("%04X ",  mem_programCounter);
         //uti_print_binary_8bit(mem_dataRead8bit(SREG));
         //printf(" %s",  ins_disassembleInstruction(mem_programCounter).info);
         //printf("     %s\n",  ins_disassembleInstruction(mem_programCounter).comment);
 
-        //uint64_t cycleTime = getTimeDelta(tim_getRealTime(), timeStamp);
-        //timeStamp = tim_getRealTime();
+        long long cycleCountStart = mem_cpuCycleCount;
 
-        for (int i = 0; i < 1000; i++) {
+        for (int i = 0; i < instructionsToExecude; i++) {
             uint16_t opCode = mem_fetchInstruction(mem_programCounter);
             jti_implementationTable[opCode]();
         }
-//
-        //uint64_t offset = (NANOSEC_PER_SEC  /  g_clockSpeed) - cycleTime;
-//
-        //uint64_t delta = getTimeDelta(tim_getRealTime(), timeStamp);
-//
-//
-        //tim_sleepNanoSec((NANOSEC_PER_SEC /  g_clockSpeed )  - delta);
+
+        calcExecutionTime = (mem_cpuCycleCount - cycleCountStart) * (NANOSEC_PER_SEC / g_clockSpeed);
+        actualExecutionTime = tim_getTimeElapsed();
+
+        tim_sleep(calcExecutionTime - actualExecutionTime - delta);
+        totalTimeTaken = tim_getTimeElapsed() + delta;
+        delta = totalTimeTaken - calcExecutionTime;
     }
-    _cpuStopSignal = 0;
+
+    _cpuStopSignal = false;
     printf("cpu stopped\n");
 }
-
 
 
 

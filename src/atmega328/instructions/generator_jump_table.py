@@ -21,7 +21,7 @@ opcode_function_pairs = [
     ['0110 KKKK dddd KKKK', 'ori',    'ori_disassemble'   ],
     ['1011 1AAr rrrr AAAA', 'out',    'out_disassemble'   ],
     ['1001 000d dddd 1111', 'pop',    'pop_disassemble'   ],
-    ['1001 001d dddd 1111', 'push',   'push_disassemble  '],
+    ['1001 001d dddd 1111', 'push',   'push_disassemble'  ],
     ['1101 kkkk kkkk kkkk', 'rcall',  'rcall_disassemble' ],
     ['1001 0101 0000 1000', 'ret',    'ret_disassemble'   ],
     ['1100 kkkk kkkk kkkk', 'rjmp',   'rjmp_disassemble'  ],
