@@ -88,7 +88,10 @@ void pin_handlePinChanges() {
             case 1: _setBitInRegisterTo(PORTC, PORTC6_PIN_1, (bool)newPinState.value); break;
             case 2: _setBitInRegisterTo(PORTD, PORTD0_PIN_2, (bool)newPinState.value); break;
             case 3: _setBitInRegisterTo(PORTD, PORTD1_PIN_3, (bool)newPinState.value); break;
-            case 4: _setBitInRegisterTo(PORTD, PORTD2_PIN_4, (bool)newPinState.value); break;
+            case 4: {
+                int_matchExternalInterruptRequest1(LOW)
+                break;
+            }
             case 5: _setBitInRegisterTo(PORTD, PORTD3_PIN_5, (bool)newPinState.value); break;
             case 6: _setBitInRegisterTo(PORTD, PORTD6_PIN_12, (bool)newPinState.value); break;
             case 7: ; break;

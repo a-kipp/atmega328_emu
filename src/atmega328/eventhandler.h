@@ -42,22 +42,22 @@ Event _dequeueEvent() {
 
 
 void eve_setPortB(uint8_t bitField) {
-    mem_dataWrite8bit(PORTB, bitField);
+    acc_dataWrite8bit(PORTB, bitField);
 }
 
 
 void eve_setPortC(uint8_t bitField) {
-    mem_dataWrite8bit(PORTC, bitField);
+    acc_dataWrite8bit(PORTC, bitField);
 }
 
 
 void eve_setPortD(uint8_t bitField) {
-    mem_dataWrite8bit(PORTD, bitField);
+    acc_dataWrite8bit(PORTD, bitField);
 }
 
 
 void eve_setUdr0(uint8_t bitField) {
-    mem_dataWrite8bit(UDR0, bitField);
+    acc_dataWrite8bit(UDR0, bitField);
 }
 
 

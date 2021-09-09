@@ -82,6 +82,9 @@
             #define PORTD2_PIN_4 2 
             #define PORTD1_PIN_3 1
             #define PORTD0_PIN_2 0
+        #define EIFR 0x003C
+            #define INTF1 1
+            #define INTF0 0
         #define TIFR0 0x0035
             #define TOV0 0 // Timer 0 Overflow Flag
         #define TIFR1 0x0036
@@ -119,11 +122,11 @@
             #define GLOBAL_INTERRUPT_ENABLE 7 // I
     #define IO_REGISTERS_END 0x005F
     #define EXTERN_IO_REGISTERS_START 0x0060
-        #define EICRA // External Interrupt Control Register A -> Datasheet page 54
-            #define ISC00
-            #define ISC01
-            #define ISC10
-            #define ISC11
+        #define EICRA 0x0069// External Interrupt Control Register A -> Datasheet page 54
+            #define ISC00 0
+            #define ISC01 1
+            #define ISC10 2
+            #define ISC11 3
         #define UBRR0L 0x00C4 // Datasheet page 276
         #define UBRR0H 0x00C5
         #define UDR0 0x00C6 // Serial Register

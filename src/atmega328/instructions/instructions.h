@@ -2,7 +2,7 @@
 
 #include "jump_table_disassemble.h"
 #include "disassemble.h"
-#include "../memory/map.h"
+#include "../memory/memory.h"
 ;
 
 

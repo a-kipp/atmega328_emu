@@ -1,4 +1,4 @@
 #pragma once
 ;
 
-long long g_clockSpeed = 16000000;
+long long g_clockSpeed = 1000000000;

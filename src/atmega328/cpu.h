@@ -16,12 +16,41 @@
 #include "timing.h"
 #include "debug.h"
 #include "eventhandler.h"
+#include "./memory/declarations.h"
 ;
 
 bool _cpuStopSignal;
 
 
 pthread_t *_cpuThread;
+
+
+static void _incrementCycleCounterOnce() {
+    cpu_cpuCycleCounter ++;
+    uint8_t timerCounter = mem_dataMemory[TCNT0];
+    timerCounter ++;
+    if (timerCounter == 0) {
+        mem_dataMemory[TIFR0] = (1 << TOV0);
+    }
+    mem_dataMemory[TCNT0] = timerCounter;
+}
+
+
+
+void cpu_incrementCycleCounter(uint8_t increments) {
+    for(uint8_t i = 0; i <= increments; i++) {
+        _incrementCycleCounterOnce();
+    }
+}
+
+
+void cpu_decrementIncrementStackPointer(int8_t increments) {
+    mem_dataMemory[STACKPOINTER] + increments;
+}
+
+
+
+
 
 
 static void *_run(void *arg) {
@@ -37,19 +66,19 @@ static void *_run(void *arg) {
     while(!_cpuStopSignal) {
         TimeObj timeStamp = tim_getCurrentTime();
 
-        //printf("%04X ",  mem_programCounter);
-        //uti_print_binary_8bit(mem_dataRead8bit(SREG));
-        //printf(" %s",  ins_disassembleInstruction(mem_programCounter).info);
-        //printf("     %s\n",  ins_disassembleInstruction(mem_programCounter).comment);
+        //printf("%04X ",  cpu_programCounter);
+        //uti_print_binary_8bit(mem_dataMemory[SREG]);
+        //printf(" %s",  ins_disassembleInstruction(cpu_programCounter).info);
+        //printf("     %s\n",  ins_disassembleInstruction(cpu_programCounter).comment);
 
-        long long cycleCountStart = mem_cpuCycleCount;
+        long long cycleCountStart = cpu_cpuCycleCounter;
 
         for (int i = 0; i < instructionsToExecude; i++) {
-            uint16_t opCode = mem_fetchInstruction(mem_programCounter);
+            uint16_t opCode = mem_fetchInstruction(cpu_programCounter);
             jti_implementationTable[opCode]();
         }
 
-        calcExecutionTime = (mem_cpuCycleCount - cycleCountStart) * (NANOSEC_PER_SEC / g_clockSpeed);
+        calcExecutionTime = (cpu_cpuCycleCounter - cycleCountStart) * (NANOSEC_PER_SEC / g_clockSpeed);
 
         actualExecutionTime = tim_getTimeElapsed(timeStamp);
 

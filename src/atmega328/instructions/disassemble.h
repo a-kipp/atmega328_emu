@@ -1,6 +1,7 @@
 #pragma once
 
 #include "decoder.h"
+#include "../memory/memory.h"
 
 
 #define INFO_LENGTH 80
@@ -172,7 +173,7 @@ InstructionInfo call_disassemble(uint16_t opCode, uint16_t programCounter) {
 InstructionInfo cbi_disassemble(uint16_t opCode, uint16_t programCounter) {
     uint16_t ioa_addr = dec_extractBits0000000011111000(opCode) + 0x20;
     uint16_t bitNum = dec_extractBits0000000000000111(opCode);
-    uint8_t ioaContent = mem_dataRead8bit(ioa_addr);
+    uint8_t ioaContent = acc_dataRead8bit(ioa_addr);
 
     InstructionInfo instruction = {0};
  
@@ -211,8 +212,8 @@ InstructionInfo cli_disassemble(uint16_t opCode, uint16_t programCounter) {
 InstructionInfo cp_disassemble(uint16_t opCode, uint16_t programCounter) {
     uint16_t rd_addr = dec_extractBits0000000111110000(opCode);
     uint16_t rr_addr = dec_extractBits0000001000001111(opCode);
-    uint8_t rdContent = mem_dataRead8bit(rd_addr);
-    uint8_t rrContent = mem_dataRead8bit(rr_addr);
+    uint8_t rdContent = acc_dataRead8bit(rd_addr);
+    uint8_t rrContent = acc_dataRead8bit(rr_addr);
     uint8_t result = rdContent - rrContent;
 
     InstructionInfo instruction = {0};
@@ -237,7 +238,7 @@ InstructionInfo cp_disassemble(uint16_t opCode, uint16_t programCounter) {
 InstructionInfo dec_disassemble(uint16_t opCode, uint16_t programCounter) {
     char *instructionName = "dec";
     uint16_t rd_addr = dec_extractBits0000000111110000(opCode);
-    uint8_t rdContent = mem_dataRead8bit(rd_addr);
+    uint8_t rdContent = acc_dataRead8bit(rd_addr);
 
     InstructionInfo instruction = {0};
  
@@ -261,8 +262,8 @@ InstructionInfo eorclr_disassemble(uint16_t opCode, uint16_t programCounter) {
     char *instructionName = "eor";
     uint16_t rd_addr = dec_extractBits0000000111110000(opCode);
     uint16_t rr_addr = dec_extractBits0000001000001111(opCode);
-    uint8_t rdContent = mem_dataRead8bit(rd_addr);
-    uint8_t rrContent = mem_dataRead8bit(rr_addr);
+    uint8_t rdContent = acc_dataRead8bit(rd_addr);
+    uint8_t rrContent = acc_dataRead8bit(rr_addr);
 
     InstructionInfo instruction = {0};
  
@@ -337,9 +338,9 @@ InstructionInfo ldi_disassemble(uint16_t opCode, uint16_t programCounter) {
 // AVR Instruction Manual page 116
 InstructionInfo lds32_disassemble(uint16_t opCode, uint16_t programCounter) {
     uint16_t rd_addr =  dec_extractBits0000000111110000(opCode);
-    uint8_t rdContent = mem_dataRead8bit(rd_addr);
+    uint8_t rdContent = acc_dataRead8bit(rd_addr);
     uint8_t constAddress = mem_fetchInstruction(programCounter + 1); 
-    uint8_t memContent = mem_dataRead8bit(constAddress);
+    uint8_t memContent = acc_dataRead8bit(constAddress);
 
     InstructionInfo instruction = {0};
 
@@ -363,7 +364,7 @@ InstructionInfo lds32_disassemble(uint16_t opCode, uint16_t programCounter) {
 // AVR Instruction Manual page 117
 InstructionInfo lds16_disassemble(uint16_t opCode, uint16_t programCounter) {
     uint16_t rd_addr =  dec_extractBits0000000011110000(opCode);
-    uint8_t rdContent = mem_dataRead8bit(rd_addr);
+    uint8_t rdContent = acc_dataRead8bit(rd_addr);
 
     uint8_t opCodeBit0 = uti_getBit(opCode, 0);
     uint8_t opCodeBit1 = uti_getBit(opCode, 1);
@@ -386,7 +387,7 @@ InstructionInfo lds16_disassemble(uint16_t opCode, uint16_t programCounter) {
 //TODO check th address offset 
     if (rd_addr < 32) rd_addr %= 32; // Registers r0...r15 are remapped to r16...r31.
 
-    uint8_t memContent = mem_dataRead8bit(constAddress);
+    uint8_t memContent = acc_dataRead8bit(constAddress);
 
     InstructionInfo instruction = {0};
 
@@ -422,7 +423,7 @@ InstructionInfo nop_disassemble(uint16_t opCode, uint16_t programCounter) {
 InstructionInfo ori_disassemble(uint16_t opCode, uint16_t programCounter) {
     uint16_t rd_addr =  dec_extractBits0000000011110000(opCode) + 16;
     uint8_t constData = dec_extractBits0000111100001111(opCode);
-    uint8_t rdContent = mem_dataRead8bit(rd_addr);
+    uint8_t rdContent = acc_dataRead8bit(rd_addr);
 
     InstructionInfo instruction = {0};
  
@@ -445,7 +446,7 @@ InstructionInfo ori_disassemble(uint16_t opCode, uint16_t programCounter) {
 InstructionInfo out_disassemble(uint16_t opCode, uint16_t programCounter) {
     uint16_t ioa_addr = dec_extractBits0000011000001111(opCode) + 0x20;
     uint16_t rr_addr =  dec_extractBits0000000111110000(opCode);
-    uint8_t rrContent = mem_dataRead8bit(rr_addr);
+    uint8_t rrContent = acc_dataRead8bit(rr_addr);
 
     InstructionInfo instruction = {0};
  
@@ -467,8 +468,8 @@ InstructionInfo out_disassemble(uint16_t opCode, uint16_t programCounter) {
 // AVR Instruction Manual page 135
 InstructionInfo pop_disassemble(uint16_t opCode, uint16_t programCounter) {
     uint16_t rd_addr = dec_extractBits0000000111110000(opCode);
-    uint16_t stackPointer = mem_dataRead16bit(STACKPOINTER);
-    uint8_t stackContent = mem_dataRead16bit(stackPointer + 1);
+    uint16_t stackPointer = acc_dataRead16bit(STACKPOINTER);
+    uint8_t stackContent = acc_dataRead16bit(stackPointer + 1);
 
     InstructionInfo instruction = {0};
  
@@ -490,8 +491,8 @@ InstructionInfo pop_disassemble(uint16_t opCode, uint16_t programCounter) {
 // AVR Instruction Manual page 136
 InstructionInfo push_disassemble(uint16_t opCode, uint16_t programCounter) {
     uint16_t rr_addr = dec_extractBits0000000111110000(opCode);
-    uint16_t stackPointer = mem_dataRead8bit(STACKPOINTER);
-    uint8_t rrContent = mem_dataRead8bit(rr_addr);
+    uint16_t stackPointer = acc_dataRead8bit(STACKPOINTER);
+    uint8_t rrContent = acc_dataRead8bit(rr_addr);
 
     InstructionInfo instruction = {0};
  
@@ -557,7 +558,7 @@ InstructionInfo sbi_disassemble(uint16_t opCode, uint16_t programCounter) {
 
     uint16_t ioa_addr = dec_extractBits0000000011111000(opCode) + 0x20;
     uint16_t bitNum = dec_extractBits0000000000000111(opCode);
-    uint8_t ioaContent = mem_dataRead8bit(ioa_addr);
+    uint8_t ioaContent = acc_dataRead8bit(ioa_addr);
 
     InstructionInfo instruction = {0};
  
@@ -578,7 +579,7 @@ InstructionInfo sbi_disassemble(uint16_t opCode, uint16_t programCounter) {
 InstructionInfo sbic_disassemble(uint16_t opCode, uint16_t programCounter) {
     uint16_t ioa_addr = dec_extractBits0000000001111000(opCode) + 0x20;
     uint16_t bitNum = dec_extractBits0000000000000111(opCode);
-    uint8_t ioaContent = mem_dataRead8bit(ioa_addr);
+    uint8_t ioaContent = acc_dataRead8bit(ioa_addr);
 
     InstructionInfo instruction = {0};
  
@@ -598,7 +599,7 @@ InstructionInfo sbic_disassemble(uint16_t opCode, uint16_t programCounter) {
 InstructionInfo sbis_disassemble(uint16_t opCode, uint16_t programCounter) {
     uint16_t ioa_addr = dec_extractBits0000000001111000(opCode) + 0x20;
     uint16_t bitNum = dec_extractBits0000000000000111(opCode);
-    uint8_t ioaContent = mem_dataRead8bit(ioa_addr);
+    uint8_t ioaContent = acc_dataRead8bit(ioa_addr);
 
     InstructionInfo instruction = {0};
  
@@ -621,7 +622,7 @@ InstructionInfo sbis_disassemble(uint16_t opCode, uint16_t programCounter) {
 InstructionInfo sbiw_disassemble(uint16_t opCode, uint16_t programCounter) {
     uint16_t rd_addr =   dec_extractBits0000000000110000(opCode) * 2 + R24;
     uint16_t constData = dec_extractBits0000000011001111(opCode);
-    uint16_t rdContent = mem_dataRead16bit(rd_addr);
+    uint16_t rdContent = acc_dataRead16bit(rd_addr);
 
     InstructionInfo instruction = {0};
  
@@ -649,7 +650,7 @@ InstructionInfo sts_disassemble(uint16_t opCode, uint16_t programCounter) {
     uint16_t rr_addr = dec_extractBits0000000111110000(opCode);
     uint16_t instructionSecond = mem_fetchInstruction(programCounter + 1);
     uint16_t mem_addr = instructionSecond;
-    uint8_t rrContent = mem_dataRead8bit(rr_addr);
+    uint8_t rrContent = acc_dataRead8bit(rr_addr);
 
     InstructionInfo instruction = {0};
  
@@ -695,7 +696,7 @@ InstructionInfo rjmp_disassemble(uint16_t opCode, uint16_t programCounter) {
 // AVR Instruction Manual page 149
 InstructionInfo sbci_disassemble(uint16_t opCode, uint16_t programCounter) {
     uint8_t rd_addr = dec_extractBits0000000111110000(opCode) + 16;
-    uint8_t rdContent = mem_dataRead8bit(rd_addr);
+    uint8_t rdContent = acc_dataRead8bit(rd_addr);
     uint8_t constData = dec_extractBits0000111100001111(opCode);
 
     InstructionInfo instruction = {0};
@@ -716,7 +717,7 @@ InstructionInfo sbci_disassemble(uint16_t opCode, uint16_t programCounter) {
 // AVR Instruction Manual page 183
 InstructionInfo subi_disassemble(uint16_t opCode, uint16_t programCounter) {
     uint8_t rd_addr = dec_extractBits0000000111110000(opCode) + 16;
-    uint8_t rdContent = mem_dataRead8bit(rd_addr);
+    uint8_t rdContent = acc_dataRead8bit(rd_addr);
     uint8_t constData = dec_extractBits0000111100001111(opCode);
 
     InstructionInfo instruction = {0};
