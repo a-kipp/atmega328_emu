@@ -4,8 +4,8 @@
 #include <stdbool.h>
 #include "map.h"
 #include "arrays.h"
-#include "interruptmatcher.h"
 #include "declarations.h"
+#include "../interrupts.h"
 
 
 

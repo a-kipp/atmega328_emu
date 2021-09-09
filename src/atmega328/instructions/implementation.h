@@ -172,7 +172,7 @@ void cbi() {
     uint16_t ioa_addr = dec_extractBits0000000011111000(instruction) + 0x20;
     uint16_t bitNum = dec_extractBits0000000000000111(instruction);
     uint8_t ioaContent = acc_dataRead8bit(ioa_addr);
-    uint8_t result = uti_setBitInByte(ioaContent, bitNum, false);
+    uint8_t result = uti_setBit(ioaContent, bitNum, false);
 
     cpu_programCounter += 1;
     cpu_incrementCycleCounter(1);
@@ -632,6 +632,26 @@ void ret() {
 
 
 
+// RETI – Return from Interrupt
+// 16-bit Opcode: 1001 0101 0001 1000
+// Returns from interrupt. The return address is loaded from the STACK and the Global Interrupt Flag is set.
+// Note that the Status Register is not automatically stored when entering an interrupt routine, and it is not
+// restored when returning from an interrupt routine. This must be handled by the application program. The
+// Stack Pointer uses a pre-increment scheme during RETI.
+// AVR Instruction Manual page 140
+void reti() {
+    uint16_t stackTop_addr = acc_dataRead16bit(STACKPOINTER);
+    uint16_t jumpDest_addr =  acc_dataRead16bit(stackTop_addr + 2);
+
+    reg_sregGlobalInterruptEnable = true;
+    cpu_decrementIncrementStackPointer(2);
+    cpu_programCounter = jumpDest_addr;
+    cpu_incrementCycleCounter(4);
+}
+
+
+
+
 // RJMP – Relative Jump
 // 16-bit Opcode: 1100 kkkk kkkk kkkk
 // Relative jump to an address within PC - 2K +1 and PC + 2K (words). For AVR microcontrollers with
@@ -655,6 +675,7 @@ void rjmp() {
     cpu_incrementCycleCounter(1);
 }
 #pragma GCC pop_options  
+
 
 
 
@@ -720,7 +741,7 @@ void sbi() {
     uint16_t ioa_addr = dec_extractBits0000000011111000(opCode) + 0x20;
     uint16_t bitNum = dec_extractBits0000000000000111(opCode);
     uint8_t ioaContent = acc_dataRead8bit(ioa_addr);
-    uint8_t result = uti_setBitInByte(ioaContent, bitNum, true);
+    uint8_t result = uti_setBit(ioaContent, bitNum, true);
 
     cpu_programCounter += 1;
     cpu_incrementCycleCounter(1);

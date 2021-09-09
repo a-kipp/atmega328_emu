@@ -540,9 +540,31 @@ InstructionInfo ret_disassemble(uint16_t opCode, uint16_t programCounter) {
     InstructionInfo instruction = {0};
  
     snprintf(instruction.info, INFO_LENGTH, "ret");
+
+    instruction.length = 1;
+
+    return instruction;
 }
 
 
+
+
+// RETI – Return from Interrupt
+// 16-bit Opcode: 1001 0101 0001 1000
+// Returns from interrupt. The return address is loaded from the STACK and the Global Interrupt Flag is set.
+// Note that the Status Register is not automatically stored when entering an interrupt routine, and it is not
+// restored when returning from an interrupt routine. This must be handled by the application program. The
+// Stack Pointer uses a pre-increment scheme during RETI.
+// AVR Instruction Manual page 140
+InstructionInfo reti_disassemble(uint16_t opCode, uint16_t programCounter) {
+    InstructionInfo instruction = {0};
+ 
+    snprintf(instruction.info, INFO_LENGTH, "reti");
+
+    instruction.length = 1;
+
+    return instruction;
+}
 
 
 

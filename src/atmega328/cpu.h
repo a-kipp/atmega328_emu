@@ -17,6 +17,7 @@
 #include "debug.h"
 #include "eventhandler.h"
 #include "./memory/declarations.h"
+#include "interrupts.h"
 ;
 
 bool _cpuStopSignal;
@@ -74,8 +75,12 @@ static void *_run(void *arg) {
         long long cycleCountStart = cpu_cpuCycleCounter;
 
         for (int i = 0; i < instructionsToExecude; i++) {
+
             uint16_t opCode = mem_fetchInstruction(cpu_programCounter);
+
             jti_implementationTable[opCode]();
+            
+            int_handleInterrupts();
         }
 
         calcExecutionTime = (cpu_cpuCycleCounter - cycleCountStart) * (NANOSEC_PER_SEC / g_clockSpeed);
@@ -88,7 +93,6 @@ static void *_run(void *arg) {
 
         delta = totalTimeTaken - calcExecutionTime;
     }
-
     _cpuStopSignal = false;
     printf("cpu stopped\n");
 }

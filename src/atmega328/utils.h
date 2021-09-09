@@ -18,12 +18,15 @@ uint16_t uti_byteswap16bit(uint16_t num) {
 
 
 bool uti_getBit(uint16_t word, int bit) {
-    //printf("hi form uti get bit\n");
-    return (word & (1 << bit));
+    if (word & (1 << bit)) {
+        return true;
+    } else {
+        false;
+    }
 }
 
 
-uint8_t uti_setBitInByte(uint8_t byte, int bit , bool isSet) {
+uint8_t uti_setBit(uint8_t byte, int bit , bool isSet) {
     if (isSet) {
         byte = byte | (1 << bit);
     } else {
