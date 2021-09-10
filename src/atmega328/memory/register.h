@@ -98,24 +98,24 @@ static void _writeToPinPortC(uint16_t address, uint8_t value) {
 
 
 static void _writeToPinPinD(uint16_t address, uint8_t newValue) {
+
     uint8_t pindContent = arr_get8BitDataArray(PIND);
     uint8_t sregContent = arr_get8BitDataArray(SREG);
-    bool sregGlobalInterruptEnable = uti_getBit(sregContent, GLOBAL_INTERRUPT_ENABLE);
 
-    if (sregGlobalInterruptEnable) {
-        bool oldPd2 = uti_getBit(pindContent, PORTD2_PIN_4);
-        bool newPd2 = uti_getBit(newValue, PORTD2_PIN_4);
-        bool oldPd3 = uti_getBit(pindContent, PORTD3_PIN_5);
-        bool newPd3 = uti_getBit(newValue, PORTD3_PIN_5);
+    // bool oldPd2 = uti_getBit(pindContent, PORTD2_PIN_4);
+    // bool newPd2 = uti_getBit(newValue, PORTD2_PIN_4);
+    bool oldPd3 = (bool)(pindContent & (1 << PIND3_PIN_5));
+    bool newPd3 = (bool)(newValue & (1 << PIND3_PIN_5));
+    
+    //if (!oldPd2 && newPd2) int_matchExternalInterruptRequest0(RISING);
+    //if (oldPd2 && !newPd2) int_matchExternalInterruptRequest0(FALLING);
+    //if (oldPd2 ^ newPd2) int_matchExternalInterruptRequest0(CHANGING);
 
-        //if (!oldPd2 && newPd2) int_matchExternalInterruptRequest0(RISING);
-        //if (oldPd2 && !newPd2) int_matchExternalInterruptRequest0(FALLING);
-        //if (oldPd2 ^ newPd2) int_matchExternalInterruptRequest0(CHANGING);
+    // catch External Interrupt Request 1
+    if (!oldPd3 && newPd3) int_matchExternalInterruptRequest1(RISING);
+    if (oldPd3 && !newPd3) int_matchExternalInterruptRequest1(FALLING);
+    if (oldPd3 ^ newPd3) int_matchExternalInterruptRequest1(CHANGING);
 
-        if (!oldPd3 && newPd3) int_matchExternalInterruptRequest1(RISING);
-        if (oldPd3 && !newPd3) int_matchExternalInterruptRequest1(FALLING);
-        if (oldPd3 ^ newPd3) int_matchExternalInterruptRequest1(CHANGING);
-    }
     mem_dataMemory[PIND] = newValue;
 }
 
@@ -456,9 +456,9 @@ static void(*_registerWriteFunctions[])(uint16_t, uint8_t) = {
     _writeToPinInput, // 0x26
     _unconditionalWrite, // 0x27
     _writeToPinPortC, // 0x28
-    _writeToPinInput, // 0x29
+    _writeToPinPinD, // 0x29
     _unconditionalWrite, // 0x2A
-    _writeToPinPortC, // 0x2B
+    _writeToPinPortD, // 0x2B
     _unconditionalWrite, // 0x2C
     _unconditionalWrite, // 0x2D
     _unconditionalWrite, // 0x2E

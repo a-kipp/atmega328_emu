@@ -11,7 +11,7 @@ typedef struct Event {
 } Event;
 ;
 
-bool _eventPending = true;
+bool _eventPending = false;
 
 
 Event eventQueue[QUEUE_SIZE] = {0};
@@ -41,25 +41,44 @@ Event _dequeueEvent() {
 
 
 
+
+
+
+void eve_writeToInt1Pin(uint8_t highOrLow) {
+    uint8_t pinDContent = mem_dataRead8bit(PIND);
+    if (highOrLow == 0) {
+        pinDContent = uti_setBit(pinDContent, PIND3_PIN_5, false);
+    } else {
+        pinDContent = uti_setBit(pinDContent, PIND3_PIN_5, true);
+    }
+    mem_dataWrite8bit(PIND, pinDContent);
+}
+
+
+
 void eve_setPortB(uint8_t bitField) {
-    acc_dataWrite8bit(PORTB, bitField);
+    mem_dataWrite8bit(PORTB, bitField);
 }
 
 
 void eve_setPortC(uint8_t bitField) {
-    acc_dataWrite8bit(PORTC, bitField);
+    mem_dataWrite8bit(PORTC, bitField);
 }
 
 
 void eve_setPortD(uint8_t bitField) {
-    acc_dataWrite8bit(PORTD, bitField);
+    mem_dataWrite8bit(PORTD, bitField);
 }
 
 
 void eve_setUdr0(uint8_t bitField) {
-    acc_dataWrite8bit(UDR0, bitField);
+    mem_dataWrite8bit(UDR0, bitField);
 }
 
 
 void eve_handleEvent() {
+    if (_eventPending) {
+        Event event = _dequeueEvent();
+        event.fun_ptr(event.argument);
+    }
 }

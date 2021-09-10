@@ -68,9 +68,11 @@ static void *_run(void *arg) {
         TimeObj timeStamp = tim_getCurrentTime();
 
         //printf("%04X ",  cpu_programCounter);
-        //uti_print_binary_8bit(mem_dataMemory[SREG]);
+        //uti_print_binary_8bit(mem_dataRead8bit(SREG));
         //printf(" %s",  ins_disassembleInstruction(cpu_programCounter).info);
         //printf("     %s\n",  ins_disassembleInstruction(cpu_programCounter).comment);
+
+        eve_handleEvent();
 
         long long cycleCountStart = cpu_cpuCycleCounter;
 
@@ -79,7 +81,7 @@ static void *_run(void *arg) {
             uint16_t opCode = mem_fetchInstruction(cpu_programCounter);
 
             jti_implementationTable[opCode]();
-            
+
             int_handleInterrupts();
         }
 

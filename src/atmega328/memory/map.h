@@ -72,6 +72,14 @@
             #define PORTC1_PIN_24 1
             #define PORTC0_PIN_22 0
         #define PIND 0x0029 // The Port D Input Pins Address
+            #define PIND7_PIN_13 7
+            #define PIND6_PIN_12 6
+            #define PIND5_PIN_11 5
+            #define PIND4_PIN_6 4
+            #define PIND3_PIN_5 3 // triggers INT1 interrupt
+            #define PIND2_PIN_4 2 // triggers INT2 interrupt
+            #define PIND1_PIN_3 1
+            #define PIND0_PIN_2 0        
         #define DDRD 0x002A // The Port D Data Direction Register
         #define PORTD 0x002B // The Port D Data Register
             #define PORTD7_PIN_13 7
@@ -79,10 +87,10 @@
             #define PORTD5_PIN_11 5
             #define PORTD4_PIN_6 4
             #define PORTD3_PIN_5 3
-            #define PORTD2_PIN_4 2 
+            #define PORTD2_PIN_4 2
             #define PORTD1_PIN_3 1
             #define PORTD0_PIN_2 0
-        #define EIFR 0x003C
+        #define EIFR 0x003C // External Interrupt Flag Register
             #define INTF1 1
             #define INTF0 0
         #define TIFR0 0x0035

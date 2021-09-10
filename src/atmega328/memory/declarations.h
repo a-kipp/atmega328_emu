@@ -9,6 +9,7 @@
 uint16_t mem_programMemory[PROGRAM_MEMORY_END] = {0};
 uint8_t mem_dataMemory[DATA_MEMORY_END] = {0};
 uint8_t mem_eepromMemory[EEPROM_END] = {0};
+uint16_t mem_fetchInstruction(uint16_t address);
 
 
 uint16_t cpu_programCounter = 0;
@@ -16,6 +17,8 @@ long long cpu_cpuCycleCounter = 0;
 
 void cpu_incrementCycleCounter(uint8_t);
 void cpu_decrementIncrementStackPointer(int8_t);
+
+void (*jti_implementationTable[])(void);
 
 bool reg_sregCarry = 0;
 bool reg_sregZero = 0;

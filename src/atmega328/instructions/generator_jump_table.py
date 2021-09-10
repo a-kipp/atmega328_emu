@@ -5,6 +5,7 @@ import os
 opcode_function_pairs = [
     ['0001 11rd dddd rrrr', 'adc',    'adc_disassemble'   ],
     ['0000 11rd dddd rrrr', 'add',    'add_disassemble'   ],
+    ['0111 KKKK dddd KKKK', 'andi',   'andi_disassemble'  ],
     ['1111 01kk kkkk k001', 'brne',   'brne_disassemble'  ],
     ['1001 010k kkkk 111k', 'call',   'call_disassemble'  ],
     ['1001 1000 AAAA Abbb', 'cbi',    'cbi_disassemble'   ],
@@ -24,6 +25,7 @@ opcode_function_pairs = [
     ['1001 001d dddd 1111', 'push',   'push_disassemble'  ],
     ['1101 kkkk kkkk kkkk', 'rcall',  'rcall_disassemble' ],
     ['1001 0101 0000 1000', 'ret',    'ret_disassemble'   ],
+    ['1001 0101 0001 1000', 'reti',   'reti_disassemble'  ],
     ['1100 kkkk kkkk kkkk', 'rjmp',   'rjmp_disassemble'  ],
     ['0100 KKKK dddd KKKK', 'sbci',   'sbci_disassemble'  ],
     ['1001 1010 AAAA Abbb', 'sbi',    'sbi_disassemble'   ],

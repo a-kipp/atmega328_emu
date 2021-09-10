@@ -14,6 +14,8 @@
 void unknown() {
     uint16_t instruction = mem_fetchInstruction(cpu_programCounter);
 
+    fprintf(stderr, "unknown instruction called!\n");
+
     cpu_programCounter += 1;
     cpu_incrementCycleCounter(1);
     //exit(-1);
@@ -29,8 +31,8 @@ void adc() {
     uint16_t instruction = mem_fetchInstruction(cpu_programCounter);
     uint16_t rd_addr = dec_extractBits0000000111110000(instruction);
     uint16_t rr_addr = dec_extractBits0000001000001111(instruction);
-    uint8_t rdContent = acc_dataRead8bit(rd_addr);
-    uint8_t rrContent = acc_dataRead8bit(rr_addr);
+    uint8_t rdContent = mem_dataRead8bit(rd_addr);
+    uint8_t rrContent = mem_dataRead8bit(rr_addr);
     uint8_t result = rdContent + rrContent + (reg_sregCarry == 0 ? 0 : 1);
 
     bool rdBit3 = uti_getBit(rdContent, 3);
@@ -64,7 +66,7 @@ void adc() {
     // writing to memory may causes an interrupt, to get the the correct return address, the program counter
     // must be incremented before an possible interrupt can occure.
     // !
-    acc_dataWrite8bit(rd_addr, result);
+    mem_dataWrite8bit(rd_addr, result);
 }
 
 
@@ -77,8 +79,8 @@ void add() {
     uint16_t instruction = mem_fetchInstruction(cpu_programCounter);
     uint16_t rd_addr = dec_extractBits0000000111110000(instruction);
     uint16_t rr_addr = dec_extractBits0000001000001111(instruction);
-    uint8_t rdContent = acc_dataRead8bit(rd_addr);
-    uint8_t rrContent = acc_dataRead8bit(rr_addr);
+    uint8_t rdContent = mem_dataRead8bit(rd_addr);
+    uint8_t rrContent = mem_dataRead8bit(rr_addr);
     uint8_t result = rdContent + rrContent;
 
     bool rdBit3 = uti_getBit(rdContent, 3);
@@ -112,7 +114,41 @@ void add() {
     // writing to memory may causes an interrupt, to get the the correct return address, the program counter
     // must be incremented before an possible interrupt can occure.
     // !
-    acc_dataWrite8bit(rd_addr, result);
+    mem_dataWrite8bit(rd_addr, result);
+}
+
+
+
+
+// ANDI – Logical AND with Immediate
+// 16-bit Opcode: 0111 KKKK dddd KKKK
+// Performs the logical AND between the contents of register Rd and a constant, and places the result in the
+// destination register Rd.
+// AVR Instruction Manual page 36
+void andi() {
+    uint16_t opCode = mem_fetchInstruction(cpu_programCounter);
+    uint16_t rd_addr =  dec_extractBits0000000011110000(opCode) + 16;
+    uint8_t rdContent = mem_dataRead8bit(rd_addr);
+    uint8_t constData = dec_extractBits0000111100001111(opCode);
+    uint8_t result = rdContent & constData;
+
+    bool resultBit7 = uti_getBit(result, 7);
+
+    // S = N ⊕ V, for signed tests.
+    reg_sregSignBit = (reg_sregNegative ^ reg_sregTwoComplOverflow);
+
+    // V: Set if two’s complement overflow resulted from the operation; cleared otherwise.
+    reg_sregTwoComplOverflow = (false);
+
+    // N: Set if MSB of the result is set; cleared otherwise.
+    reg_sregNegative = (resultBit7);
+
+    // Z: Set if the result is $00; cleared otherwise.
+    reg_sregZero = (result == 0);
+
+    cpu_programCounter += 1;
+    cpu_incrementCycleCounter(1);
+    mem_dataWrite8bit(rd_addr, result);
 }
 
 
@@ -150,9 +186,9 @@ void brne() {
 // AVR Instruction Manual page 63
 void call() {
     uint16_t jumpDest_addr = mem_fetchInstruction(cpu_programCounter + 1);
-    uint16_t stackTop_addr = acc_dataRead16bit(STACKPOINTER);
+    uint16_t stackTop_addr = mem_dataRead16bit(STACKPOINTER);
 
-    acc_dataWrite16bit(stackTop_addr - 1, cpu_programCounter + 2);
+    mem_dataWrite16bit(stackTop_addr - 1, cpu_programCounter + 2);
     cpu_decrementIncrementStackPointer(-2);
     cpu_programCounter = jumpDest_addr;
     cpu_incrementCycleCounter(4);
@@ -171,7 +207,7 @@ void cbi() {
     uint16_t instruction = mem_fetchInstruction(cpu_programCounter);
     uint16_t ioa_addr = dec_extractBits0000000011111000(instruction) + 0x20;
     uint16_t bitNum = dec_extractBits0000000000000111(instruction);
-    uint8_t ioaContent = acc_dataRead8bit(ioa_addr);
+    uint8_t ioaContent = mem_dataRead8bit(ioa_addr);
     uint8_t result = uti_setBit(ioaContent, bitNum, false);
 
     cpu_programCounter += 1;
@@ -180,7 +216,7 @@ void cbi() {
     // writing to memory may causes an interrupt, to get the the correct return address, the program counter
     // must be incremented before an possible interrupt can occure.
     // !
-    acc_dataWrite8bit(ioa_addr, result);
+    mem_dataWrite8bit(ioa_addr, result);
 }
 
 
@@ -208,8 +244,8 @@ void cp() {
     uint16_t opCode = mem_fetchInstruction(cpu_programCounter);
     uint16_t rd_addr = dec_extractBits0000000111110000(opCode);
     uint16_t rr_addr = dec_extractBits0000001000001111(opCode);
-    uint8_t rdContent = acc_dataRead8bit(rd_addr);
-    uint8_t rrContent = acc_dataRead8bit(rr_addr);
+    uint8_t rdContent = mem_dataRead8bit(rd_addr);
+    uint8_t rrContent = mem_dataRead8bit(rr_addr);
     uint8_t result = rdContent - rrContent;
 
     bool rdBit3 = uti_getBit(rdContent, 3);
@@ -255,7 +291,7 @@ void cp() {
 void dec() {
     uint16_t opCode = mem_fetchInstruction(cpu_programCounter);
     uint16_t rd_addr = dec_extractBits0000000111110000(opCode);
-    uint8_t rdContent = acc_dataRead8bit(rd_addr);
+    uint8_t rdContent = mem_dataRead8bit(rd_addr);
     uint8_t result = rdContent - 1;
 
     bool resultBit7 = uti_getBit(result, 7);
@@ -279,7 +315,7 @@ void dec() {
     // writing to memory may causes an interrupt, to get the the correct return address, the program counter
     // must be incremented before an possible interrupt can occure.
     // !
-    acc_dataWrite8bit(rd_addr, result);
+    mem_dataWrite8bit(rd_addr, result);
 }
 
 
@@ -295,8 +331,8 @@ void eorclr() {
     uint16_t opCode = mem_fetchInstruction(cpu_programCounter);
     uint16_t rd_addr = dec_extractBits0000000111110000(opCode);
     uint16_t rr_addr = dec_extractBits0000001000001111(opCode);
-    uint8_t rdContent = acc_dataRead8bit(rd_addr);
-    uint8_t rrContent = acc_dataRead8bit(rr_addr);
+    uint8_t rdContent = mem_dataRead8bit(rd_addr);
+    uint8_t rrContent = mem_dataRead8bit(rr_addr);
     uint8_t result = rdContent ^ rrContent;
 
     bool resultBit7 = uti_getBit(result, 7);
@@ -334,7 +370,7 @@ void eorclr() {
     // writing to memory may causes an interrupt, to get the the correct return address, the program counter
     // must be incremented before an possible interrupt can occure.
     // !
-    acc_dataWrite8bit(rd_addr, result);
+    mem_dataWrite8bit(rd_addr, result);
 }
 
 
@@ -349,7 +385,7 @@ void in() {
     uint16_t opCode = mem_fetchInstruction(cpu_programCounter);
     uint16_t ioa_addr = dec_extractBits0000011000001111(opCode) + 0x20;
     uint16_t rd_addr =  dec_extractBits0000000111110000(opCode);
-    uint8_t ioaContent = acc_dataRead8bit(ioa_addr);
+    uint8_t ioaContent = mem_dataRead8bit(ioa_addr);
 
     cpu_programCounter += 1;
     cpu_incrementCycleCounter(1);
@@ -357,7 +393,7 @@ void in() {
     // writing to memory may causes an interrupt, to get the the correct return address, the program counter
     // must be incremented before an possible interrupt can occure.
     // !
-    acc_dataWrite8bit(rd_addr, ioaContent);
+    mem_dataWrite8bit(rd_addr, ioaContent);
 }
 
 
@@ -391,7 +427,7 @@ void ldi() {
     // writing to memory may causes an interrupt, to get the the correct return address, the program counter
     // must be incremented before an possible interrupt can occure.
     // !
-    acc_dataWrite8bit(rd_addr, constData);
+    mem_dataWrite8bit(rd_addr, constData);
 }
 
 
@@ -405,7 +441,7 @@ void lds32() {
     uint16_t opCode = mem_fetchInstruction(cpu_programCounter);
     uint16_t rd_addr =  dec_extractBits0000000111110000(opCode);
     uint8_t constAddress = mem_fetchInstruction(cpu_programCounter + 1); 
-    uint8_t memContent = acc_dataRead8bit(constAddress);
+    uint8_t memContent = mem_dataRead8bit(constAddress);
 
     cpu_programCounter += 2;
     cpu_incrementCycleCounter(2);
@@ -413,7 +449,7 @@ void lds32() {
     // writing to memory may causes an interrupt, to get the the correct return address, the program counter
     // must be incremented before an possible interrupt can occure.
     // !
-    acc_dataWrite8bit(rd_addr, memContent);
+    mem_dataWrite8bit(rd_addr, memContent);
 }
 
 
@@ -461,7 +497,7 @@ void lds16() {
     // writing to memory may causes an interrupt, to get the the correct return address, the program counter
     // must be incremented before an possible interrupt can occure.
     // !
-    acc_dataWrite8bit(rd_addr, memContent);
+    mem_dataWrite8bit(rd_addr, memContent);
 }
 
 
@@ -490,7 +526,7 @@ void ori() {
     uint16_t opCode = mem_fetchInstruction(cpu_programCounter);
     uint16_t rd_addr =  dec_extractBits0000000011110000(opCode) + 16;
     uint8_t constData = dec_extractBits0000111100001111(opCode);
-    uint8_t rdContent = acc_dataRead8bit(rd_addr);
+    uint8_t rdContent = mem_dataRead8bit(rd_addr);
     uint8_t result = rdContent | constData;
     uint8_t resultBit7 = uti_getBit(result, 7);
 
@@ -512,7 +548,7 @@ void ori() {
     // writing to memory may causes an interrupt, to get the the correct return address, the program counter
     // must be incremented before an possible interrupt can occure.
     // !
-    acc_dataWrite8bit(rd_addr, result);
+    mem_dataWrite8bit(rd_addr, result);
 }    
 
 
@@ -529,14 +565,14 @@ void out() {
     uint16_t opCode = mem_fetchInstruction(cpu_programCounter);
     uint16_t ioa_addr = dec_extractBits0000011000001111(opCode) + 0x20;
     uint16_t rr_addr =  dec_extractBits0000000111110000(opCode);
-    uint8_t rrContent = acc_dataRead8bit(rr_addr);
+    uint8_t rrContent = mem_dataRead8bit(rr_addr);
 
     cpu_programCounter += 1;
     // !
     // writing to memory may causes an interrupt, to get the the correct return address, the program counter
     // must be incremented before an possible interrupt can occure.
     // !
-    acc_dataWrite8bit(ioa_addr, rrContent);
+    mem_dataWrite8bit(ioa_addr, rrContent);
     cpu_incrementCycleCounter(1);
 }
 
@@ -552,11 +588,11 @@ void out() {
 void pop() {
     uint16_t opCode = mem_fetchInstruction(cpu_programCounter);
     uint16_t rd_addr = dec_extractBits0000000111110000(opCode);
-    uint16_t stackPointer = acc_dataRead16bit(STACKPOINTER);
-    uint8_t stackContent = acc_dataRead16bit(stackPointer + 1);
+    uint16_t stackPointer = mem_dataRead16bit(STACKPOINTER);
+    uint8_t stackContent = mem_dataRead16bit(stackPointer + 1);
 
-    acc_dataWrite8bit(rd_addr, stackContent);
-    acc_dataWrite16bit(STACKPOINTER, stackPointer + 1);
+    mem_dataWrite8bit(rd_addr, stackContent);
+    mem_dataWrite16bit(STACKPOINTER, stackPointer + 1);
     cpu_programCounter += 1;
     cpu_incrementCycleCounter(2);
 }
@@ -573,11 +609,11 @@ void pop() {
 void push() {
     uint16_t opCode = mem_fetchInstruction(cpu_programCounter);
     uint16_t rr_addr = dec_extractBits0000000111110000(opCode);
-    uint16_t stackPointer = acc_dataRead16bit(STACKPOINTER);
-    uint8_t rrContent = acc_dataRead8bit(rr_addr);
+    uint16_t stackPointer = mem_dataRead16bit(STACKPOINTER);
+    uint8_t rrContent = mem_dataRead8bit(rr_addr);
 
-    acc_dataWrite8bit(stackPointer, rrContent);
-    acc_dataWrite16bit(STACKPOINTER, stackPointer - 1);
+    mem_dataWrite8bit(stackPointer, rrContent);
+    mem_dataWrite16bit(STACKPOINTER, stackPointer - 1);
     cpu_programCounter += 1;
     cpu_incrementCycleCounter(1);
 }
@@ -596,7 +632,7 @@ void push() {
 #pragma GCC optimize ("O1") 
 void rcall() {
     uint16_t opCode = mem_fetchInstruction(cpu_programCounter);
-    uint16_t stackTop_addr = acc_dataRead16bit(STACKPOINTER);
+    uint16_t stackTop_addr = mem_dataRead16bit(STACKPOINTER);
     uint16_t addressOffset = (uint16_t)dec_extractBits0000011111111111(opCode);
     bool signBit = uti_getBit(opCode, 11);
     uint16_t jumpDest_addr;
@@ -607,7 +643,7 @@ void rcall() {
     }
 
     cpu_programCounter = jumpDest_addr;
-    acc_dataWrite16bit(stackTop_addr - 1, cpu_programCounter + 1);
+    mem_dataWrite16bit(stackTop_addr - 1, cpu_programCounter + 1);
     cpu_decrementIncrementStackPointer(-2);
     cpu_incrementCycleCounter(3);
 }
@@ -621,8 +657,8 @@ void rcall() {
 // increment scheme during RET.
 // AVR Instruction Manual page 139
 void ret() {
-    uint16_t stackTop_addr = acc_dataRead16bit(STACKPOINTER);
-    uint16_t jumpDest_addr =  acc_dataRead16bit(stackTop_addr + 2);
+    uint16_t stackTop_addr = mem_dataRead16bit(STACKPOINTER);
+    uint16_t jumpDest_addr =  mem_dataRead16bit(stackTop_addr + 2);
 
     cpu_decrementIncrementStackPointer(2);
     cpu_programCounter = jumpDest_addr;
@@ -640,8 +676,8 @@ void ret() {
 // Stack Pointer uses a pre-increment scheme during RETI.
 // AVR Instruction Manual page 140
 void reti() {
-    uint16_t stackTop_addr = acc_dataRead16bit(STACKPOINTER);
-    uint16_t jumpDest_addr =  acc_dataRead16bit(stackTop_addr + 2);
+    uint16_t stackTop_addr = mem_dataRead16bit(STACKPOINTER);
+    uint16_t jumpDest_addr =  mem_dataRead16bit(stackTop_addr + 2);
 
     reg_sregGlobalInterruptEnable = true;
     cpu_decrementIncrementStackPointer(2);
@@ -687,7 +723,7 @@ void rjmp() {
 void sbci() {
     uint16_t opCode = mem_fetchInstruction(cpu_programCounter);
     uint8_t rd_addr = dec_extractBits0000000111110000(opCode) + 16;
-    uint8_t rdContent = acc_dataRead8bit(rd_addr);
+    uint8_t rdContent = mem_dataRead8bit(rd_addr);
     uint8_t constData = dec_extractBits0000111100001111(opCode);
     uint8_t result = rdContent - constData - (uint8_t)reg_sregCarry;
 
@@ -724,7 +760,7 @@ void sbci() {
     // writing to memory may causes an interrupt, to get the the correct return address, the program counter
     // must be incremented before an possible interrupt can occure.
     // !
-    acc_dataWrite8bit(rd_addr, result);
+    mem_dataWrite8bit(rd_addr, result);
 }
 
 
@@ -740,7 +776,7 @@ void sbi() {
     uint16_t opCode = mem_fetchInstruction(cpu_programCounter);
     uint16_t ioa_addr = dec_extractBits0000000011111000(opCode) + 0x20;
     uint16_t bitNum = dec_extractBits0000000000000111(opCode);
-    uint8_t ioaContent = acc_dataRead8bit(ioa_addr);
+    uint8_t ioaContent = mem_dataRead8bit(ioa_addr);
     uint8_t result = uti_setBit(ioaContent, bitNum, true);
 
     cpu_programCounter += 1;
@@ -749,7 +785,7 @@ void sbi() {
     // writing to memory may causes an interrupt, to get the the correct return address, the program counter
     // must be incremented before an possible interrupt can occure.
     // !
-    acc_dataWrite8bit(ioa_addr, result);
+    mem_dataWrite8bit(ioa_addr, result);
 }
 
 
@@ -765,7 +801,7 @@ void sbic() {
     uint16_t nextOpCode = mem_fetchInstruction(cpu_programCounter + 1);
     uint16_t ioa_addr = dec_extractBits0000000001111000(opCode) + 0x20;
     uint16_t bitNum = dec_extractBits0000000000000111(opCode);
-    uint8_t ioaContent = acc_dataRead8bit(ioa_addr);
+    uint8_t ioaContent = mem_dataRead8bit(ioa_addr);
 
     #define CALL_INSTRUCTION_CODE 0b1001010000001110
     #define CALL_INSTRUCTION_MASK 0b1111111000001110
@@ -814,7 +850,7 @@ void sbis() {
     uint16_t nextOpCode = mem_fetchInstruction(cpu_programCounter + 1);
     uint16_t ioa_addr = dec_extractBits0000000001111000(opCode) + 0x20;
     uint16_t bitNum = dec_extractBits0000000000000111(opCode);
-    uint8_t ioaContent = acc_dataRead8bit(ioa_addr);
+    uint8_t ioaContent = mem_dataRead8bit(ioa_addr);
 
     #define CALL_INSTRUCTION_CODE 0b1001010000001110
     #define CALL_INSTRUCTION_MASK 0b1111111000001110
@@ -863,7 +899,7 @@ void sbiw() {
     uint16_t instruction = mem_fetchInstruction(cpu_programCounter);
     uint16_t rd_addr =   dec_extractBits0000000000110000(instruction) * 2 + R24;
     uint16_t constData = dec_extractBits0000000011001111(instruction);
-    uint16_t rdContent = acc_dataRead16bit(rd_addr);
+    uint16_t rdContent = mem_dataRead16bit(rd_addr);
     uint16_t result = rdContent - constData;
 
     bool resultBit15 = uti_getBit(result, 15);
@@ -890,7 +926,7 @@ void sbiw() {
     // writing to memory may causes an interrupt, to get the the correct return address, the program counter
     // must be incremented before an possible interrupt can occure.
     // !
-    acc_dataWrite16bit(rd_addr, result);
+    mem_dataWrite16bit(rd_addr, result);
 }
 
 
@@ -912,7 +948,7 @@ void sts() {
     uint16_t rr_addr = dec_extractBits0000000111110000(instructionFirst);
     uint16_t instructionSecond = mem_fetchInstruction(cpu_programCounter + 1);
     uint16_t mem_addr = instructionSecond;
-    uint8_t memContent = acc_dataRead8bit(rr_addr);
+    uint8_t memContent = mem_dataRead8bit(rr_addr);
 
     cpu_programCounter += 2;
     cpu_incrementCycleCounter(1);
@@ -920,7 +956,7 @@ void sts() {
     // writing to memory may causes an interrupt, to get the the correct return address, the program counter
     // must be incremented before an possible interrupt can occure.
     // !
-    acc_dataWrite8bit(mem_addr, memContent);
+    mem_dataWrite8bit(mem_addr, memContent);
 }
 
 
@@ -934,7 +970,7 @@ void sts() {
 void subi() {
     uint16_t opCode = mem_fetchInstruction(cpu_programCounter);
     uint8_t rd_addr = dec_extractBits0000000111110000(opCode) + 16;
-    uint8_t rdContent = acc_dataRead8bit(rd_addr);
+    uint8_t rdContent = mem_dataRead8bit(rd_addr);
     uint8_t constData = dec_extractBits0000111100001111(opCode);
     uint8_t result = rdContent - constData;
 
@@ -969,7 +1005,7 @@ void subi() {
     // writing to memory may causes an interrupt, to get the the correct return address, the program counter
     // must be incremented before an possible interrupt can occure.
     // !
-    acc_dataWrite8bit(rd_addr, result);
+    mem_dataWrite8bit(rd_addr, result);
 }
 
 

@@ -31,6 +31,8 @@ int main(int argc, char *argv[] ) {
             case 'c': is_running = false; break;
             case 'm': deb_triggerSpeedTest(); break;
             case 'd': atm_disassemble(); break;
+            case '1': atm_setPin5high(); break;
+            case '0': atm_setPin5low(); break;
             default: ; break;
         }
     }
