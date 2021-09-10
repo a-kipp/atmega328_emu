@@ -67,10 +67,56 @@ static void *_run(void *arg) {
     while(!_cpuStopSignal) {
         TimeObj timeStamp = tim_getCurrentTime();
 
-        //printf("%04X ",  cpu_programCounter);
-        //uti_print_binary_8bit(mem_dataRead8bit(SREG));
-        //printf(" %s",  ins_disassembleInstruction(cpu_programCounter).info);
-        //printf("     %s\n",  ins_disassembleInstruction(cpu_programCounter).comment);
+        eve_handleEvent();
+
+        long long cycleCountStart = cpu_cpuCycleCounter;
+
+        for (int i = 0; i < instructionsToExecude; i++) {
+
+            uint16_t opCode = mem_fetchInstruction(cpu_programCounter);
+
+            jti_implementationTable[opCode]();
+
+            int_handleInterrupts();
+        }
+
+        calcExecutionTime = (cpu_cpuCycleCounter - cycleCountStart) * (NANOSEC_PER_SEC / g_clockSpeed);
+
+        actualExecutionTime = tim_getTimeElapsed(timeStamp);
+
+        tim_sleep(calcExecutionTime - actualExecutionTime - delta);
+
+        totalTimeTaken = tim_getTimeElapsed(timeStamp) + delta;
+
+        delta = totalTimeTaken - calcExecutionTime;
+    }
+    _cpuStopSignal = false;
+    printf("cpu stopped\n");
+}
+
+
+
+
+
+static void *_runVerbose(void *arg) {
+
+    if (g_clockSpeed > 20) g_clockSpeed = 20;
+
+    uint64_t calcExecutionTime = 0;
+    uint64_t actualExecutionTime = 0;
+    uint64_t totalTimeTaken = 0;
+    uint64_t delta = 0;
+    uint16_t instructionsToExecude = (g_clockSpeed / 1000000) + 1;
+
+    _cpuStopSignal = false;
+
+    while(!_cpuStopSignal) {
+        TimeObj timeStamp = tim_getCurrentTime();
+
+        printf("%04X ",  cpu_programCounter);
+        uti_print_binary_8bit(mem_dataRead8bit(SREG));
+        printf(" %s",  ins_disassembleInstruction(cpu_programCounter).info);
+        printf("     %s\n",  ins_disassembleInstruction(cpu_programCounter).comment);
 
         eve_handleEvent();
 
@@ -111,12 +157,6 @@ static void *_run(void *arg) {
 
 
 
-
-
-
-
-
-
 // Public
 // ____________________________________________________________________________________________________________________
 
@@ -124,6 +164,13 @@ void cpu_start() {
     pthread_t newThread;
     _cpuThread = &newThread;
     pthread_create(_cpuThread, NULL, _run, NULL);
+}
+
+
+void cpu_startVerbose() {
+    pthread_t newThread;
+    _cpuThread = &newThread;
+    pthread_create(_cpuThread, NULL, _runVerbose, NULL);
 }
 
 

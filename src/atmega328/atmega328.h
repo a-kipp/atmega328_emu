@@ -15,13 +15,18 @@ void atm_loadProgram(char* filePath) {
     mem_loadProgram(filePath);
 }
 
-//void atm_setClockSpeed(int clockSpeed) {
-//    tim_atmegaClockSpeed = clockSpeed;
-//}
+void atm_setClock(int clockSpeed) {
+    g_clockSpeed = clockSpeed;
+}
 
 void atm_start() {
     cpu_start();
 }
+
+void atm_startVerbose() {
+    cpu_startVerbose();
+}
+
 
 void atm_stop() {
     cpu_stop();
