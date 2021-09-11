@@ -48,18 +48,93 @@ static char *_getName(int address) {
         case R29_Y_REGISTER_HIGH_BYTE: return "R29";
         case R30_Z_REGISTER_LOW_BYTE: return "R30";
         case R31_Z_REGISTER_HIGH_BYTE: return "R31";
-        case DDRB: return "DDRB";
-        case PORTB: return "PORTB"; 
-        case GPIOR0: return "GPIOR0";
-        case EECR: return "EECR";
-        case EEDR: return "EEDR";
-        case EEARL: return "EEARL";
-        case EEARH: return "EEARH";
-        case GPIOR1: return "GPIOR1";
-        case GPIOR2: return "GPIOR2";
-        case SPL: return "SPL";
-        case SPH: return "SPH";
-        case SREG: return "SREG";
+        case UDR0:   return "UDR0";   //;0xc6
+        case UBRR0L: return "UBRR0L"; //;0xc4
+        case UBRR0H: return "UBRR0H"; //;0xc5
+        //case UCSR0C: return "UCSR0C"; //;0xc2
+        //case UCSR0B: return "UCSR0B"; //;0xc1
+        //case UCSR0A: return "UCSR0A"; //;0xc0
+        //case TWAMR:  return "TWAMR";  //;0xbd
+        //case TWCR:   return "TWCR";   //;0xbc
+        //case TWDR:   return "TWDR";   //;0xbb
+        //case TWAR:   return "TWAR";   //;0xba
+        //case TWSR:   return "TWSR";   //;0xb9
+        //case TWBR:   return "TWBR";   //;0xb8
+        //case ASSR:   return "ASSR";   //;0xb6
+        //case OCR2B:  return "OCR2B";  //;0xb4
+        //case OCR2A:  return "OCR2A";  //;0xb3
+        //case TCNT2:  return "TCNT2";  //;0xb2
+        //case TCCR2B: return "TCCR2B"; //;0xb1
+        //case TCCR2A: return "TCCR2A"; //;0xb0
+        //case OCR1BL: return "OCR1BL"; //;0x8a
+        //case OCR1BH: return "OCR1BH"; //;0x8b
+        //case OCR1AL: return "OCR1AL"; //;0x88
+        //case OCR1AH: return "OCR1AH"; //;0x89
+        //case ICR1L:  return "ICR1L";  //;0x86
+        //case ICR1H:  return "ICR1H";  //;0x87
+        //case TCNT1L: return "TCNT1L"; //;0x84
+        //case TCNT1H: return "TCNT1H"; //;0x85
+        //case TCCR1C: return "TCCR1C"; //;0x82
+        //case TCCR1B: return "TCCR1B"; //;0x81
+        //case TCCR1A: return "TCCR1A"; //;0x80
+        //case DIDR1:  return "DIDR1";  //;0x7f
+        //case DIDR0:  return "DIDR0";  //;0x7e
+        //case ADMUX:  return "ADMUX";  //;0x7c
+        //case ADCSRB: return "ADCSRB"; //;0x7b
+        //case ADCSRA: return "ADCSRA"; //;0x7a
+        //case ADCH:   return "ADCH";   //;0x79
+        //case ADCL:   return "ADCL";   //;0x78
+        //case TIMSK2: return "TIMSK2"; //;0x70
+        //case TIMSK1: return "TIMSK1"; //;0x6f
+        //case TIMSK0: return "TIMSK0"; //;0x6e
+        //case PCMSK1: return "PCMSK1"; //;0x6c
+        //case PCMSK2: return "PCMSK2"; //;0x6d
+        //case PCMSK0: return "PCMSK0"; //;0x6b
+        case EICRA:  return "EICRA";  //;0x69
+        //case PCICR:  return "PCICR";  //;0x68
+        //case: OSCCAL: return "OSCCAL"; //;0x66
+        //case: PRR:    return "PRR";    //;0x64
+        //case: CLKPR:  return "CLKPR";  //;0x61
+        //case: WDTCSR: return "WDTCSR"; //;0x60
+        case SREG:   return "SREG";   //;0x3f
+        case SPL:    return "SPL";    //;0x3d
+        case SPH:    return "SPH";    //;0x3e
+        //case SPMCSR: return "SPMCSR"; //;0x37
+        //case MCUCR:  return "MCUCR";  //;0x35
+        //case MCUSR:  return "MCUSR";  //;0x34
+        //case SMCR:   return "SMCR";   //;0x33
+        //case ACSR:   return "ACSR";   //;0x30
+        //case SPDR:   return "SPDR";   //;0x2e
+        //case SPSR:   return "SPSR";   //;0x2d
+        //case SPCR:   return "SPCR";   //;0x2c
+        case GPIOR2: return "GPIOR2"; //;0x2b
+        case GPIOR1: return "GPIOR1"; //;0x2a
+        case OCR0B:  return "OCR0B";  //;0x28
+        case OCR0A:  return "OCR0A";  //;0x27
+        case TCNT0:  return "TCNT0";  //;0x26
+        //case TCCR0B: return "TCCR0B"; //;0x25
+        //case TCCR0A: return "TCCR0A"; //;0x24
+        //case GTCCR:  return "GTCCR";  //;0x23
+        case EEARH:  return "EEARH";  //;0x22
+        case EEARL:  return "EEARL";  //;0x21
+        case EEDR:   return "EEDR";   //;0x20
+        case EECR:   return "EECR";   //;0x1f
+        case GPIOR0: return "GPIOR0"; //;0x1e
+        case EIMSK:  return "EIMSK";  //;0x1d
+        case EIFR:   return "EIFR";   //;0x1c
+        //case PCIFR:  return "PCIFR";  //;0x1b
+        case TIFR2:  return "TIFR2";  //;0x17
+        case TIFR1:  return "TIFR1";  //;0x16
+        case TIFR0:  return "TIFR0";  //;0x15
+        case PORTD:  return "PORTD";  //;0x0b
+        case DDRD:   return "DDRD";   //;0x0a
+        case PIND:   return "PIND";   //;0x09
+        case PORTC:  return "PORTC";  //;0x08
+        case DDRC:   return "DDRC";   //;0x07
+        case PINC:   return "PINC";   //;0x06
+        case PORTB:  return "PORTB";  //;0x05
+        case DDRB:   return "DDRB";   //;0x04
+        case PINB:   return "PINB";   //;0x03
         default: return "UNKNOWN_ADDRESS";
     }
 }
@@ -308,10 +383,12 @@ InstructionInfo eorclr_disassemble(uint16_t opCode, uint16_t programCounter) {
 InstructionInfo in_disassemble(uint16_t opCode, uint16_t programCounter) {
     uint16_t ioa_addr = dec_extractBits0000011000001111(opCode) + 0x20;
     uint16_t rr_addr =  dec_extractBits0000000111110000(opCode);
+    uint8_t ioaContent = mem_dataRead8bit(ioa_addr);
+    uint8_t rrContent = mem_dataRead8bit(ioa_addr);
 
     InstructionInfo instruction = {0};
  
-    snprintf(instruction.info, INFO_LENGTH, "in %s, %s", _getName(rr_addr), _getName(ioa_addr));
+    snprintf(instruction.info, INFO_LENGTH, "in %s(%02X), %s(%02X)", _getName(rr_addr), rrContent, _getName(ioa_addr), ioaContent);
     instruction.length =  1;
     
     return instruction;
@@ -697,7 +774,7 @@ InstructionInfo sts_disassemble(uint16_t opCode, uint16_t programCounter) {
 
     InstructionInfo instruction = {0};
  
-    snprintf(instruction.info, INFO_LENGTH, "sts %04X \"%s\"(%02X)", mem_addr, _getName(rr_addr), rrContent);
+    snprintf(instruction.info, INFO_LENGTH, "sts %04X %s(%02X)", mem_addr, _getName(rr_addr), rrContent);
     instruction.length =  2;
 
     return instruction;

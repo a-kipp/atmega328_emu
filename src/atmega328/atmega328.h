@@ -16,7 +16,7 @@ void atm_loadProgram(char* filePath) {
 }
 
 void atm_setClock(int clockSpeed) {
-    g_clockSpeed = clockSpeed;
+    cpu_clockSpeed = clockSpeed;
 }
 
 void atm_start() {

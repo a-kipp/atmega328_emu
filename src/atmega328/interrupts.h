@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "memory/map.h"
-#include "memory/declarations.h"
+#include "declarations.h"
 
 #define TOATAL_NUMBER_INTERRUPTS 26
 
@@ -46,17 +46,49 @@
 bool _interruptPending = false;
 bool _activeInterrupts[TOATAL_NUMBER_INTERRUPTS];
 
+static void _prepareInterruptCall() {
+    uint16_t stackTop_addr = mem_dataRead16bit(STACKPOINTER);
+    mem_dataWrite16bit(stackTop_addr - 1, cpu_programCounter);
+    cpu_decrementIncrementStackPointer(-2);
+    reg_sregGlobalInterruptEnable = false;
+    cpu_incrementCycleCounter(4);
+}
 
 
 
-
-
-
-
-// External Interrupt Request 1
-// ____________________________________________________________________________________________________________________
 
 // Public
+// ____________________________________________________________________________________________________________________
+
+
+
+// match INT0_INTERRUPT
+void int_matchExternalInterruptRequest0(uint8_t logicLevel) {
+
+    bool isc01 = uti_getBit(mem_dataMemory[EICRA], ISC01);
+    bool isc00 = uti_getBit(mem_dataMemory[EICRA], ISC00);
+
+    if (uti_getBit(mem_dataMemory[EIMSK], INT0)) {
+        if (
+            !isc01 && !isc00 && (logicLevel == LOW) || 
+            !isc01 && isc00 && (logicLevel == CHANGING) ||
+            isc01 && !isc00 && (logicLevel == FALLING) ||
+            isc01 && isc00 && (logicLevel == RISING)
+        ) {
+            // When an edge or logic change on the INT1 pin triggers an interrupt request, INTF1
+            // becomes set (one). The flag is cleared when the interrupt routine is executed.
+            mem_dataMemory[EIFR] = uti_setBit(mem_dataMemory[EIFR], INTF0, true);
+        }
+    }
+    if (uti_getBit(mem_dataMemory[EIFR], INTF0)) {
+        _activeInterrupts[INT0_INTERRUPT] = true;
+        _interruptPending = true;
+    }
+}
+
+
+
+// match INT1_INTERRUPT
 void int_matchExternalInterruptRequest1(uint8_t logicLevel) {
 
     bool isc11 = uti_getBit(mem_dataMemory[EICRA], ISC11);
@@ -64,10 +96,10 @@ void int_matchExternalInterruptRequest1(uint8_t logicLevel) {
 
     if (uti_getBit(mem_dataMemory[EIMSK], INT1)) {
         if (
-            !isc11 && !isc10 && logicLevel == LOW || 
-            !isc11 && isc10 && logicLevel == CHANGING ||
-            isc11 && !isc10 && logicLevel == FALLING ||
-            isc11 && isc10 && logicLevel == RISING
+            !isc11 && !isc10 && (logicLevel == LOW) || 
+            !isc11 && isc10 && (logicLevel == CHANGING) ||
+            isc11 && !isc10 && (logicLevel == FALLING) ||
+            isc11 && isc10 && (logicLevel == RISING)
         ) {
             // When an edge or logic change on the INT1 pin triggers an interrupt request, INTF1
             // becomes set (one). The flag is cleared when the interrupt routine is executed.
@@ -80,93 +112,46 @@ void int_matchExternalInterruptRequest1(uint8_t logicLevel) {
     }
 }
 
-static void _execudeExternalInterruptRequest1() {
-    printf("hi form interrupt execude\n");
-    cpu_programCounter = 0x0004;
-    mem_dataMemory[EIFR] = uti_setBit(mem_dataMemory[EIFR], INTF1, false);
-}
 
 
-
-
-
-// External Interrupt Request 0
-// ____________________________________________________________________________________________________________________
-
-
-
-
-
-
-
-// Not Implemented Interrupts
-// ____________________________________________________________________________________________________________________
-
-
-static void _notImplementet() {
-    fprintf(stderr, "the called interrupt is not inmplemented\n");
-    exit(1);
-}
-
-
-
-
-
-static void(*_interruptCallFunctions[])() = {
-    _notImplementet,
-    _notImplementet,
-    _execudeExternalInterruptRequest1,
-};
-
-
-
-
-
-
-
-
-// Public
-// ____________________________________________________________________________________________________________________
 
 
 void int_handleInterrupts() {
 
     if (reg_sregGlobalInterruptEnable) {
 
-
         // check for for interrupts that trigger on low level
         int_matchExternalInterruptRequest1(LOW);
+        int_matchExternalInterruptRequest0(LOW);
 
         if (_interruptPending) {
 
-            for(uint8_t i = 0; i < TOATAL_NUMBER_INTERRUPTS; i++) {
-
-                if (_activeInterrupts[i]) {
-
-                    uint16_t stackTop_addr = arr_get16BitDataArray(STACKPOINTER);
-
-                    mem_dataMemory[stackTop_addr - 1] = cpu_programCounter;
-
-                    cpu_decrementIncrementStackPointer(-2);
-
-                    reg_sregGlobalInterruptEnable = false;
-
-                    _activeInterrupts[i] = false;
-
-                    cpu_incrementCycleCounter(4);
-
-                    printf("hi form handle external interrupt: %d\n", i);
-                    //_execudeExternalInterruptRequest1();
-                    _interruptCallFunctions[i];
-
-                    // When the AVR exits from an interrupt, it will always return to the main program and
-                    // execute one more instruction before any pending interrupt is served.
-                    uint16_t opCode = mem_fetchInstruction(cpu_programCounter);
-                    jti_implementationTable[opCode]();
-
-                }
+            // INT0_INTERRUPT
+            if (uti_getBit(mem_dataRead8bit(EIFR), INTF0)) {
+                void _prepareInterruptCall();
+                cpu_programCounter = INT0_INTERRUPT;
+                uint8_t eifrContent = mem_dataRead8bit(EIFR);
+                eifrContent = uti_setBit(eifrContent, INTF0, false);
+                mem_dataWrite8bit(EIFR, eifrContent);
             }
-            _interruptPending = false;
+
+
+            // INT1_INTERRUPT
+            else if (uti_getBit(mem_dataRead8bit(EIFR), INTF1)) {
+                _prepareInterruptCall();
+                cpu_programCounter = INT1_INTERRUPT;
+                uint8_t eifrContent = mem_dataRead8bit(EIFR);
+                eifrContent = uti_setBit(eifrContent, INTF1, false);
+                mem_dataWrite8bit(EIFR, eifrContent);
+            }
+
+            
+            else {
+                _interruptPending = false;
+            }
+
+            // When the AVR exits from an interrupt, it will always return to the main program and
+            // execute one more instruction before any pending interrupt is served.
         }
     }
 }   

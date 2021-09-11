@@ -528,7 +528,8 @@ void ori() {
     uint8_t constData = dec_extractBits0000111100001111(opCode);
     uint8_t rdContent = mem_dataRead8bit(rd_addr);
     uint8_t result = rdContent | constData;
-    uint8_t resultBit7 = uti_getBit(result, 7);
+
+    bool resultBit7 = uti_getBit(result, 7);
 
     // S: N ⊕ V, for signed tests.
     reg_sregSignBit = (reg_sregNegative ^ reg_sregTwoComplOverflow);
@@ -642,8 +643,8 @@ void rcall() {
         jumpDest_addr = (PROGRAM_MEMORY_END + 2 + cpu_programCounter + addressOffset)  % (PROGRAM_MEMORY_END + 1);
     }
 
-    cpu_programCounter = jumpDest_addr;
     mem_dataWrite16bit(stackTop_addr - 1, cpu_programCounter + 1);
+    cpu_programCounter = jumpDest_addr;
     cpu_decrementIncrementStackPointer(-2);
     cpu_incrementCycleCounter(3);
 }
@@ -658,7 +659,7 @@ void rcall() {
 // AVR Instruction Manual page 139
 void ret() {
     uint16_t stackTop_addr = mem_dataRead16bit(STACKPOINTER);
-    uint16_t jumpDest_addr =  mem_dataRead16bit(stackTop_addr + 2);
+    uint16_t jumpDest_addr =  mem_dataRead16bit(stackTop_addr + 1);
 
     cpu_decrementIncrementStackPointer(2);
     cpu_programCounter = jumpDest_addr;
@@ -677,10 +678,10 @@ void ret() {
 // AVR Instruction Manual page 140
 void reti() {
     uint16_t stackTop_addr = mem_dataRead16bit(STACKPOINTER);
-    uint16_t jumpDest_addr =  mem_dataRead16bit(stackTop_addr + 2);
-
-    reg_sregGlobalInterruptEnable = true;
+    uint16_t jumpDest_addr =  mem_dataRead16bit(stackTop_addr + 1);
+    
     cpu_decrementIncrementStackPointer(2);
+    reg_sregGlobalInterruptEnable = true;
     cpu_programCounter = jumpDest_addr;
     cpu_incrementCycleCounter(4);
 }

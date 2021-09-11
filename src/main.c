@@ -6,8 +6,6 @@
 #include "atmega328/atmega328.h"
 #include "atmega328/debug.h"
 
-#include <stdio.h>
-#include <argp.h>
 
 const char *argp_program_version =
     "atmegaEmu 0.0.1";
@@ -55,7 +53,7 @@ parse_opt(int key, char *arg, struct argp_state *state)
         break;
     case 'c':
         arguments->string1 = arg;
-        g_clockSpeed = atoi(arguments->string1);
+        cpu_clockSpeed = atoi(arguments->string1);
         break;
     case 'b':
         arguments->string2 = arg;
@@ -152,7 +150,7 @@ int main(int argc, char **argv)
         switch (character) {
             case 'e': is_running = false; break;
             case 'l': atm_loadProgram(argv[1]); break;
-            case 's': atm_start(); break;
+            case 's': atm_startVerbose(); break;
             case 'h': atm_stop(); break;
             case 'c': is_running = false; break;
             case 'm': deb_triggerSpeedTest(); break;

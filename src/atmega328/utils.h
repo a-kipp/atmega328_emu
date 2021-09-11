@@ -16,13 +16,8 @@ uint16_t uti_byteswap16bit(uint16_t num) {
     return num << 8 | num >> 8;
 }
 
-
 bool uti_getBit(uint16_t word, int bit) {
-    if (word & (1 << bit)) {
-        return true;
-    } else {
-        false;
-    }
+    return word & (1 << bit);
 }
 
 

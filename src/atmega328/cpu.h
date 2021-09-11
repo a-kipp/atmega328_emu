@@ -12,11 +12,10 @@
 #include "memory/memory.h"
 #include "instructions/jump_table_implementation.h"
 #include "instructions/instructions.h"
-#include "globalconfig.h"
 #include "timing.h"
 #include "debug.h"
 #include "eventhandler.h"
-#include "./memory/declarations.h"
+#include "declarations.h"
 #include "interrupts.h"
 ;
 
@@ -46,7 +45,7 @@ void cpu_incrementCycleCounter(uint8_t increments) {
 
 
 void cpu_decrementIncrementStackPointer(int8_t increments) {
-    mem_dataMemory[STACKPOINTER] + increments;
+    mem_dataMemory[STACKPOINTER] += increments;
 }
 
 
@@ -60,7 +59,7 @@ static void *_run(void *arg) {
     uint64_t actualExecutionTime = 0;
     uint64_t totalTimeTaken = 0;
     uint64_t delta = 0;
-    uint16_t instructionsToExecude = (g_clockSpeed / 1000000) + 1;
+    uint16_t instructionsToExecude = (cpu_clockSpeed / 1000000) + 1;
 
     _cpuStopSignal = false;
 
@@ -80,7 +79,7 @@ static void *_run(void *arg) {
             int_handleInterrupts();
         }
 
-        calcExecutionTime = (cpu_cpuCycleCounter - cycleCountStart) * (NANOSEC_PER_SEC / g_clockSpeed);
+        calcExecutionTime = (cpu_cpuCycleCounter - cycleCountStart) * (NANOSEC_PER_SEC / cpu_clockSpeed);
 
         actualExecutionTime = tim_getTimeElapsed(timeStamp);
 
@@ -100,13 +99,13 @@ static void *_run(void *arg) {
 
 static void *_runVerbose(void *arg) {
 
-    if (g_clockSpeed > 20) g_clockSpeed = 20;
+    if (cpu_clockSpeed > 20) cpu_clockSpeed = 20;
 
     uint64_t calcExecutionTime = 0;
     uint64_t actualExecutionTime = 0;
     uint64_t totalTimeTaken = 0;
     uint64_t delta = 0;
-    uint16_t instructionsToExecude = (g_clockSpeed / 1000000) + 1;
+    uint16_t instructionsToExecude = (cpu_clockSpeed / 1000000) + 1;
 
     _cpuStopSignal = false;
 
@@ -131,7 +130,7 @@ static void *_runVerbose(void *arg) {
             int_handleInterrupts();
         }
 
-        calcExecutionTime = (cpu_cpuCycleCounter - cycleCountStart) * (NANOSEC_PER_SEC / g_clockSpeed);
+        calcExecutionTime = (cpu_cpuCycleCounter - cycleCountStart) * (NANOSEC_PER_SEC / cpu_clockSpeed);
 
         actualExecutionTime = tim_getTimeElapsed(timeStamp);
 

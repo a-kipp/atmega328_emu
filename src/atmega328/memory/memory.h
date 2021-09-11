@@ -7,8 +7,7 @@
 #include "loader.h"
 #include "../utils.h"
 #include "../peripherals.h"
-#include "arrays.h"
-#include "register.h"
+#include "../register.h"
 #include "../interrupts.h"
 
 

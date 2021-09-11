@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <time.h>
-#include "globalconfig.h"
-
+;
 #define NANOSEC_PER_SEC 1000000000
 
 typedef struct timespec TimeObj;

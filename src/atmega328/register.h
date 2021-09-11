@@ -2,36 +2,35 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "map.h"
-#include "arrays.h"
+#include "memory/map.h"
 #include "declarations.h"
-#include "../interrupts.h"
+#include "interrupts.h"
 
 
 
 
 static uint8_t _sregRead(uint16_t address) {
     uint8_t returnValue = 0;
-    returnValue | reg_sregCarry & (1 << CARRY_FLAG);
-    returnValue | reg_sregZero & (1 << ZERO_FLAG);
-    returnValue | reg_sregNegative & (1 << NEGATIVE_FLAG);
-    returnValue | reg_sregTwoComplOverflow & (1 << TWOS_COMPLEMENT_OVERFLOW_FLAG);
-    returnValue | reg_sregSignBit & (1 << SIGN_BIT);
-    returnValue | reg_sregHalfCarry & (1 << HALF_CARRY_FLAG);
-    returnValue | reg_sregBitCopyStorage & (1 << BIT_COPY_STORAGE);
-    returnValue | reg_sregGlobalInterruptEnable & (1 << GLOBAL_INTERRUPT_ENABLE);
+    returnValue |= (reg_sregCarry << CARRY_FLAG);
+    returnValue |= (reg_sregZero << ZERO_FLAG);
+    returnValue |= (reg_sregNegative << NEGATIVE_FLAG);
+    returnValue |= (reg_sregTwoComplOverflow << TWOS_COMPLEMENT_OVERFLOW_FLAG);
+    returnValue |= (reg_sregSignBit << SIGN_BIT);
+    returnValue |= (reg_sregHalfCarry << HALF_CARRY_FLAG);
+    returnValue |= (reg_sregBitCopyStorage << BIT_COPY_STORAGE);
+    returnValue |= (reg_sregGlobalInterruptEnable << GLOBAL_INTERRUPT_ENABLE);
     return returnValue;
 }
 
 static void _sregWrite(uint16_t address, uint8_t value) {
-    reg_sregCarry = value | ~(1 << CARRY_FLAG);
-    reg_sregZero  = value | ~(1 << ZERO_FLAG);
-    reg_sregNegative = value | ~(1 << NEGATIVE_FLAG);
-    reg_sregTwoComplOverflow = value | ~(1 << TWOS_COMPLEMENT_OVERFLOW_FLAG);
-    reg_sregSignBit = value | ~(1 << SIGN_BIT);
-    reg_sregHalfCarry = value | ~(1 << HALF_CARRY_FLAG);
-    reg_sregBitCopyStorage = value | ~(1 << BIT_COPY_STORAGE);
-    reg_sregGlobalInterruptEnable = value | ~(1 << GLOBAL_INTERRUPT_ENABLE);
+    reg_sregCarry = value & (1 << CARRY_FLAG);
+    reg_sregZero  = value & (1 << ZERO_FLAG);
+    reg_sregNegative = value & (1 << NEGATIVE_FLAG);
+    reg_sregTwoComplOverflow = value & (1 << TWOS_COMPLEMENT_OVERFLOW_FLAG);
+    reg_sregSignBit = value & (1 << SIGN_BIT);
+    reg_sregHalfCarry = value & (1 << HALF_CARRY_FLAG);
+    reg_sregBitCopyStorage = value & (1 << BIT_COPY_STORAGE);
+    reg_sregGlobalInterruptEnable = value & (1 << GLOBAL_INTERRUPT_ENABLE);
 }
 
 
@@ -99,8 +98,8 @@ static void _writeToPinPortC(uint16_t address, uint8_t value) {
 
 static void _writeToPinPinD(uint16_t address, uint8_t newValue) {
 
-    uint8_t pindContent = arr_get8BitDataArray(PIND);
-    uint8_t sregContent = arr_get8BitDataArray(SREG);
+    uint8_t pindContent = mem_dataMemory[PIND];
+    uint8_t sregContent = mem_dataMemory[SREG];
 
     // bool oldPd2 = uti_getBit(pindContent, PORTD2_PIN_4);
     // bool newPd2 = uti_getBit(newValue, PORTD2_PIN_4);
