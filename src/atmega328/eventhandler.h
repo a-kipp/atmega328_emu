@@ -41,6 +41,15 @@ Event _dequeueEvent() {
 
 
 
+void eve_writeToInt0Pin(uint8_t highOrLow) {
+    uint8_t pinDContent = mem_dataRead8bit(PIND);
+    if (highOrLow == 0) {
+        pinDContent = uti_setBit(pinDContent, PIND2_PIN_4, false);
+    } else {
+        pinDContent = uti_setBit(pinDContent, PIND2_PIN_4, true);
+    }
+    mem_dataWrite8bit(PIND, pinDContent);
+}
 
 
 
@@ -76,7 +85,7 @@ void eve_setUdr0(uint8_t bitField) {
 }
 
 
-void eve_handleEvent() {
+void eve_handleEvents() {
     if (_eventPending) {
         Event event = _dequeueEvent();
         event.fun_ptr(event.argument);

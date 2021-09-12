@@ -156,7 +156,9 @@ int main(int argc, char **argv)
             case 'm': deb_triggerSpeedTest(); break;
             case 'd': atm_disassemble(); break;
             case '1': atm_setPin5high(); break;
-            case '0': atm_setPin5low(); break;
+            case '2': atm_setPin5low(); break;
+            case '3': atm_setPin4high(); break;
+            case '4': atm_setPin4low(); break;
             default: ; break;
     
         }

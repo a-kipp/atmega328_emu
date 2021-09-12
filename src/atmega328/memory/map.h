@@ -9,6 +9,32 @@
 
 // Program Memory Map
 #define PROAGRAM_MEMORY_START 0x000
+    #define RESET_INTERRUPT_ADDR 0
+    #define INT0_INTERRUPT_ADDR 1
+    #define INT1_INTERRUPT_ADDR 2
+    #define PCINT0_INTERRUPT_ADDR 3
+    #define PCINT1_INTERRUPT_ADDR 4
+    #define PCINT2_INTERRUPT_ADDR 5
+    #define WDT_INTERRUPT_ADDR 6
+    #define TIMER2_COMPA_INTERRUPT_ADDR 7
+    #define TIMER2_COMPB_INTERRUPT_ADDR 8
+    #define TIMER2_OVF_INTERRUPT_ADDR 9
+    #define TIMER1_CAPT_INTERRUPT_ADDR 10
+    #define TIMER1_COMPA_INTERRUPT_ADDR 11
+    #define TIMER1_COMPB_INTERRUPT_ADDR 12
+    #define TIMER1_OVF_INTERRUPT_ADDR 13
+    #define TIMER0_COMPA_INTERRUPT_ADDR 14
+    #define TIMER0_COMPB_INTERRUPT_ADDR 15
+    #define TIMER0_OVF_INTERRUPT_ADDR 16
+    #define SPI_STC_INTERRUPT_ADDR 17
+    #define USART_RX_INTERRUPT_ADDR 18
+    #define USART_UDRE_INTERRUPT_ADDR 19
+    #define USART_TX_INTERRUPT_ADDR 20
+    #define ADC_INTERRUPT_ADDR 21
+    #define EE_READY_INTERRUPT_ADDR 22
+    #define ANALOG_COMP_INTERRUPT_ADDR 23
+    #define TWI_INTERRUPT_ADDR 24
+    #define SPM_READY_INTERRUPT_ADDR 25
     #define BOOT_SECTION_START
     #define BOOT_SECTION_END 0x7ff
 #define PROGRAM_MEMORY_END 0x3fff
@@ -77,7 +103,7 @@
             #define PIND5_PIN_11 5
             #define PIND4_PIN_6 4
             #define PIND3_PIN_5 3 // triggers INT1 interrupt
-            #define PIND2_PIN_4 2 // triggers INT2 interrupt
+            #define PIND2_PIN_4 2 // triggers INT0 interrupt
             #define PIND1_PIN_3 1
             #define PIND0_PIN_2 0        
         #define DDRD 0x002A // The Port D Data Direction Register
@@ -90,13 +116,17 @@
             #define PORTD2_PIN_4 2
             #define PORTD1_PIN_3 1
             #define PORTD0_PIN_2 0
-        #define EIFR 0x003C // External Interrupt Flag Register
-            #define INTF1 1
-            #define INTF0 0
         #define TIFR0 0x0035
             #define TOV0 0 // Timer 0 Overflow Flag
         #define TIFR1 0x0036
         #define TIFR2 0x0037
+        #define PCIFR 0x003B // Pin Change Interrupt Flag Register
+            #define PCIF2 2 // Pin Change Interrupt Flag 2
+            #define PCIF1 1 // Pin Change Interrupt Flag 1
+            #define PCIF0 0 // Pin Change Interrupt Flag 0
+        #define EIFR 0x003C // External Interrupt Flag Register
+            #define INTF1 1
+            #define INTF0 0
         #define EIMSK 0x003D // External Interrupt Mask Register -> page 55
             #define INT0 0
             #define INT1 1
@@ -130,11 +160,18 @@
             #define GLOBAL_INTERRUPT_ENABLE 7 // I
     #define IO_REGISTERS_END 0x005F
     #define EXTERN_IO_REGISTERS_START 0x0060
-        #define EICRA 0x0069// External Interrupt Control Register A -> Datasheet page 54
+        #define PCICR 0x0068 // Pin Change Interrupt Control Register
+            #define PCIE2 2 // Pin Change Interrupt Enable 2
+            #define PCIE1 1 // Pin Change Interrupt Enable 1
+            #define PCIE0 0 // Pin Change Interrupt Enable 0
+        #define EICRA 0x0069 // External Interrupt Control Register A -> Datasheet page 54
             #define ISC00 0
             #define ISC01 1
             #define ISC10 2
             #define ISC11 3
+        #define PCMSK2 0x006D // Pin Change Mask Register 2
+        #define PCMSK1 0x006C // Pin Change Mask Register 1
+        #define PCMSK0 0x006B // Pin Change Mask Register 0
         #define UBRR0L 0x00C4 // Datasheet page 276
         #define UBRR0H 0x00C5
         #define UDR0 0x00C6 // Serial Register

@@ -70,7 +70,7 @@ unsigned int tim_atmegaClockSpeed = 16000000; //minimum 2 Hz
 
 void deb_triggerSpeedTest() {
     if (!_speedTestIsRunning) {
-        _cycleCountStart = cpu_cpuCycleCounter;
+        _cycleCountStart = cpu_cycleCounter;
         clock_gettime(CLOCK_REALTIME, &_startTime);
 
         _speedTestIsRunning = true;
@@ -87,9 +87,9 @@ void deb_triggerSpeedTest() {
         elapsed += ((double)_stopTime.tv_nsec / 1000000000);
         elapsed -= ((double)_startTime.tv_nsec / 1000000000);
 
-        double speedHz = (double)(cpu_cpuCycleCounter - _cycleCountStart) / elapsed;
+        double speedHz = (double)(cpu_cycleCounter - _cycleCountStart) / elapsed;
     
-        printf("cycles elapsed: %d\n", cpu_cpuCycleCounter - _cycleCountStart);
+        printf("cycles elapsed: %d\n", cpu_cycleCounter - _cycleCountStart);
         printf("time elapsed: %f\n", elapsed);
         printf("speed: %f Hz\n", speedHz);
     }

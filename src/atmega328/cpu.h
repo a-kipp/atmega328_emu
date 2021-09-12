@@ -26,7 +26,7 @@ pthread_t *_cpuThread;
 
 
 static void _incrementCycleCounterOnce() {
-    cpu_cpuCycleCounter ++;
+    cpu_cycleCounter ++;
     uint8_t timerCounter = mem_dataMemory[TCNT0];
     timerCounter ++;
     if (timerCounter == 0) {
@@ -66,20 +66,20 @@ static void *_run(void *arg) {
     while(!_cpuStopSignal) {
         TimeObj timeStamp = tim_getCurrentTime();
 
-        eve_handleEvent();
+        eve_handleEvents();
 
-        long long cycleCountStart = cpu_cpuCycleCounter;
+        long long cycleCountStart = cpu_cycleCounter;
 
         for (int i = 0; i < instructionsToExecude; i++) {
 
-            uint16_t opCode = mem_fetchInstruction(cpu_programCounter);
+            uint16_t opCode = mem_fetchInstruction(reg_programCounter);
 
             jti_implementationTable[opCode]();
 
             int_handleInterrupts();
         }
 
-        calcExecutionTime = (cpu_cpuCycleCounter - cycleCountStart) * (NANOSEC_PER_SEC / cpu_clockSpeed);
+        calcExecutionTime = (cpu_cycleCounter - cycleCountStart) * (NANOSEC_PER_SEC / cpu_clockSpeed);
 
         actualExecutionTime = tim_getTimeElapsed(timeStamp);
 
@@ -99,8 +99,6 @@ static void *_run(void *arg) {
 
 static void *_runVerbose(void *arg) {
 
-    if (cpu_clockSpeed > 20) cpu_clockSpeed = 20;
-
     uint64_t calcExecutionTime = 0;
     uint64_t actualExecutionTime = 0;
     uint64_t totalTimeTaken = 0;
@@ -112,25 +110,25 @@ static void *_runVerbose(void *arg) {
     while(!_cpuStopSignal) {
         TimeObj timeStamp = tim_getCurrentTime();
 
-        printf("%04X ",  cpu_programCounter);
+        printf("%04X ",  reg_programCounter);
         uti_print_binary_8bit(mem_dataRead8bit(SREG));
-        printf(" %s",  ins_disassembleInstruction(cpu_programCounter).info);
-        printf("     %s\n",  ins_disassembleInstruction(cpu_programCounter).comment);
+        printf(" %s",  ins_disassembleInstruction(reg_programCounter).info);
+        printf("     %s\n",  ins_disassembleInstruction(reg_programCounter).comment);
 
-        eve_handleEvent();
+        eve_handleEvents();
 
-        long long cycleCountStart = cpu_cpuCycleCounter;
+        long long cycleCountStart = cpu_cycleCounter;
 
         for (int i = 0; i < instructionsToExecude; i++) {
 
-            uint16_t opCode = mem_fetchInstruction(cpu_programCounter);
+            uint16_t opCode = mem_fetchInstruction(reg_programCounter);
 
             jti_implementationTable[opCode]();
 
             int_handleInterrupts();
         }
 
-        calcExecutionTime = (cpu_cpuCycleCounter - cycleCountStart) * (NANOSEC_PER_SEC / cpu_clockSpeed);
+        calcExecutionTime = (cpu_cycleCounter - cycleCountStart) * (NANOSEC_PER_SEC / cpu_clockSpeed);
 
         actualExecutionTime = tim_getTimeElapsed(timeStamp);
 
@@ -143,14 +141,6 @@ static void *_runVerbose(void *arg) {
     _cpuStopSignal = false;
     printf("cpu stopped\n");
 }
-
-
-
-
-
-
-
-
 
 
 

@@ -1,3 +1,9 @@
+// Read and write access to the registers is provided by the functions in this file. Most of the
+// interrupts are catched during a write operation to the particular register. Some registers such
+// as the SREG flag register and some interrupt flag registers are relocated and split into single
+// bits and therefore must bei accessed only by their read and write functions.
+
+
 #pragma once
 
 #include <stdint.h>
@@ -5,7 +11,6 @@
 #include "memory/map.h"
 #include "declarations.h"
 #include "interrupts.h"
-
 
 
 
@@ -22,6 +27,7 @@ static uint8_t _sregRead(uint16_t address) {
     return returnValue;
 }
 
+
 static void _sregWrite(uint16_t address, uint8_t value) {
     reg_sregCarry = value & (1 << CARRY_FLAG);
     reg_sregZero  = value & (1 << ZERO_FLAG);
@@ -31,6 +37,83 @@ static void _sregWrite(uint16_t address, uint8_t value) {
     reg_sregHalfCarry = value & (1 << HALF_CARRY_FLAG);
     reg_sregBitCopyStorage = value & (1 << BIT_COPY_STORAGE);
     reg_sregGlobalInterruptEnable = value & (1 << GLOBAL_INTERRUPT_ENABLE);
+}
+
+
+static uint8_t _pcifrRead0x3B(uint16_t address) {
+    uint8_t returnValue = 0;
+    returnValue |= (reg_pinChangeInterruptFlag2 << PCIF2);
+    returnValue |= (reg_pinChangeInterruptFlag1 << PCIF1);
+    returnValue |= (reg_pinChangeInterruptFlag0 << PCIF0);
+    return returnValue;
+}
+
+
+static void _pcifrWrite0x3B(uint16_t address, uint8_t value) {
+    reg_pinChangeInterruptFlag2 = value & (1 << PCIF2);
+    reg_pinChangeInterruptFlag1 = value & (1 << PCIF1);
+    reg_pinChangeInterruptFlag0 = value & (1 << PCIF0);
+}
+
+
+static uint8_t _eifrRead0x3C(uint16_t address) {
+    uint8_t returnValue = 0;
+    returnValue |= (reg_externalInterruptFlag1 << INTF1);
+    returnValue |= (reg_externalInterruptFlag0 << INTF0);
+    return returnValue;
+}
+
+
+static void _eifrWrite0x3C(uint16_t address, uint8_t value) {
+    reg_externalInterruptFlag1 = value & (1 << INTF1);
+    reg_externalInterruptFlag0 = value & (1 << INTF0);
+}
+
+
+static uint8_t _eimskRead0x3D(uint16_t address) {
+    uint8_t returnValue = 0;
+    returnValue |= (reg_externalInterruptMask1 << INT1);
+    returnValue |= (reg_externalInterruptMask0 << INT0);
+    return returnValue;
+}
+
+
+static void _eimskWrite0x3D(uint16_t address, uint8_t value) {
+    reg_externalInterruptMask1 = value & (1 << INT1);
+    reg_externalInterruptMask0 = value & (1 << INT0);
+}
+
+
+static uint8_t _pcicrRead0x68(uint16_t address) {
+    uint8_t returnValue = 0;
+    returnValue |= (reg_pinChangeInterruptControl2 << PCIE2);
+    returnValue |= (reg_pinChangeInterruptControl1 << PCIE1);
+    returnValue |= (reg_pinChangeInterruptControl0 << PCIE0);
+    return returnValue;
+}
+
+
+static void _pcicrWrite0x68(uint16_t address, uint8_t value) {
+    reg_pinChangeInterruptControl2 = value & (1 << PCIE2);
+    reg_pinChangeInterruptControl1 = value & (1 << PCIE1);
+    reg_pinChangeInterruptControl0 = value & (1 << PCIE0);
+}
+
+static uint8_t _eicraRead0x69(uint16_t address) {
+    uint8_t returnValue = 0;
+    returnValue |= (reg_externalInterruptControl3 << ISC11);
+    returnValue |= (reg_externalInterruptControl2 << ISC10);
+    returnValue |= (reg_externalInterruptControl1 << ISC01);
+    returnValue |= (reg_externalInterruptControl0 << ISC00);
+    return returnValue;
+}
+
+
+static void _eicraWrite0x69(uint16_t address, uint8_t value) {
+    reg_externalInterruptControl3 = value & (1 << ISC11);
+    reg_externalInterruptControl2 = value & (1 << ISC10);
+    reg_externalInterruptControl1 = value & (1 << ISC01);
+    reg_externalInterruptControl0 = value & (1 << ISC00);
 }
 
 
@@ -47,7 +130,6 @@ static void _consolePrint(uint16_t address, uint8_t value) {
 }
 
 
-
 static void _catchBadAddress(uint16_t address, uint8_t value) {
     if (address == BAD_ADDRESS) {
         fprintf(stderr, "writing to the bad address\n");
@@ -55,8 +137,22 @@ static void _catchBadAddress(uint16_t address, uint8_t value) {
 }
 
 
+static void _pinbWrite0x23(uint16_t address, uint8_t newValue) {
+    uint8_t pindContent = mem_dataMemory[PINB];
+    // match PCINT0 Interrupt
+    if (pindContent ^ newValue) int_catchPcint0Interrupt(pindContent ^ newValue);
+    mem_dataMemory[PINB] = newValue;
+}
 
-static void _writeToPinPortB(uint16_t address, uint8_t value) {
+
+static uint8_t _pinbRead0x23(uint16_t address) {
+    uint8_t pinbContent = mem_dataMemory[PINB];
+    uint8_t portbContent = mem_dataMemory[PORTB];
+    return portbContent | pinbContent;
+}
+
+
+static void _portbWrite0x25(uint16_t address, uint8_t value) {
     if (address = PORTB) {
         uint8_t oldHighPins = mem_dataMemory[PORTB] & mem_dataMemory[DDRB];
         mem_dataMemory[PORTB] = value;
@@ -76,13 +172,27 @@ static void _writeToPinPortB(uint16_t address, uint8_t value) {
 }
 
 
-static void _writeToPinPortC(uint16_t address, uint8_t value) {
+static void _pincWrite0x26(uint16_t address, uint8_t newValue) {
+    uint8_t pindContent = mem_dataMemory[PINC];
+    // match PCINT1 Interrupt
+    if (pindContent ^ newValue) int_catchPcint0Interrupt(pindContent ^ newValue);
+    mem_dataMemory[PINC] = newValue;
+}
+
+
+static uint8_t _pincRead0x26(uint16_t address) {
+    uint8_t pincContent = mem_dataMemory[PINC];
+    uint8_t portcContent = mem_dataMemory[PORTC];
+    return portcContent | pincContent;
+}
+
+
+static void _portcWrite0x28(uint16_t address, uint8_t value) {
     if (address = PORTC) {
         uint8_t oldHighPins = mem_dataMemory[PORTC] & mem_dataMemory[DDRC];
         mem_dataMemory[PORTC] = value;
         uint8_t newHighPins = value & mem_dataMemory[DDRC];
         uint8_t changedPins = oldHighPins ^ newHighPins;
-        // no pin here
         if (changedPins & (1 << 6)) per_digitalPinOut(1, newHighPins & (1 << 6));
         if (changedPins & (1 << 5)) per_digitalPinOut(28, newHighPins & (1 << 5));
         if (changedPins & (1 << 3)) per_digitalPinOut(27, newHighPins & (1 << 3));
@@ -96,30 +206,39 @@ static void _writeToPinPortC(uint16_t address, uint8_t value) {
 }
 
 
-static void _writeToPinPinD(uint16_t address, uint8_t newValue) {
-
+static void _pindWrite0x29(uint16_t address, uint8_t newValue) {
     uint8_t pindContent = mem_dataMemory[PIND];
     uint8_t sregContent = mem_dataMemory[SREG];
-
-    // bool oldPd2 = uti_getBit(pindContent, PORTD2_PIN_4);
-    // bool newPd2 = uti_getBit(newValue, PORTD2_PIN_4);
+    bool oldPd2 = (bool)(pindContent & (1 << PORTD2_PIN_4));
+    bool newPd2 = (bool)(newValue & (1 << PORTD2_PIN_4));
     bool oldPd3 = (bool)(pindContent & (1 << PIND3_PIN_5));
     bool newPd3 = (bool)(newValue & (1 << PIND3_PIN_5));
-    
-    //if (!oldPd2 && newPd2) int_matchExternalInterruptRequest0(RISING);
-    //if (oldPd2 && !newPd2) int_matchExternalInterruptRequest0(FALLING);
-    //if (oldPd2 ^ newPd2) int_matchExternalInterruptRequest0(CHANGING);
 
-    // catch External Interrupt Request 1
-    if (!oldPd3 && newPd3) int_matchExternalInterruptRequest1(RISING);
-    if (oldPd3 && !newPd3) int_matchExternalInterruptRequest1(FALLING);
-    if (oldPd3 ^ newPd3) int_matchExternalInterruptRequest1(CHANGING);
+    // match External Interrupt Request 0
+    if (!oldPd2 && newPd2) int_catchInt0Interrupt(RISING);
+    if (oldPd2 && !newPd2) int_catchInt0Interrupt(FALLING);
+    if (oldPd2 ^ newPd2) int_catchInt0Interrupt(CHANGING);
+
+    // match External Interrupt Request 1
+    if (!oldPd3 && newPd3) int_catchInt1Interrupt(RISING);
+    if (oldPd3 && !newPd3) int_catchInt1Interrupt(FALLING);
+    if (oldPd3 ^ newPd3) int_catchInt1Interrupt(CHANGING);
+
+    // match PCINT2 Interrupt
+    if (pindContent ^ newValue) int_catchPcint2Interrupt(pindContent ^ newValue);
 
     mem_dataMemory[PIND] = newValue;
 }
 
 
-static void _writeToPinPortD(uint16_t address, uint8_t value) {
+static uint8_t _pinbRead0x29(uint16_t address) {
+    uint8_t pindContent = mem_dataMemory[PIND];
+    uint8_t portdContent = mem_dataMemory[PORTD];
+    return portdContent | pindContent;
+}
+
+
+static void _portdWrite0x2B(uint16_t address, uint8_t value) {
     if (address = PORTD) {
         uint8_t oldHighPins = mem_dataMemory[PORTD] & mem_dataMemory[DDRD];
         mem_dataMemory[PORTD] = value;
@@ -137,6 +256,7 @@ static void _writeToPinPortD(uint16_t address, uint8_t value) {
         fprintf(stderr, "something wrong with the pins\n");
     }
 }
+
 
 static void _writeToPinInput(uint16_t address, uint8_t value) {
     fprintf(stderr, "tried to write to pin input register, nothing happened\n");
@@ -189,13 +309,13 @@ static uint8_t(*_registerReadFunctions[])(uint16_t) = {
     _unconditionalRead, // 0x20
     _unconditionalRead, // 0x21
     _unconditionalRead, // 0x22
-    _unconditionalRead, // 0x23
+    _pinbRead0x23, // 0x23
     _unconditionalRead, // 0x24
     _unconditionalRead, // 0x25
-    _unconditionalRead, // 0x26
+    _pincRead0x26, // 0x26
     _unconditionalRead, // 0x27
     _unconditionalRead, // 0x28
-    _unconditionalRead, // 0x29
+    _pinbRead0x29, // 0x29
     _unconditionalRead, // 0x2A
     _unconditionalRead, // 0x2B
     _unconditionalRead, // 0x2C
@@ -213,9 +333,9 @@ static uint8_t(*_registerReadFunctions[])(uint16_t) = {
     _unconditionalRead, // 0x38
     _unconditionalRead, // 0x39
     _unconditionalRead, // 0x3A
-    _unconditionalRead, // 0x3B
-    _unconditionalRead, // 0x3C
-    _unconditionalRead, // 0x3D
+    _pcifrRead0x3B, // 0x3B
+    _eifrRead0x3C, // 0x3C
+    _eimskRead0x3D, // 0x3D
     _unconditionalRead, // 0x3E
     _unconditionalRead, // 0x3F
     _unconditionalRead, // 0x40
@@ -258,8 +378,8 @@ static uint8_t(*_registerReadFunctions[])(uint16_t) = {
     _unconditionalRead, // 0x65
     _unconditionalRead, // 0x66
     _unconditionalRead, // 0x67
-    _unconditionalRead, // 0x68
-    _unconditionalRead, // 0x69
+    _pcicrRead0x68, // 0x68
+    _eicraRead0x69, // 0x69
     _unconditionalRead, // 0x6A
     _unconditionalRead, // 0x6B
     _unconditionalRead, // 0x6C
@@ -449,15 +569,15 @@ static void(*_registerWriteFunctions[])(uint16_t, uint8_t) = {
     _unconditionalWrite, // 0x20
     _unconditionalWrite, // 0x21
     _unconditionalWrite, // 0x22
-    _writeToPinInput, // 0x23
+    _pinbWrite0x23, // 0x23
     _unconditionalWrite, // 0x24
-    _writeToPinPortB, // 0x25
-    _writeToPinInput, // 0x26
+    _portbWrite0x25, // 0x25
+    _pincWrite0x26, // 0x26
     _unconditionalWrite, // 0x27
-    _writeToPinPortC, // 0x28
-    _writeToPinPinD, // 0x29
+    _portcWrite0x28, // 0x28
+    _pindWrite0x29, // 0x29
     _unconditionalWrite, // 0x2A
-    _writeToPinPortD, // 0x2B
+    _portdWrite0x2B, // 0x2B
     _unconditionalWrite, // 0x2C
     _unconditionalWrite, // 0x2D
     _unconditionalWrite, // 0x2E
@@ -473,9 +593,9 @@ static void(*_registerWriteFunctions[])(uint16_t, uint8_t) = {
     _unconditionalWrite, // 0x38
     _unconditionalWrite, // 0x39
     _unconditionalWrite, // 0x3A
-    _unconditionalWrite, // 0x3B
-    _unconditionalWrite, // 0x3C
-    _unconditionalWrite, // 0x3D
+    _pcifrWrite0x3B, // 0x3B
+    _eifrWrite0x3C, // 0x3C
+    _eimskWrite0x3D, // 0x3D
     _unconditionalWrite, // 0x3E
     _unconditionalWrite, // 0x3F
     _unconditionalWrite, // 0x40
@@ -518,8 +638,8 @@ static void(*_registerWriteFunctions[])(uint16_t, uint8_t) = {
     _unconditionalWrite, // 0x65
     _unconditionalWrite, // 0x66
     _unconditionalWrite, // 0x67
-    _unconditionalWrite, // 0x68
-    _unconditionalWrite, // 0x69
+    _pcicrWrite0x68, // 0x68
+    _eicraWrite0x69, // 0x69
     _unconditionalWrite, // 0x6A
     _unconditionalWrite, // 0x6B
     _unconditionalWrite, // 0x6C

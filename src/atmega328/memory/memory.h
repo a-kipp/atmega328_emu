@@ -17,12 +17,13 @@
 // ____________________________________________________________________________________________________________________
 
 
-// this function shall only be used by the CPU to write to memory
 void mem_dataWrite8bit(uint16_t address, uint8_t value) {
+    // the low memory addresses belong to the registers therefore register acces function is call.
     if (address <= 0x00FF) {
         reg_write8BitToRegister(address, value);
     } else if (address > DATA_MEMORY_END) {
-        fprintf(stderr, "invalid address in datamemory called\n");
+        fprintf(stderr, "error: write to invalid memory address\n");
+        exit(-1);
     } else {
         mem_dataMemory[address] = value;
     }
@@ -31,8 +32,12 @@ void mem_dataWrite8bit(uint16_t address, uint8_t value) {
 
 
 uint8_t mem_dataRead8bit(uint16_t address) {
+    // the low memory addresses belong to the registers therefore register acces function is call.
     if (address <= 0x00FF) {
         return reg_read8BitFromRegister(address);
+    } else if (address > DATA_MEMORY_END) {
+        fprintf(stderr, "error: read from invalid memory address\n");
+        exit(-1);
     } else {
         return mem_dataMemory[address];
     }
@@ -68,8 +73,9 @@ void mem_loadProgram(char* filePath) {
 
 
 uint16_t mem_fetchInstruction(uint16_t address) {
-    if (cpu_programCounter > PROGRAM_MEMORY_END) {
-        fprintf(stderr, "end of Program Memory reached\n");
+    if (reg_programCounter > PROGRAM_MEMORY_END) {
+        fprintf(stderr, "error: read from invalid program memory address\n");
+        exit(-1);
     }
     uint16_t opCode = mem_programMemory[address];
     return uti_byteswap16bit(opCode);
