@@ -1,6 +1,6 @@
-An ATmega328P Emulator
+## An ATmega328P Emulator
 
-A yet unfinished emulator for the ATmega328P wich is found in Arduiono.
+A yet unfinished emulator for the ATmega328P wich is found in Arduino.
 The emulator supports the most common instructions and some of the interrupts.
 In order to speed things up, I experimented with some optimization such as
 using jumptables for the 16-bit instruction decoding. I can run the emulator at
