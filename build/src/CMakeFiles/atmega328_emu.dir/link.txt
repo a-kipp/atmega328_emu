@@ -1,0 +1,1 @@
+/usr/bin/cc -O3 -DNDEBUG CMakeFiles/atmega328_emu.dir/main.c.o -o atmega328_emu  -pthread 

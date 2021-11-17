@@ -1,0 +1,1 @@
+/usr/bin/cc CMakeFiles/instruction_tests.dir/test.c.o -o instruction_tests 
